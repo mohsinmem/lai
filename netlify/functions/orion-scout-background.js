@@ -167,7 +167,7 @@ exports.handler = async (event) => {
       status: 'success',
       duration_ms: duration,
       signals_found: scanResults.reduce((acc, curr) => acc + curr.signals, 0),
-      summary: JSON.stringify(scanResults)
+      summary: scanResults.map(r => `AFERR Scanned: ${r.company} | Score: ${r.score} | Cognitive Framing: ${r.framing}`).join('; ') || 'No viable organizations found.'
     }]);
 
     console.log(`Orion Scout completed in ${duration}ms.`);

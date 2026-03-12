@@ -285,11 +285,12 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
     if (insertError) throw insertError;
 
     // 3. Audit Log
+    const activationLatency = (firstSignal && firstAction) ? (firstAction._at - firstSignal._at) + 'ms' : 'N/A';
     await supabaseClient.from('scraper_logs').insert([{
       status: 'success',
       duration_ms: Date.now() - startTime,
       signals_found: market_events.length,
-      summary: `AFERR Ingested: ${organization_name} | Overall: ${overallScore} | Latency: ${Date.now() - startTime}ms`
+      summary: `AFERR Ingested: ${organization_name} | Overall: ${overallScore} | Activation Latency: ${activationLatency}`
     }]);
 
     res.json({ status: 'ok', organization_name, aferr_overall: overallScore });
