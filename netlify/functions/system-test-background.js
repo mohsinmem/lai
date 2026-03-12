@@ -64,7 +64,30 @@ exports.handler = async (event) => {
     if (!completed) throw new Error('Worker timed out or failed to update database');
     logStep('Worker Verification', 'success', 'Found result in company_research');
 
-    // 5. Check Analytics Aggregation
+    // 5. AFERR Schema Dry Run (New Step)
+    logStep('AFERR Dry Run', 'pending');
+    const { error: aferrError } = await supabase
+        .from('diagnostic_results')
+        .insert([{
+            organization_name: `AFERR_TEST_${Math.floor(Math.random() * 100)}`,
+            region: 'TestRegion',
+            overall_score: 85,
+            signal_detection_score: 90,
+            emotional_framing_score: 80,
+            resource_reallocation_score: 85,
+            decision_alignment_score: 75,
+            execution_responsiveness_score: 95,
+            metadata: {
+                source: 'smoke-test',
+                evivve_mock: true,
+                latency_ms: 45
+            }
+        }]);
+    
+    if (aferrError) throw new Error(`AFERR Dry Run Failed: ${aferrError.message}`);
+    logStep('AFERR Schema Validation', 'success', 'Inserted AFERR data with metadata');
+
+    // 6. Check Analytics Aggregation
     const analyticsUrl = `${baseUrl.replace(/\/$/, '')}/api/analytics/global`;
     const analyticsRes = await fetch(analyticsUrl);
     const analyticsData = await analyticsRes.json();
@@ -84,6 +107,7 @@ exports.handler = async (event) => {
     // Cleanup - remove test data so we don't pollute the real index
     await supabase.from('research_queue').delete().eq('company_name', testCompany);
     await supabase.from('company_research').delete().eq('company_name', testCompany);
+    await supabase.from('diagnostic_results').delete().like('organization_name', 'AFERR_TEST_%');
     
     // Log final test result to a dedicated audit table (if it exists)
     try {

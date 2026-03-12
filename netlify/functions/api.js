@@ -44,7 +44,7 @@ app.get('/api/health', async (req, res) => {
       }
     };
 
-    health.tables.diagnostic_results = await checkTableSchema('diagnostic_results', ['organization_name', 'overall_score', 'region']);
+    health.tables.diagnostic_results = await checkTableSchema('diagnostic_results', ['organization_name', 'overall_score', 'region', 'metadata']);
     health.tables.company_research = await checkTableSchema('company_research', ['company_name', 'adaptiveness_score', 'region']);
     health.tables.research_queue = await checkTableSchema('research_queue', ['company_name', 'status']);
     health.tables.scraper_logs = await checkTableSchema('scraper_logs', ['status', 'summary']);
