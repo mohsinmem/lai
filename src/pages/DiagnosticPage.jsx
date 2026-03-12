@@ -56,7 +56,8 @@ const dimensions = [
 ];
 
 const DiagnosticPage = () => {
-  const [step, setStep] = useState(0); // 0: Start, 1: Questions, 2: Results
+  const [step, setStep] = useState(0); // 0: Start, 0.5: Pre-survey, 1: Questions, 2: Results
+  const [meta, setMeta] = useState({ organization_name: '', industry: '', region: '' });
   const [currentDimIndex, setCurrentDimIndex] = useState(0);
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [answers, setAnswers] = useState({});
@@ -92,6 +93,7 @@ const DiagnosticPage = () => {
   const calculateResults = async () => {
     const overallScore = parseFloat(getOverallScore());
     const resultData = {
+      ...meta,
       overall_score: overallScore,
       signal_score: parseFloat(getDimScore('signal')),
       emotional_score: parseFloat(getDimScore('emotional')),
@@ -118,6 +120,7 @@ const DiagnosticPage = () => {
     const dimAnswers = Object.keys(answers)
       .filter(key => key.startsWith(dimId))
       .map(key => answers[key]);
+    if (dimAnswers.length === 0) return 0;
     const avg = dimAnswers.reduce((a, b) => a + b, 0) / dimAnswers.length;
     return (avg * 10).toFixed(1);
   };
@@ -142,9 +145,75 @@ const DiagnosticPage = () => {
               <div className="badge-center">Professional Assessment</div>
               <h1>Leadership Adaptiveness Diagnostic</h1>
               <p>A rapid behavioral assessment to measure how your leadership system responds to changing environments. (20 Questions • 5 Minutes)</p>
-              <button onClick={() => setStep(1)} className="btn-start">
+              <button onClick={() => setStep(0.5)} className="btn-start">
                 Begin Assessment <ArrowRight />
               </button>
+            </motion.div>
+          )}
+
+          {step === 0.5 && (
+            <motion.div 
+              key="meta"
+              className="start-screen"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+            >
+              <div className="badge-center">Registration Data</div>
+              <h2>Organization Details</h2>
+              <p>This data helps us provide accurate benchmarking for your industry and region.</p>
+              
+              <div className="meta-form">
+                <div className="form-group-diag">
+                  <label>Organization Name</label>
+                  <input 
+                    type="text" 
+                    value={meta.organization_name}
+                    onChange={(e) => setMeta({...meta, organization_name: e.target.value})}
+                    placeholder="Enter organization name"
+                  />
+                </div>
+                <div className="form-group-diag">
+                  <label>Industry</label>
+                  <select 
+                    value={meta.industry}
+                    onChange={(e) => setMeta({...meta, industry: e.target.value})}
+                  >
+                    <option value="">Select Industry</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Finance">Finance</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="Manufacturing">Manufacturing</option>
+                    <option value="Energy">Energy</option>
+                    <option value="Retail">Retail</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div className="form-group-diag">
+                  <label>Region</label>
+                  <select 
+                    value={meta.region}
+                    onChange={(e) => setMeta({...meta, region: e.target.value})}
+                  >
+                    <option value="">Select Region</option>
+                    <option value="North America">North America</option>
+                    <option value="Europe">Europe</option>
+                    <option value="APAC">APAC</option>
+                    <option value="Middle East">Middle East</option>
+                    <option value="LATAM">LATAM</option>
+                    <option value="Africa">Africa</option>
+                  </select>
+                </div>
+                
+                <button 
+                  disabled={!meta.organization_name || !meta.industry || !meta.region}
+                  onClick={() => setStep(1)} 
+                  className="btn-start"
+                  style={{ marginTop: '2rem' }}
+                >
+                  Confirm and Start <ArrowRight />
+                </button>
+              </div>
             </motion.div>
           )}
 
@@ -300,6 +369,13 @@ const DiagnosticPage = () => {
 
         .start-screen h1 { font-size: 3rem; margin-bottom: 1.5rem; }
         .start-screen p { font-size: 1.2rem; color: var(--slate); margin-bottom: 2.5rem; }
+
+        .meta-form { text-align: left; max-width: 400px; margin: 0 auto; }
+        .form-group-diag { margin-bottom: 1.5rem; }
+        .form-group-diag label { display: block; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--slate-light); margin-bottom: 0.5rem; }
+        .form-group-diag input, .form-group-diag select { 
+          width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 1rem; color: var(--navy); 
+        }
 
         .btn-start {
           background: var(--navy);
