@@ -11,11 +11,21 @@ app.use(express.json({ limit: '10mb' }));
 // API Routes
 
 // Health Check - Enhanced Deep Diagnostic
+app.get('/api/debug-env', (req, res) => {
+  res.json({
+    has_url: !!process.env.SUPABASE_URL,
+    has_key: !!process.env.SUPABASE_KEY,
+    has_service_key: !!process.env.SUPABASE_SERVICE_KEY,
+    key_prefix: (process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY)?.substring(0, 10),
+    is_same: process.env.SUPABASE_SERVICE_KEY === process.env.SUPABASE_KEY
+  });
+});
+
 app.get('/api/health', async (req, res) => {
   try {
     const health = {
       status: 'ok',
-      version: '1.1.12',
+      version: '1.1.13',
       timestamp: new Date().toISOString(),
       env: {
         has_url: !!process.env.SUPABASE_URL,
