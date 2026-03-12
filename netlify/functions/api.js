@@ -282,7 +282,7 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
         }
       }]);
 
-    if (insertError) throw insertError;
+    if (insertOrgError) throw insertOrgError;
 
     // 3. Audit Log
     const activationLatency = (firstSignal && firstAction) ? (firstAction._at - firstSignal._at) + 'ms' : 'N/A';
