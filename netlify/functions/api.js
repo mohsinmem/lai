@@ -15,7 +15,7 @@ app.get('/api/health', async (req, res) => {
   try {
     const health = {
       status: 'ok',
-      version: '1.1.15',
+      version: '1.1.16',
       timestamp: new Date().toISOString(),
       env: {
         has_url: !!process.env.SUPABASE_URL,
@@ -270,7 +270,20 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
 
     const overallScore = Math.round((activationScore + forecastingScore + experimentationScore + realizationScore + reflectionScore) / 5);
 
-    // 2. Persistence
+    // 2. Organization Auto-Discovery (Upsert)
+    const { error: orgUpsertError } = await supabaseClient
+      .from('organizations')
+      .upsert([{ 
+        name: organization_name, 
+        region: region || 'Global' 
+      }], { onConflict: 'name' });
+    
+    if (orgUpsertError && !orgUpsertError.message.includes('duplicate key')) {
+        console.warn('⚠️  Organization Auto-Discovery Warning:', orgUpsertError.message);
+        // Continue even if org upsert fails (non-critical)
+    }
+
+    // 3. Persistence
     const { error: insertOrgError } = await supabaseClient
       .from('diagnostic_results')
       .insert([{
