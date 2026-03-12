@@ -15,6 +15,7 @@ const LiveSignalsWidget = () => {
         setLoading(false);
       } catch (err) {
         console.error('Failed to fetch signals:', err);
+        setLoading(false);
       }
     };
 

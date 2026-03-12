@@ -8,10 +8,20 @@ const GlobalIndexPage = () => {
   const [rankings, setRankings] = useState([]);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/stats`)
+    fetch('/api/analytics/global')
       .then(res => res.json())
-      .then(data => setRankings(data))
-      .catch(err => console.error('Failed to fetch stats:', err));
+      .then(data => {
+        // Map analytics data to ranking structure
+        const mapped = data.sort((a, b) => b.avg_score - a.avg_score).map((r, i) => ({
+          rank: i + 1,
+          country: r.region,
+          score: r.avg_score,
+          trend: '+2.4%', // Mock trend as we don't store historical aggregates yet
+          status: r.avg_score >= 80 ? 'High' : r.avg_score >= 60 ? 'Moderate' : 'Risk'
+        }));
+        setRankings(mapped);
+      })
+      .catch(err => console.error('Failed to fetch analytics:', err));
   }, []);
   return (
     <div className="glai-page">

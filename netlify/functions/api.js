@@ -41,45 +41,38 @@ app.post('/api/diagnostic', async (req, res) => {
   }
 });
 
-// Global Analytics
+// Global Analytics (Unified Diagnostic + Research)
 app.get('/api/analytics/global', async (req, res) => {
   try {
-    const { data, error } = await supabase
-      .from('diagnostic_results')
-      .select('*');
-
-    if (error) throw error;
+    const [{ data: diagData }, { data: researchData }] = await Promise.all([
+      supabase.from('diagnostic_results').select('*'),
+      supabase.from('company_research').select('*')
+    ]);
 
     // Aggregate by region
     const regions = {};
-    data.forEach(row => {
+    
+    const processEntry = (row, isResearch = false) => {
       if (!row.region) return;
       if (!regions[row.region]) {
         regions[row.region] = { 
           region: row.region, 
-          participants: 0, 
-          scores: { overall: 0, signal: 0, emotional: 0, resource: 0, decision: 0, execution: 0 } 
+          count: 0, 
+          total_score: 0 
         };
       }
       const r = regions[row.region];
-      r.participants++;
-      r.scores.overall += row.overall_score;
-      r.scores.signal += row.signal_score;
-      r.scores.emotional += row.emotional_score;
-      r.scores.resource += row.resource_score;
-      r.scores.decision += row.decision_score;
-      r.scores.execution += row.execution_score;
-    });
+      r.count++;
+      r.total_score += isResearch ? row.adaptiveness_score : row.overall_score;
+    };
+
+    if (diagData) diagData.forEach(row => processEntry(row));
+    if (researchData) researchData.forEach(row => processEntry(row, true));
 
     const analytics = Object.values(regions).map(r => ({
       region: r.region,
-      participants: r.participants,
-      avg_score: Math.round(r.scores.overall / r.participants),
-      avg_signal: Math.round(r.scores.signal / r.participants),
-      avg_emotional: Math.round(r.scores.emotional / r.participants),
-      avg_resource: Math.round(r.scores.resource / r.participants),
-      avg_decision: Math.round(r.scores.decision / r.participants),
-      avg_execution: Math.round(r.scores.execution / r.participants),
+      participants: r.count,
+      avg_score: Math.round(r.total_score / r.count)
     }));
 
     res.json(analytics);
