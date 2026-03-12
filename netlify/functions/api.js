@@ -15,8 +15,10 @@ app.get('/api/debug-env', (req, res) => {
   res.json({
     has_url: !!process.env.SUPABASE_URL,
     has_key: !!process.env.SUPABASE_KEY,
+    key_len: process.env.SUPABASE_KEY?.length,
     has_service_key: !!process.env.SUPABASE_SERVICE_KEY,
-    key_prefix: (process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY)?.substring(0, 10),
+    service_key_len: process.env.SUPABASE_SERVICE_KEY?.length,
+    key_prefix: (process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY)?.substring(0, 15),
     is_same: process.env.SUPABASE_SERVICE_KEY === process.env.SUPABASE_KEY
   });
 });
@@ -25,7 +27,7 @@ app.get('/api/health', async (req, res) => {
   try {
     const health = {
       status: 'ok',
-      version: '1.1.13',
+      version: '1.1.14',
       timestamp: new Date().toISOString(),
       env: {
         has_url: !!process.env.SUPABASE_URL,
