@@ -5,6 +5,8 @@ const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+console.log('Seed Init:', { url: !!supabaseUrl, key: !!supabaseKey, keyLen: supabaseKey?.length });
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
