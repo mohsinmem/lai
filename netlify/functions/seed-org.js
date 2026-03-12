@@ -5,7 +5,12 @@ const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-console.log('Seed Init:', { url: !!supabaseUrl, key: !!supabaseKey, keyLen: supabaseKey?.length });
+console.log('Seed Init:', { 
+  url: supabaseUrl?.substring(0, 15) + '...', 
+  hasServiceKey: !!process.env.SUPABASE_SERVICE_KEY,
+  allKeysSame: process.env.SUPABASE_SERVICE_KEY === process.env.SUPABASE_KEY,
+  keyPrefix: supabaseKey?.substring(0, 10)
+});
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
