@@ -55,7 +55,7 @@ const ResearchPage = () => {
                   <div key={i} className="h-48 bg-slate-200 animate-pulse rounded-2xl" />
                 ))}
               </div>
-            ) : (
+            ) : signals.length > 0 ? (
               <div className="space-y-6">
                 {signals.map((signal, index) => (
                   <motion.div
@@ -97,6 +97,18 @@ const ResearchPage = () => {
                     </div>
                   </motion.div>
                 ))}
+              </div>
+            ) : (
+              <div className="p-12 bg-white rounded-3xl border-2 border-dashed border-slate-200 text-center">
+                <Globe className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-slate-900 mb-2">No Research Results Yet</h3>
+                <p className="text-slate-500 max-w-sm mx-auto mb-8">
+                  The LAI research agents are currently scanning global signals. Results will appear here automatically once the first cycle completes.
+                </p>
+                <div className="flex items-center justify-center gap-4 text-xs font-bold uppercase tracking-widest text-slate-400">
+                  <span className="w-2 h-2 bg-slate-300 rounded-full" />
+                  Scanner Idle
+                </div>
               </div>
             )}
           </div>

@@ -118,8 +118,9 @@ app.get('/api/research/live', async (req, res) => {
     if (error) throw error;
     res.json(data);
   } catch (err) {
-    console.error('Supabase Error:', err);
-    res.status(500).json({ error: 'Failed to fetch live research' });
+    console.error('Supabase Error (Research Feed):', err);
+    // Return empty array instead of 500 so UI doesn't break if table isn't seeded yet
+    res.json([]);
   }
 });
 
