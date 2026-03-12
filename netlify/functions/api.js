@@ -31,9 +31,9 @@ app.get('/api/health', async (req, res) => {
         if (error) return { exists: false, error: error.message };
         
         const existingColumns = data.length > 0 ? Object.keys(data[0]) : [];
-        if (data.length === 0) {
-            return { exists: true, isEmpty: true, missing_columns: [], ok: true };
-        }
+        // If empty, we can't easily check columns without a more complex query, 
+        // but for now we'll assume ok to avoid false negatives on fresh installs.
+        // Actually, we'll check against a known list.
         
         const missing = requiredColumns.filter(c => !existingColumns.includes(c));
         return { exists: true, missing_columns: missing, ok: missing.length === 0 };
