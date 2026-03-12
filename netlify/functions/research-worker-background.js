@@ -26,6 +26,7 @@ exports.handler = async (event) => {
     };
 
     // 2. Update/Upsert Research Result
+    console.log(`Upserting research result for ${company_name}...`);
     const { error: upsertError } = await supabase
       .from('company_research')
       .upsert({ 
@@ -34,15 +35,24 @@ exports.handler = async (event) => {
         ...mockResearchData
       }, { onConflict: 'company_name' });
 
-    if (upsertError) throw upsertError;
+    if (upsertError) {
+      console.error('Supabase Upsert Error:', upsertError);
+      throw upsertError;
+    }
+    console.log(`Research result upserted for ${company_name}.`);
 
     // 3. Mark as completed in the queue
-    await supabase
+    console.log(`Updating queue status for ${company_name}...`);
+    const { error: queueError } = await supabase
       .from('research_queue')
       .update({ status: 'completed', updated_at: new Date().toISOString() })
       .eq('company_name', company_name);
 
-    console.log(`Successfully completed research for: ${company_name}`);
+    if (queueError) {
+       console.log('Queue update skipped or failed (might not be in queue):', queueError.message);
+    }
+    
+    console.log(`Successfully completed research cycle for: ${company_name}`);
   } catch (err) {
     console.error('Research Worker Error:', err);
     // Background functions should throw error if they want Netlify to retry
