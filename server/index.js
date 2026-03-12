@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const db = require('./db');
 require('dotenv').config();
 
@@ -18,6 +19,10 @@ app.use(cors({
   ]
 }));
 app.use(express.json());
+
+// Serve the built React frontend
+const distPath = path.join(__dirname, '..', 'dist');
+app.use(express.static(distPath));
 
 // API Routes
 
@@ -93,6 +98,11 @@ app.get('/api/analytics/global', (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch global analytics' });
   }
+});
+
+// SPA catch-all: any route not handled by API returns the React app
+app.get('*', (req, res) => {
+  res.sendFile(path.join(distPath, 'index.html'));
 });
 
 app.listen(PORT, () => {
