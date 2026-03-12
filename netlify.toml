@@ -9,6 +9,9 @@
 [functions."orion-scout-background"]
   schedule = "0 */12 * * *"
 
+[functions."research-scheduler"]
+  schedule = "0 * * * *"
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api"

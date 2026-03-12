@@ -53,9 +53,19 @@ exports.handler = async (event) => {
         .eq('id', item.id);
 
       // Trigger the research worker background function
-      // In a real Netlify environment, this would be an internal fetch to the background function
-      // For this demo, we'll assume the worker is triggered by this loop.
-      // But background functions are better for long-running tasks.
+      console.log(`Triggering background worker for: ${item.company_name}`);
+      
+      // We use the absolute URL if possible, or construct it from the request headers
+      // For Netlify, background functions are fire-and-forget
+      await fetch(`${process.env.URL || 'https://lai.institute'}/.netlify/functions/research-worker-background`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          company_id: item.id, 
+          company_name: item.company_name,
+          region: item.region 
+        })
+      }).catch(err => console.error(`Failed to trigger worker for ${item.company_name}:`, err));
     }
 
     return {
