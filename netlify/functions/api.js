@@ -15,7 +15,7 @@ app.get('/api/health', async (req, res) => {
   try {
     const health = {
       status: 'ok',
-      version: '1.1.18',
+      version: '1.1.19',
       timestamp: new Date().toISOString(),
       env: {
         has_url: !!process.env.SUPABASE_URL,
@@ -293,12 +293,12 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
       .insert([{
         organization_name,
         region: region || 'Global',
-        overall_score: overallScore,
-        signal_detection_score: parseFloat(activationScore.toFixed(2)),
-        emotional_framing_score: parseFloat(forecastingScore.toFixed(2)),
-        resource_reallocation_score: parseFloat(experimentationScore.toFixed(2)),
-        decision_alignment_score: parseFloat(realizationScore.toFixed(2)),
-        execution_responsiveness_score: parseFloat(reflectionScore.toFixed(2)),
+        overall_score: Math.round(overallScore),
+        signal_detection_score: Math.round(activationScore),
+        emotional_framing_score: Math.round(forecastingScore),
+        resource_reallocation_score: Math.round(experimentationScore),
+        decision_alignment_score: Math.round(realizationScore),
+        execution_responsiveness_score: Math.round(reflectionScore),
         session_date: session_date || new Date().toISOString(),
         duration_seconds: duration_seconds || 0,
         metadata: {
