@@ -15,7 +15,7 @@ app.get('/api/health', async (req, res) => {
   try {
     const health = {
       status: 'ok',
-      version: '1.1.2',
+      version: '1.1.3',
       timestamp: new Date().toISOString(),
       env: {
         has_url: !!process.env.SUPABASE_URL,
@@ -264,7 +264,6 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
       .insert([{
         organization_name,
         region: region || 'Global',
-        industry: 'Evivve AFERR Ingestion',
         overall_score: overallScore,
         signal_detection_score: parseFloat(activationScore.toFixed(2)),
         emotional_framing_score: parseFloat(forecastingScore.toFixed(2)),

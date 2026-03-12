@@ -138,7 +138,6 @@ exports.handler = async (event) => {
         .insert([{
           organization_name: companyName,
           region: company.region || 'Global',
-          industry: 'AFERR Scraper',
           overall_score: overallScore,
           signal_detection_score: parseFloat(activationScore.toFixed(2)),
           emotional_framing_score: parseFloat(forecastingScore.toFixed(2)),
