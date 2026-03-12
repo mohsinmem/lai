@@ -10,11 +10,12 @@ app.use(express.json());
 
 // API Routes
 
-// Health Check - Enhanced Diagnostic
+// Health Check - Enhanced Deep Diagnostic
 app.get('/api/health', async (req, res) => {
   try {
     const health = {
       status: 'ok',
+      version: '1.1.0',
       timestamp: new Date().toISOString(),
       env: {
         has_url: !!process.env.SUPABASE_URL,
@@ -23,15 +24,30 @@ app.get('/api/health', async (req, res) => {
       tables: {}
     };
 
-    // Check key tables
-    const checkTable = async (name) => {
-      const { error } = await supabase.from(name).select('id').limit(1);
-      return !error;
+    // Deep Schema Check
+    const checkTableSchema = async (tableName, requiredColumns) => {
+      try {
+        const { data, error } = await supabase.from(tableName).select('*').limit(1);
+        if (error) return { exists: false, error: error.message };
+        
+        const existingColumns = data.length > 0 ? Object.keys(data[0]) : [];
+        if (data.length === 0) {
+            // Table exists but is empty, we can't easily check columns without data 
+            // but we can trust the select * didn't fail
+            return { exists: true, isEmpty: true };
+        }
+        
+        const missing = requiredColumns.filter(c => !existingColumns.includes(c));
+        return { exists: true, missing_columns: missing, ok: missing.length === 0 };
+      } catch (e) {
+        return { exists: false, error: e.message };
+      }
     };
 
-    health.tables.diagnostic_results = await checkTable('diagnostic_results');
-    health.tables.company_research = await checkTable('company_research');
-    health.tables.research_queue = await checkTable('research_queue');
+    health.tables.diagnostic_results = await checkTableSchema('diagnostic_results', ['organization_name', 'overall_score', 'region']);
+    health.tables.company_research = await checkTableSchema('company_research', ['company_name', 'adaptiveness_score', 'region']);
+    health.tables.research_queue = await checkTableSchema('research_queue', ['company_name', 'status']);
+    health.tables.scraper_logs = await checkTableSchema('scraper_logs', ['status', 'summary']);
 
     res.json(health);
   } catch (err) {

@@ -10,6 +10,7 @@ import DiagnosticPage from './pages/DiagnosticPage';
 import AboutPage from './pages/AboutPage';
 import ResearchPage from './pages/ResearchPage';
 import ResearchDashboard from './pages/ResearchDashboard';
+import DevStatus from './pages/DevStatus';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/research" element={<ResearchPage />} />
             <Route path="/admin" element={<ResearchDashboard />} />
+            <Route path="/status" element={<DevStatus />} />
           </Routes>
         </main>
         <Footer />
