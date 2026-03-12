@@ -5,6 +5,59 @@ import { FileText, Download, Globe, Activity, ShieldCheck, ArrowRight, Target, B
 const ResearchPage = () => {
   const [signals, setSignals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState('All');
+
+  const resources = [
+    {
+      id: 1,
+      title: "The AFERR Model: Behavioral Foundations",
+      type: "Google Slides",
+      category: "Framework",
+      description: "A comprehensive deck outlining the behavioral science behind the Activation-Forecasting-Reflection loop.",
+      link: "#",
+      icon: <Target className="w-5 h-5 text-amber-500" />
+    },
+    {
+      id: 2,
+      title: "Global Leadership Resilience Report 2025",
+      type: "PDF Report",
+      category: "Report",
+      description: "Statistical analysis of 100,000+ simulation data points across 40 countries.",
+      link: "#",
+      icon: <FileChartPie className="w-5 h-5 text-red-500" />
+    },
+    {
+      id: 3,
+      title: "Adaptive Strategy Whitepaper",
+      type: "Google Doc",
+      category: "Article",
+      description: "Directives for CHROs on closing the Adaptiveness Gap in executive leadership.",
+      link: "#",
+      icon: <FileText className="w-5 h-5 text-blue-500" />
+    },
+    {
+      id: 4,
+      title: "Case Study: Geopolitical Pivot 2024",
+      type: "PDF Case Study",
+      category: "Case Study",
+      description: "Anonymized analysis of a Fortune 500 company's response to supply chain volatility.",
+      link: "#",
+      icon: <Building2 className="w-5 h-5 text-teal-500" />
+    },
+    {
+        id: 5,
+        title: "Leadership Benchmarking Framework",
+        type: "Google Slides",
+        category: "Framework",
+        description: "Standardized methodology for measuring executive coherence velocity.",
+        link: "#",
+        icon: <BarChart3 className="w-5 h-5 text-amber-500" />
+    }
+  ];
+
+  const filteredResources = activeFilter === 'All' 
+    ? resources 
+    : resources.filter(r => r.category === activeFilter || r.type.includes(activeFilter));
 
   useEffect(() => {
     const fetchSignals = async () => {
@@ -15,13 +68,14 @@ const ResearchPage = () => {
         setLoading(false);
       } catch (err) {
         console.error('Failed to fetch signals:', err);
+        setLoading(false);
       }
     };
     fetchSignals();
   }, []);
 
   return (
-    <div className="min-h-screen pt-32 bg-slate-50">
+    <div className="min-h-screen pt-32 bg-slate-50 font-['Inter']">
       
       {/* Hero Section */}
       <section className="container px-4 mx-auto mb-20">
@@ -132,131 +186,176 @@ const ResearchPage = () => {
         </div>
       </section>
 
-      {/* Library & Live Feed */}
-      <section className="py-24 bg-slate-50">
+      {/* Library Section */}
+      <section className="py-24 bg-slate-50 overflow-hidden">
         <div className="container px-4 mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-            
-            {/* The Research Library */}
-            <div className="lg:col-span-5">
-              <h2 className="text-3xl font-serif text-slate-900 mb-6">The Research Library</h2>
-              <p className="text-lg text-slate-600 font-light mb-10">
-                Our library provides leaders and organizations with the knowledge required to navigate disruption and benchmark their capabilities. The repository is continuously updated and organized into four core categories:
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div>
+              <h2 className="text-3xl lg:text-4xl font-serif text-slate-900 mb-4">The Research Library</h2>
+              <p className="text-lg text-slate-600 font-light max-w-2xl">
+                Our library provides leaders with the knowledge required to navigate disruption. The repository is continuously updated across our core diagnostic domains.
               </p>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200 hover:border-teal-300 transition-colors group cursor-pointer">
-                  <BookOpen className="w-8 h-8 text-teal-600 mb-4 group-hover:-translate-y-1 transition-transform" />
-                  <h4 className="font-bold text-slate-900 mb-2 font-serif text-lg">Articles</h4>
-                  <p className="text-xs text-slate-500 leading-relaxed">In-depth explorations of the adaptiveness framework, featuring topics such as Leadership Under Uncertainty and Decision Alignment.</p>
+            </div>
+            
+            {/* Filter Bar */}
+            <div className="flex flex-wrap gap-2">
+              {['All', 'Framework', 'Report', 'Case Study', 'Article'].map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setActiveFilter(filter)}
+                  className={`px-5 py-2 rounded-full text-xs font-bold transition-all ${
+                    activeFilter === filter 
+                      ? 'bg-teal-700 text-white shadow-md' 
+                      : 'bg-white text-slate-500 border border-slate-200 hover:border-teal-200 shadow-sm'
+                  }`}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredResources.map((resource) => (
+              <motion.div
+                layout
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                key={resource.id}
+                className="p-8 bg-white rounded-3xl shadow-sm border border-slate-100 hover:border-teal-300 hover:shadow-xl hover:shadow-teal-900/5 transition-all group flex flex-col h-full"
+              >
+                <div className="flex justify-between items-start mb-6">
+                  <div className="p-3 bg-slate-50 rounded-2xl group-hover:bg-teal-50 transition-colors">
+                    {resource.icon}
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full border border-slate-100 italic">
+                    {resource.type}
+                  </span>
                 </div>
-                <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200 hover:border-teal-300 transition-colors group cursor-pointer">
-                  <FileChartPie className="w-8 h-8 text-teal-600 mb-4 group-hover:-translate-y-1 transition-transform" />
-                  <h4 className="font-bold text-slate-900 mb-2 font-serif text-lg">Reports</h4>
-                  <p className="text-xs text-slate-500 leading-relaxed">Comprehensive publications, including the annual Global Adaptiveness Report, highlighting structural trends.</p>
+                
+                <h3 className="text-xl font-serif text-slate-900 mb-3 group-hover:text-teal-700 transition-colors">
+                  {resource.title}
+                </h3>
+                <p className="text-sm text-slate-500 leading-relaxed mb-8 flex-grow font-light">
+                  {resource.description}
+                </p>
+                
+                <div className="flex items-center justify-between pt-6 border-t border-slate-50">
+                  <span className="text-[10px] font-bold text-teal-600 uppercase tracking-widest">
+                    {resource.category}
+                  </span>
+                  <a 
+                    href={resource.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-slate-900 font-bold text-sm group-hover:translate-x-1 transition-transform"
+                  >
+                    View Resource <ArrowRight className="w-4 h-4" />
+                  </a>
                 </div>
-                <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200 hover:border-teal-300 transition-colors group cursor-pointer">
-                  <Building2 className="w-8 h-8 text-teal-600 mb-4 group-hover:-translate-y-1 transition-transform" />
-                  <h4 className="font-bold text-slate-900 mb-2 font-serif text-lg">Case Studies</h4>
-                  <p className="text-xs text-slate-500 leading-relaxed">Real-world analyses of organizations navigating complex strategic pivots and environmental shocks.</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Live Global Signals (GLAM Data Feed) */}
+      <section className="py-24 bg-white border-y border-slate-200">
+        <div className="container px-4 mx-auto">
+          <div className="bg-slate-900 rounded-[3rem] p-8 md:p-16 shadow-2xl text-white border border-slate-800 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-teal-500/10 rounded-full blur-[120px] -mr-48 -mt-48" />
+            <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full blur-[120px] -ml-48 -mb-48" />
+            
+            <div className="relative z-10">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12 pb-12 border-b border-slate-800">
+                <div className="max-w-xl">
+                  <h2 className="text-3xl lg:text-4xl font-serif mb-4">Live Global Signals (GLAM)</h2>
+                  <p className="text-slate-400 font-light leading-relaxed">
+                    Real-time signal extraction from the Orion Scout network. Monitoring leadership adaptiveness profiles across 10,000+ global entities.
+                  </p>
                 </div>
-                <div className="p-6 bg-white rounded-2xl shadow-sm border border-slate-200 hover:border-teal-300 transition-colors group cursor-pointer">
-                  <BarChart3 className="w-8 h-8 text-teal-600 mb-4 group-hover:-translate-y-1 transition-transform" />
-                  <h4 className="font-bold text-slate-900 mb-2 font-serif text-lg">Insights</h4>
-                  <p className="text-xs text-slate-500 leading-relaxed">Granular, data-driven perspectives from the Global Leadership Adaptiveness Map (GLAM) across different executive roles.</p>
+                <div className="flex items-center gap-4 text-xs font-bold text-emerald-400 uppercase tracking-widest bg-emerald-950/30 px-6 py-3 rounded-full border border-emerald-500/20 shadow-[0_0_25px_rgba(16,185,129,0.15)]">
+                  <span className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                  Orion Scout Live
                 </div>
               </div>
-            </div>
 
-            {/* Live Global Signals (GLAM Data Feed) */}
-            <div className="lg:col-span-7">
-              <div className="bg-slate-900 rounded-3xl p-6 md:p-10 shadow-2xl text-white h-full border border-slate-800">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-8 border-b border-slate-800">
-                  <div>
-                    <h2 className="text-2xl font-serif">Live Global Signals (GLAM)</h2>
-                    <p className="text-slate-400 text-xs mt-1">Real-time signal extraction from the Orion Scout network.</p>
+              <div className="grid grid-cols-1 gap-6 max-h-[600px] overflow-y-auto pr-4 custom-scrollbar">
+                {loading ? (
+                  <div className="space-y-6">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="h-44 bg-slate-800/40 animate-pulse rounded-[2rem] border border-slate-800" />
+                    ))}
                   </div>
-                  <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-950/30 px-3 py-1.5 rounded-full border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
-                    <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                    Tracking Active
+                ) : signals.length > 0 ? (
+                  signals.map((signal, index) => (
+                    <motion.div
+                      key={signal.id || index}
+                      initial={{ opacity: 0, x: 20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="p-8 bg-slate-800/30 rounded-[2rem] border border-slate-700/50 hover:bg-slate-800/60 hover:border-teal-500/30 transition-all group"
+                    >
+                      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
+                        <div>
+                          <div className="flex items-center gap-4 mb-2">
+                            <h3 className="text-xl font-bold text-slate-100">{signal.company_name}</h3>
+                            <span className="px-3 py-1 bg-slate-700/50 text-slate-300 text-[10px] font-bold uppercase tracking-widest rounded-full border border-slate-600">
+                              {signal.region}
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+                            Detected {new Date(signal.last_researched).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-4xl font-serif font-bold text-teal-400 mb-1">
+                            {signal.adaptiveness_score}
+                          </div>
+                          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Benchmark Rating</p>
+                        </div>
+                      </div>
+                      
+                      <div className="text-sm text-slate-300 mb-6 border-l-2 border-teal-500/50 pl-6 py-2 italic font-light leading-relaxed">
+                        "{signal.research_notes}"
+                      </div>
+
+                      <div className="flex items-center gap-3 text-[10px] font-bold text-teal-500 uppercase tracking-widest">
+                        <Activity className="w-4 h-4" />
+                        AFERR Logic Sequence Validated
+                      </div>
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="py-20 flex flex-col items-center justify-center p-8 text-center bg-slate-800/20 rounded-[2rem] border border-dashed border-slate-700">
+                    <Globe className="w-16 h-16 text-slate-800 mb-6" />
+                    <h3 className="text-2xl font-serif text-slate-300 mb-4">Awaiting Intelligence Signals</h3>
+                    <p className="text-slate-500 max-w-sm font-light">
+                      The Orion network is scanning. New behavioral data will appear here as leadership signals are extracted and verified.
+                    </p>
                   </div>
-                </div>
-
-                <div className="h-[500px] overflow-y-auto pr-2 custom-scrollbar space-y-4">
-                  {loading ? (
-                    <div className="space-y-4">
-                      {[1, 2, 3].map(i => (
-                        <div key={i} className="h-40 bg-slate-800/50 animate-pulse rounded-2xl" />
-                      ))}
-                    </div>
-                  ) : signals.length > 0 ? (
-                    signals.map((signal, index) => (
-                      <motion.div
-                        key={signal.id || index}
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="p-6 bg-slate-800/40 rounded-2xl border border-slate-700/50 hover:bg-slate-800/80 transition-colors"
-                      >
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <div className="flex items-center gap-3 mb-1">
-                              <h3 className="text-lg font-bold text-slate-100">{signal.company_name}</h3>
-                              <span className="px-2 py-0.5 bg-slate-700 text-slate-300 text-[10px] font-bold uppercase rounded">
-                                {signal.region}
-                              </span>
-                            </div>
-                            <p className="text-[10px] text-slate-500 uppercase tracking-widest">
-                              {new Date(signal.last_researched).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-3xl font-serif font-bold text-teal-400">
-                              {signal.adaptiveness_score}
-                            </div>
-                            <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">LAI Score</p>
-                          </div>
-                        </div>
-                        
-                        <div className="text-sm text-slate-300 mb-4 border-l-2 border-slate-600 pl-4 py-1 italic font-light">
-                          "{signal.research_notes}"
-                        </div>
-
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-teal-500 uppercase">
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                          Authenticated Pipeline
-                        </div>
-                      </motion.div>
-                    ))
-                  ) : (
-                    <div className="h-full flex flex-col items-center justify-center p-8 text-center">
-                      <Globe className="w-12 h-12 text-slate-700 mb-4 animate-spin-slow" />
-                      <h3 className="text-lg font-medium text-slate-300 mb-2">Awaiting Intelligence</h3>
-                      <p className="text-sm text-slate-500 max-w-sm">
-                        The Orion intelligence agents are actively scanning for new behavioral signals.
-                      </p>
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
             </div>
-
           </div>
         </div>
       </section>
 
       {/* Explore CTA */}
-      <section className="py-32 bg-white text-center border-t border-slate-200">
-        <div className="container px-4 mx-auto max-w-3xl">
-          <h2 className="text-4xl lg:text-5xl font-serif text-slate-900 mb-6">Explore the Research</h2>
+      <section className="py-32 bg-slate-50 text-center relative overflow-hidden">
+        <div className="container px-4 mx-auto max-w-3xl relative z-10">
+          <h2 className="text-4xl lg:text-5xl font-serif text-slate-900 mb-8">Contribute to the Map</h2>
           <p className="text-xl text-slate-600 font-light leading-relaxed mb-12">
-            Dive into our latest publications below to understand the structural realities of global corporate resilience, or contribute to our ongoing research by benchmarking your own leadership team's adaptiveness profile.
+            The LAI research engine thrives on data. Contribute to our understanding of global organizational resilience by benchmarking your leadership team or exploring the depth of our open library.
           </p>
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
-            <button className="w-full sm:w-auto px-8 py-4 bg-teal-700 hover:bg-teal-800 text-white rounded-full font-bold transition-all shadow-lg hover:shadow-teal-900/20 text-sm tracking-wide">
-              Access Resource Library
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
+            <button className="w-full sm:w-auto px-10 py-5 bg-teal-700 hover:bg-teal-800 text-white rounded-full font-bold transition-all shadow-xl shadow-teal-900/20 text-sm tracking-wide transform hover:-translate-y-1">
+              Explore Resource Library
             </button>
-            <button className="w-full sm:w-auto px-8 py-4 bg-slate-100 hover:bg-slate-200 text-slate-900 rounded-full font-bold transition-all text-sm tracking-wide">
+            <button 
+                onClick={() => window.location.href = '/diagnostic'}
+                className="w-full sm:w-auto px-10 py-5 bg-white hover:bg-slate-50 text-slate-900 rounded-full font-bold transition-all border border-slate-200 text-sm tracking-wide shadow-sm transform hover:-translate-y-1"
+            >
               Benchmark Your Team
             </button>
           </div>
@@ -268,4 +367,3 @@ const ResearchPage = () => {
 };
 
 export default ResearchPage;
-
