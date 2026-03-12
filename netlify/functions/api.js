@@ -15,7 +15,7 @@ app.get('/api/health', async (req, res) => {
   try {
     const health = {
       status: 'ok',
-      version: '1.1.16',
+      version: '1.1.17',
       timestamp: new Date().toISOString(),
       env: {
         has_url: !!process.env.SUPABASE_URL,
@@ -245,7 +245,7 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
         return costSpikes.length > 0 && a._at < costSpikes[0]._at;
     });
     
-    const forecastingScore = 40 + (proactiveOffers.length * 15);
+    const forecastingScore = Math.min(100, 40 + (proactiveOffers.length * 15));
 
     // 3. Experimentation (Resource Reallocation): Diversity/Velocity
     const uniqueBlocks = new Set(actions.map(a => a.landBlockId).filter(Boolean));
@@ -258,7 +258,7 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
     const startValue = state.initial_tribe_value || 1000;
     const endValue = state.final_tribe_value || 1000;
     const completionTime = state.completion_at || (actions.length > 0 ? actions[actions.length - 1]._at : 0);
-    const velocity = (endValue - startValue) / (completionTime || 1000);
+    const velocity = Math.max(0, (endValue - startValue) / (completionTime || 1000));
     const realizationScore = Math.min(100, 40 + (velocity * 200000));
 
     // 5. Reflection (Execution Responsiveness): Pivoting Ratio
