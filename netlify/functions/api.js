@@ -15,7 +15,7 @@ app.get('/api/health', async (req, res) => {
   try {
     const health = {
       status: 'ok',
-      version: '1.1.6',
+      version: '1.1.7',
       timestamp: new Date().toISOString(),
       env: {
         has_url: !!process.env.SUPABASE_URL,
