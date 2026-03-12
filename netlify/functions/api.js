@@ -54,6 +54,19 @@ app.get('/api/health', async (req, res) => {
     health.tables.research_queue = await checkTableSchema('research_queue', ['company_name', 'status']);
     health.tables.scraper_logs = await checkTableSchema('scraper_logs', ['status', 'summary']);
 
+    // Pipeline Health Check (Last 24h)
+    const { data: recentErrors } = await supabase
+      .from('scraper_logs')
+      .select('id')
+      .eq('status', 'error')
+      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      .limit(1);
+
+    health.pipeline = {
+        status: recentErrors?.length > 0 ? 'degraded' : 'nominal',
+        recent_errors: recentErrors?.length || 0
+    };
+
     res.json(health);
   } catch (err) {
     res.status(500).json({ status: 'error', message: err.message });
@@ -188,65 +201,84 @@ app.get('/api/research/live', async (req, res) => {
   }
 });
 
-// Evivve Multiplayer Ingestion
+// Evivve Multiplayer Ingestion (High-Fidelity)
 app.post('/api/ingest-multiplayer', async (req, res) => {
-  const { data, organization_name, region } = req.body;
+  const payload = req.body;
+  const { organization_name, region, multiplayer_data } = payload;
   const startTime = Date.now();
 
   try {
-    if (!data || !organization_name) {
-      throw new Error('Missing multiplayer data or organization name');
+    if (!multiplayer_data || !organization_name) {
+      throw new Error('Missing high-fidelity data or organization name');
     }
 
-    // Mapping Logic:
-    // MV_COST_CHANGE latency -> Signal Detection (Signal Score)
-    // Activity density -> Execution Responsiveness (Execution Score)
-    // tribeValue efficiency -> Resource Reallocation (Resource Score)
+    // 1. Behavioral Extraction (AFERR)
     
-    // Mock mapping logic based on user rules:
-    const latency = data.MV_COST_CHANGE_latency || 0;
-    const density = data.activity_density || 0;
-    const efficiency = data.tribeValue_efficiency || 0;
+    // Forecasting: Calculate delta between cost changes and team adjustments (offers)
+    const costChanges = multiplayer_data.market_events?.filter(e => e.type === 'MV_COST_CHANGE') || [];
+    const offers = multiplayer_data.actions?.filter(a => a.type === 'SUBMIT_OFFER') || [];
+    
+    let forecastingScore = 70; // Baseline
+    if (costChanges.length > 0 && offers.length > 0) {
+        // Simple logic: more offers following cost changes = better forecasting/responsiveness
+        const responsivenessRatio = Math.min(1, offers.length / costChanges.length);
+        forecastingScore = 50 + (responsivenessRatio * 50);
+    }
 
-    // Normalizing to 0-100 (Simplified)
-    const signalScore = Math.max(0, Math.min(100, 100 - (latency / 10)));
-    const executionScore = Math.max(0, Math.min(100, density * 100));
-    const resourceScore = Math.max(0, Math.min(100, efficiency * 100));
-    const overallScore = Math.round((signal_score + execution_score + resource_score) / 3) || 70;
+    // Experimentation: Unique landBlockId interactions
+    const uniqueBlocks = new Set(multiplayer_data.actions?.map(a => a.landBlockId).filter(Boolean));
+    const experimentationScore = Math.min(100, 40 + (uniqueBlocks.size * 5));
 
+    // Realization: tribeValue evolution
+    const startValue = multiplayer_data.state?.initial_tribe_value || 1000;
+    const endValue = multiplayer_data.state?.final_tribe_value || startValue;
+    const growth = (endValue - startValue) / startValue;
+    const realizationScore = Math.min(100, 50 + (growth * 100));
+
+    const overallScore = Math.round((forecastingScore + experimentationScore + realizationScore + 140) / 5); // Default 70 for others
+
+    // 2. Persistence
     const { error: insertError } = await supabase
       .from('diagnostic_results')
       .insert([{
         organization_name,
         region: region || 'Global',
-        industry: 'Evivve Multiplayer',
+        industry: 'Evivve Behavioral Ingestion',
         overall_score: overallScore,
-        signal_score: Math.round(signalScore),
-        execution_score: Math.round(executionScore),
-        resource_score: Math.round(resourceScore),
-        emotional_score: 75, // Default for non-mapped dimension
-        decision_score: 75
+        emotional_framing_score: parseFloat(forecastingScore.toFixed(2)),
+        resource_reallocation_score: parseFloat(experimentationScore.toFixed(2)),
+        decision_alignment_score: parseFloat(realizationScore.toFixed(2)),
+        signal_detection_score: 75.00, // Baseline
+        execution_responsiveness_score: 75.00,
+        metadata: {
+            raw_evivve: multiplayer_data,
+            ingestion_id: `EVIVVE_${startTime}`,
+            metrics: {
+                unique_blocks: uniqueBlocks.size,
+                growth_rate: growth
+            }
+        }
       }]);
 
     if (insertError) throw insertError;
 
-    // Report success to DevStatus via logs
+    // 3. Audit Log
     await supabase.from('scraper_logs').insert([{
       status: 'success',
       duration_ms: Date.now() - startTime,
-      signals_found: 3,
-      summary: `Evivve Ingestion: ${organization_name} | Latency: ${latency}ms | Density: ${density} | Efficiency: ${efficiency}`
+      signals_found: uniqueBlocks.size,
+      summary: `Evivve Ingested: ${organization_name} | AFERR Mapping Complete`
     }]);
 
-    res.json({ status: 'ok', organization_name });
+    res.json({ status: 'ok', organization_name, score: overallScore });
   } catch (err) {
-    console.error('Ingestion Error:', err.message);
+    console.error('High-Fidelity Ingestion Error:', err.message);
     
-    // Log failure
     await supabase.from('scraper_logs').insert([{
       status: 'error',
+      error_code: 'INGEST_FAIL',
       summary: `Evivve Ingestion Failed: ${err.message}`
-    }]).catch(e => console.error('Double failure logging ingestion:', e));
+    }]).catch(e => console.error('Logging fail:', e));
 
     res.status(500).json({ status: 'error', message: err.message });
   }

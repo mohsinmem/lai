@@ -51,17 +51,17 @@ exports.handler = async (event) => {
 
   let browser = null;
   try {
-    // 1. Fetch targets from diagnostic_results (unique organizations)
-    let { data: companies, error: fetchError } = await supabase
-      .from('diagnostic_results')
-      .select('organization_name, region')
-      .order('created_at', { ascending: false })
+    // 1. Fetch targets from the organizations table
+    let { data: targets, error: fetchError } = await supabase
+      .from('organizations')
+      .select('name, region')
+      .order('last_scanned', { ascending: true, nullsFirst: true })
       .limit(5);
 
     if (fetchError) throw fetchError;
-    if (!companies || companies.length === 0) {
-      console.log('No organizations found in diagnostic_results. Seeding default test target...');
-      companies = [{ organization_name: 'NVIDIA', region: 'North America' }];
+    if (!targets || targets.length === 0) {
+      console.log('No organizations found in tracking table.');
+      return { statusCode: 200, body: 'No targets to scan' };
     }
 
     // 2. Launch Browser
@@ -76,73 +76,70 @@ exports.handler = async (event) => {
     const page = await browser.newPage();
     const scanResults = [];
 
-    for (const company of companies) {
-      const companyName = company.organization_name;
+    for (const company of targets) {
+      const companyName = company.name;
       console.log(`Scanning signals for: ${companyName}`);
-      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(companyName + ' leadership strategy change')}&tbm=nws`;
+      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(companyName + ' leadership strategy adaptiveness news')}&tbm=nws`;
       
-      await page.goto(searchUrl, { waitUntil: 'networkidle2' });
+      await page.goto(searchUrl, { waitUntil: 'networkidle2', timeout: 30000 });
       
-      // Extract headlines and snippets
       const signals = await page.evaluate(() => {
         const results = [];
-        document.querySelectorAll('div.So033e').forEach(el => {
+        document.querySelectorAll('div.So033e, div.nS4uS, div.mCBkyc').forEach(el => {
           results.push(el.innerText.toLowerCase());
         });
         return results.join(' ');
       });
 
-      // 3. LAI Intelligence Logic (The Matrix)
+      // 3. AFERR Intelligence Scoring
       const scores = {
-        activation: 50,
-        forecasting: 50,
-        experimentation: 50,
-        realization: 50,
-        reflection: 50
+        activation: 40,      // Baseline
+        forecasting: 40,
+        experimentation: 40,
+        realization: 40,
+        reflection: 40
       };
 
-      let totalSignalsFound = 0;
-
-      Object.keys(LAI_MATRIX).forEach(dimension => {
-        LAI_MATRIX[dimension].keywords.forEach(word => {
+      let hits = 0;
+      Object.keys(LAI_MATRIX).forEach(dim => {
+        LAI_MATRIX[dim].keywords.forEach(word => {
           const regex = new RegExp(`\\b${word}\\b`, 'gi');
           const count = (signals.match(regex) || []).length;
           if (count > 0) {
-            scores[dimension] = Math.min(100, scores[dimension] + (count * LAI_MATRIX[dimension].weight * 5));
-            totalSignalsFound += count;
+            scores[dim] = Math.min(100, scores[dim] + (count * LAI_MATRIX[dim].weight * 5.5));
+            hits += count;
           }
         });
       });
 
-      const overallScore = Math.round(
-          (scores.activation + scores.forecasting + scores.experimentation + scores.realization + scores.reflection) / 5
-      );
+      const overallScore = Math.round((scores.activation + scores.forecasting + scores.experimentation + scores.realization + scores.reflection) / 5);
 
-      // 4. Persistence - Update diagnostic_results
-      // We look for the latest entry for this organization and update it, 
-      // or we can treat this as an "Intelligence" type entry.
-      // For simplicity, we update the existing diagnostic if present.
-      const { error: upsertError } = await supabase
+      // 4. Persistence - Upsert to diagnostic_results
+      const { error: insertError } = await supabase
         .from('diagnostic_results')
         .insert([{
           organization_name: companyName,
-          region: company.region,
+          region: company.region || 'Global',
+          industry: 'Automated Research',
           overall_score: overallScore,
-          signal_score: Math.round(scores.activation),
-          emotional_score: Math.round(scores.forecasting), // Mapping for existing columns
-          resource_score: Math.round(scores.experimentation),
-          decision_score: Math.round(scores.realization),
-          execution_score: Math.round(scores.reflection),
-          industry: 'Automated Insight'
+          signal_detection_score: parseFloat(scores.activation.toFixed(2)),
+          emotional_framing_score: parseFloat(scores.forecasting.toFixed(2)),
+          resource_reallocation_score: parseFloat(scores.experimentation.toFixed(2)),
+          decision_alignment_score: parseFloat(scores.realization.toFixed(2)),
+          execution_responsiveness_score: parseFloat(scores.reflection.toFixed(2)),
+          metadata: {
+              source: 'orion-scout',
+              signals_found: hits,
+              timestamp: new Date().toISOString()
+          }
         }]);
 
-      if (upsertError) throw upsertError;
+      if (insertError) throw insertError;
 
-      scanResults.push({
-        company: companyName,
-        signals: totalSignalsFound,
-        score: overallScore
-      });
+      // Update last scanned timestamp
+      await supabase.from('organizations').update({ last_scanned: new Date().toISOString() }).eq('name', companyName);
+
+      scanResults.push({ company: companyName, signals: hits, score: overallScore });
     }
 
     // 5. Audit Logging

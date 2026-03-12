@@ -101,12 +101,19 @@ const DevStatus = () => {
                                     <span className="text-emerald-400 font-mono text-sm">READY (v{health.version})</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 bg-black/20 rounded-lg">
+                                    <span className="text-slate-400">Pipeline Status</span>
+                                    <span className={`font-mono text-sm ${health.pipeline?.status === 'nominal' ? 'text-emerald-400' : 'text-red-400 animate-pulse'}`}>
+                                        {health.pipeline?.status?.toUpperCase() || '--'}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-black/20 rounded-lg">
                                     <span className="text-slate-400">Last Ping</span>
                                     <span className="text-slate-500 font-mono text-xs">{new Date(health.timestamp).toLocaleTimeString()}</span>
                                 </div>
                             </div>
                         ) : (
                             <div className="animate-pulse space-y-4">
+                                <div className="h-10 bg-slate-800/50 rounded-lg"></div>
                                 <div className="h-10 bg-slate-800/50 rounded-lg"></div>
                                 <div className="h-10 bg-slate-800/50 rounded-lg"></div>
                             </div>
