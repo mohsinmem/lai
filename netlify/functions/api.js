@@ -106,4 +106,21 @@ app.post('/api/demo-request', async (req, res) => {
   }
 });
 
+// Live Research Signals
+app.get('/api/research/live', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('company_research')
+      .select('*')
+      .order('last_researched', { ascending: false })
+      .limit(10);
+
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    console.error('Supabase Error:', err);
+    res.status(500).json({ error: 'Failed to fetch live research' });
+  }
+});
+
 module.exports.handler = serverless(app);

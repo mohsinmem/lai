@@ -26,15 +26,22 @@ exports.handler = async (event) => {
        research_notes: `Automated research completed for ${company_name}. Detected strong signals in resource reallocation.`
     };
 
-    // 2. Update Supabase
-    const { error } = await supabase
+    // 2. Update/Upsert Research Result
+    const { error: upsertError } = await supabase
       .from('company_research')
       .upsert({ 
         company_name,
+        region: region || 'Global',
         ...mockResearchData
       }, { onConflict: 'company_name' });
 
-    if (error) throw error;
+    if (upsertError) throw upsertError;
+
+    // 3. Mark as completed in the queue
+    await supabase
+      .from('research_queue')
+      .update({ status: 'completed', updated_at: new Date().toISOString() })
+      .eq('company_name', company_name);
 
     return {
       statusCode: 200,

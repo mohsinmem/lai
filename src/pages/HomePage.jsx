@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Signal, Heart, Layers, Target, Zap, TrendingUp, Globe, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import LiveSignalsWidget from '../components/LiveSignalsWidget';
 
 const HomePage = () => {
   return (
@@ -48,6 +49,10 @@ const HomePage = () => {
             <div className="image-wrapper">
               <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1000" alt="LAI HQ" />
               <div className="image-overlay"></div>
+            </div>
+            
+            <div className="mt-8">
+              <LiveSignalsWidget />
             </div>
           </motion.div>
         </div>
