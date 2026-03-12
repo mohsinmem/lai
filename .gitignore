@@ -1,0 +1,19 @@
+# Dependencies
+node_modules
+server/node_modules
+
+# Build output  
+dist
+
+# Local env files
+.env
+.env.local
+.env.production
+
+# Database (do not commit data files)
+server/lai.db
+*.db
+
+# OS files
+.DS_Store
+Thumbs.db
