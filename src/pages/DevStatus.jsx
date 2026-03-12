@@ -207,7 +207,16 @@ const DevStatusContent = () => {
                     </div>
 
                     <div className="bg-[#12161e] rounded-2xl p-6 border border-slate-800/50 col-span-3">
-                        <h3 className="text-lg font-bold text-white mb-6">Recent System & Research Audit</h3>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-bold text-white">Recent System & Research Audit</h3>
+                            <button 
+                                onClick={fetchLogs} 
+                                className="text-xs flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg transition-colors"
+                            >
+                                <Zap className="w-3 h-3 text-blue-400" />
+                                Live Refresh
+                            </button>
+                        </div>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left">
                                 <thead className="text-slate-500 text-xs uppercase tracking-wider">
