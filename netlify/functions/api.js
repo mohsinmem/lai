@@ -15,7 +15,7 @@ app.get('/api/health', async (req, res) => {
   try {
     const health = {
       status: 'ok',
-      version: '1.1.4',
+      version: '1.1.5',
       timestamp: new Date().toISOString(),
       env: {
         has_url: !!process.env.SUPABASE_URL,
@@ -43,9 +43,15 @@ app.get('/api/health', async (req, res) => {
     };
 
     health.tables.diagnostic_results = await checkTableSchema('diagnostic_results', [
+        'id',
         'organization_name', 
+        'region',
         'overall_score', 
-        'signal_detection_score', 
+        'signal_detection_score',
+        'emotional_framing_score',
+        'resource_reallocation_score',
+        'decision_alignment_score',
+        'execution_responsiveness_score',
         'metadata'
     ]);
     health.tables.company_research = await checkTableSchema('company_research', ['company_name', 'adaptiveness_score', 'region']);
