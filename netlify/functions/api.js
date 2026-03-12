@@ -10,6 +10,25 @@ app.use(express.json());
 
 // API Routes
 
+// Health Check
+app.get('/api/health', async (req, res) => {
+  try {
+    const { data: tables, error } = await supabase
+      .from('diagnostic_results')
+      .select('count', { count: 'exact', head: true });
+    
+    res.json({ 
+      status: 'ok', 
+      supabase: !!supabase.auth,
+      tables: {
+        diagnostic_results: !error
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ status: 'error', message: err.message });
+  }
+});
+
 // Diagnostic Results
 app.post('/api/diagnostic', async (req, res) => {
   const { 
