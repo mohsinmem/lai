@@ -9,6 +9,7 @@ import GlobalIndexPage from './pages/GlobalIndexPage';
 import DiagnosticPage from './pages/DiagnosticPage';
 import AboutPage from './pages/AboutPage';
 import ResearchPage from './pages/ResearchPage';
+import ResearchDashboard from './pages/ResearchDashboard';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route path="/diagnostic" element={<DiagnosticPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/research" element={<ResearchPage />} />
+            <Route path="/admin" element={<ResearchDashboard />} />
           </Routes>
         </main>
         <Footer />

@@ -103,7 +103,7 @@ const DiagnosticPage = () => {
     };
 
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+      const API_BASE_URL = '/api';
       await fetch(`${API_BASE_URL}/api/diagnostic`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
