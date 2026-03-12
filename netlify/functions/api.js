@@ -15,7 +15,7 @@ app.get('/api/health', async (req, res) => {
   try {
     const health = {
       status: 'ok',
-      version: '1.1.19',
+      version: '1.1.20',
       timestamp: new Date().toISOString(),
       env: {
         has_url: !!process.env.SUPABASE_URL,
@@ -287,20 +287,17 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
         // Continue even if org upsert fails (non-critical)
     }
 
-    // 3. Persistence
-    const { error: insertOrgError } = await supabaseClient
-      .from('diagnostic_results')
-      .insert([{
+    const row = {
         organization_name,
         region: region || 'Global',
-        overall_score: Math.round(overallScore),
-        signal_detection_score: Math.round(activationScore),
-        emotional_framing_score: Math.round(forecastingScore),
-        resource_reallocation_score: Math.round(experimentationScore),
-        decision_alignment_score: Math.round(realizationScore),
-        execution_responsiveness_score: Math.round(reflectionScore),
+        overall_score: Math.round(overallScore) || 0,
+        signal_detection_score: Math.round(activationScore) || 0,
+        emotional_framing_score: Math.round(forecastingScore) || 0,
+        resource_reallocation_score: Math.round(experimentationScore) || 0,
+        decision_alignment_score: Math.round(realizationScore) || 0,
+        execution_responsiveness_score: Math.round(reflectionScore) || 0,
         session_date: session_date || new Date().toISOString(),
-        duration_seconds: duration_seconds || 0,
+        duration_seconds: parseInt(duration_seconds) || 0,
         metadata: {
             activation_delta: firstSignal && firstAction ? firstAction._at - firstSignal._at : null,
             pivoting_ratio: pivotingRatio,
@@ -310,7 +307,14 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
                 actions: actions.length
             }
         }
-      }]);
+    };
+
+    console.log('DEBUG Ingest Row:', JSON.stringify(row, null, 2));
+
+    // 3. Persistence
+    const { error: insertOrgError } = await supabaseClient
+      .from('diagnostic_results')
+      .insert([row]);
 
     if (insertOrgError) throw insertOrgError;
 
