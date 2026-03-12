@@ -15,7 +15,7 @@ app.get('/api/health', async (req, res) => {
   try {
     const health = {
       status: 'ok',
-      version: '1.1.5',
+      version: '1.1.6',
       timestamp: new Date().toISOString(),
       env: {
         has_url: !!process.env.SUPABASE_URL,
@@ -26,20 +26,26 @@ app.get('/api/health', async (req, res) => {
 
     // Deep Schema Check
     const checkTableSchema = async (tableName, requiredColumns) => {
-      try {
-        const { data, error } = await supabaseClient.from(tableName).select('*').limit(1);
-        if (error) return { exists: false, error: error.message };
-        
-        const existingColumns = data.length > 0 ? Object.keys(data[0]) : [];
-        // If empty, we can't easily check columns without a more complex query, 
-        // but for now we'll assume ok to avoid false negatives on fresh installs.
-        // Actually, we'll check against a known list.
-        
-        const missing = requiredColumns.filter(c => !existingColumns.includes(c));
-        return { exists: true, missing_columns: missing, ok: missing.length === 0 };
-      } catch (e) {
-        return { exists: false, error: e.message };
-      }
+        try {
+            // Attempt to select required columns with limit 0 to verify existence without rows
+            const { error } = await supabaseClient
+                .from(tableName)
+                .select(requiredColumns.join(','))
+                .limit(0);
+            
+            if (error) {
+                // If it's a 'column does not exist' error, parse which one
+                if (error.message.includes('column') && error.message.includes('does not exist')) {
+                    // Try to find missing columns by checking one by one or just return the error
+                    return { exists: true, ok: false, error: error.message };
+                }
+                return { exists: false, error: error.message };
+            }
+            
+            return { exists: true, ok: true, missing_columns: [] };
+        } catch (e) {
+            return { exists: false, error: e.message };
+        }
     };
 
     health.tables.diagnostic_results = await checkTableSchema('diagnostic_results', [
