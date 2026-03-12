@@ -297,20 +297,37 @@ const ResearchPage = () => {
                       className="p-8 bg-slate-800/30 rounded-[2rem] border border-slate-700/50 hover:bg-slate-800/60 hover:border-teal-500/30 transition-all group"
                     >
                       <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-6">
-                        <div>
+                        <div className="flex-grow">
                           <div className="flex items-center gap-4 mb-2">
-                            <h3 className="text-xl font-bold text-slate-100">{signal.company_name}</h3>
+                            <h3 className="text-xl font-bold text-slate-100">{signal.organization_name || signal.company_name}</h3>
                             <span className="px-3 py-1 bg-slate-700/50 text-slate-300 text-[10px] font-bold uppercase tracking-widest rounded-full border border-slate-600">
                               {signal.region}
                             </span>
                           </div>
-                          <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
-                            Detected {new Date(signal.last_researched).toLocaleDateString()}
-                          </p>
+                          <div className="flex flex-wrap gap-6 mt-4">
+                            <div>
+                                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Date Played</p>
+                                <p className="text-sm text-slate-300">
+                                    {signal.session_date ? new Date(signal.session_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Length</p>
+                                <p className="text-sm text-slate-300">
+                                    {signal.duration_seconds ? `${Math.floor(signal.duration_seconds / 60)}m ${signal.duration_seconds % 60}s` : 'N/A'}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Intelligence Batch</p>
+                                <p className="text-sm text-slate-400 font-mono text-[11px]">
+                                    {new Date(signal.created_at || signal.last_researched).toLocaleDateString()}
+                                </p>
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right shrink-0">
                           <div className="text-4xl font-serif font-bold text-teal-400 mb-1">
-                            {signal.adaptiveness_score}
+                            {signal.overall_score || signal.adaptiveness_score}
                           </div>
                           <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Benchmark Rating</p>
                         </div>

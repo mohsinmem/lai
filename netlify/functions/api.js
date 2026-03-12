@@ -15,7 +15,7 @@ app.get('/api/health', async (req, res) => {
   try {
     const health = {
       status: 'ok',
-      version: '1.1.17',
+      version: '1.1.18',
       timestamp: new Date().toISOString(),
       env: {
         has_url: !!process.env.SUPABASE_URL,
@@ -214,7 +214,7 @@ app.get('/api/research/live', async (req, res) => {
 // Evivve Multiplayer Ingestion (Refined AFERR-LAI Alignment)
 app.post('/api/ingest-multiplayer', async (req, res) => {
   const payload = req.body;
-  const { organization_name, region, multiplayer_data } = payload;
+  const { organization_name, region, multiplayer_data, session_date, duration_seconds } = payload;
   const startTime = Date.now();
 
   try {
@@ -224,7 +224,7 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
 
     const { market_events = [], actions = [], state = {} } = multiplayer_data;
 
-    // 1. Activation (Signal Detection): Time Delta Scoring
+    // 1. Activation (Signal Detection): Time-Normalized Scoring
     // Calculate delta between first market signal and first player action
     const firstSignal = market_events.sort((a, b) => a._at - b._at)[0];
     const firstAction = actions.sort((a, b) => a._at - b._at)[0];
@@ -232,8 +232,12 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
     let activationScore = 50; // Baseline
     if (firstSignal && firstAction) {
         const delta = Math.max(0, firstAction._at - firstSignal._at);
-        // Faster activation = higher score (Max 100, drops as delta increases)
-        activationScore = Math.max(20, Math.min(100, 100 - (delta / 5000)));
+        // Time-Normalized: A lag is scored against the total duration if available
+        const sessionDuration = duration_seconds ? duration_seconds * 1000 : (state.completion_at - (firstSignal._at || state.started_at || firstAction._at));
+        const relativeLag = delta / Math.max(1, sessionDuration);
+        
+        // Scored inversely to the relative lag (Max 100)
+        activationScore = Math.max(20, Math.min(100, 100 - (relativeLag * 500))); 
     }
 
     // 2. Forecasting (Cognitive Framing): Proactive Trade Offers
@@ -295,6 +299,8 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
         resource_reallocation_score: parseFloat(experimentationScore.toFixed(2)),
         decision_alignment_score: parseFloat(realizationScore.toFixed(2)),
         execution_responsiveness_score: parseFloat(reflectionScore.toFixed(2)),
+        session_date: session_date || new Date().toISOString(),
+        duration_seconds: duration_seconds || 0,
         metadata: {
             activation_delta: firstSignal && firstAction ? firstAction._at - firstSignal._at : null,
             pivoting_ratio: pivotingRatio,
