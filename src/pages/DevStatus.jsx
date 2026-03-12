@@ -1,24 +1,72 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component } from 'react';
 import { motion } from 'framer-motion';
 import { Activity, ShieldCheck, Database, Zap, AlertCircle, CheckCircle2, Terminal } from 'lucide-react';
 
-const DevStatus = () => {
+class ErrorBoundary extends Component {
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
+
+    static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+    }
+
+    componentDidCatch(error, errorInfo) {
+        console.error("Dashboard caught error:", error, errorInfo);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div className="min-h-screen bg-[#0a0c10] text-slate-200 p-8 pt-24 font-['Inter'] flex items-center justify-center">
+                    <div className="max-w-md w-full bg-red-950/30 border border-red-500/30 rounded-2xl p-6 text-center">
+                        <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                        <h2 className="text-xl font-bold text-white mb-2">Initialization Error</h2>
+                        <p className="text-slate-400 text-sm mb-4">A critical error occurred while rendering the dashboard.</p>
+                        <p className="font-mono text-xs text-red-400 bg-red-900/20 p-2 rounded max-h-32 overflow-auto">{this.state.error?.message || 'Unknown render error'}</p>
+                        <button 
+                            onClick={() => window.location.reload()} 
+                            className="mt-6 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm transition-colors"
+                        >
+                            Reload Dashboard
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
+
+const DevStatusContent = () => {
     const [health, setHealth] = useState(null);
     const [logs, setLogs] = useState([]);
+    const [testing, setTesting] = useState(false);
+    const [testResult, setTestResult] = useState(null);
+    const [loading, setLoading] = useState(true);
+
     const [testing, setTesting] = useState(false);
     const [testResult, setTestResult] = useState(null);
 
     const fetchHealth = () => {
         fetch('/api/health')
             .then(res => res.json())
-            .then(data => setHealth(data))
-            .catch(err => console.error('Health check failed', err));
+            .then(data => {
+                setHealth(data);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error('Health check failed', err);
+                setHealth({ status: 'error', message: err.message });
+                setLoading(false);
+            });
     };
 
     const fetchLogs = () => {
         fetch('/api/scraper-logs')
             .then(res => res.json())
-            .then(data => setLogs(data))
+            .then(data => setLogs(Array.isArray(data) ? data : []))
             .catch(err => console.error('Failed to fetch logs', err));
     };
 
@@ -48,6 +96,16 @@ const DevStatus = () => {
         }
         setTesting(false);
     };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-[#0a0c10] text-slate-200 flex flex-col items-center justify-center font-['Inter']">
+                <Activity className="w-12 h-12 text-blue-500 animate-pulse mb-4" />
+                <h2 className="text-xl font-bold text-white">Connecting to Orion Scout...</h2>
+                <p className="text-slate-500 mt-2">Initializing System Integrity Dashboard</p>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-[#0a0c10] text-slate-200 p-8 pt-24 font-['Inter']">
@@ -133,15 +191,15 @@ const DevStatus = () => {
                             <Database className="text-blue-500" /> Database Schema Integrity
                         </h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {health && health.status === 'ok' && health.tables ? Object.entries(health.tables).map(([name, status]) => (
+                            {health?.status === 'ok' && health?.tables ? Object.entries(health.tables).map(([name, status]) => (
                                 <div key={name} className="p-4 bg-black/20 rounded-xl border border-slate-800/30">
                                     <div className="flex justify-between items-start mb-2">
                                         <span className="font-mono text-sm font-bold text-slate-300">{name}</span>
-                                        {status.exists ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <AlertCircle className="w-4 h-4 text-red-500" />}
+                                        {status?.exists ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <AlertCircle className="w-4 h-4 text-red-500" />}
                                     </div>
                                     <div className="text-xs text-slate-500">
-                                        {status.exists ? (
-                                            status.ok ? 'Schema Validated (All keys found)' : `Missing: ${status.missing_columns?.join(', ')}`
+                                        {status?.exists ? (
+                                            status?.ok ? 'Schema Validated (All keys found)' : `Missing: ${status?.missing_columns?.join(', ')}`
                                         ) : 'Table Not Found'}
                                     </div>
                                 </div>
@@ -165,25 +223,25 @@ const DevStatus = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="text-sm border-t border-slate-800/50">
-                                    {logs.map((log, i) => (
+                                    {logs?.map((log, i) => (
                                         <tr key={i} className="border-b border-slate-800/30">
                                             <td className="py-4 text-slate-500 text-xs whitespace-nowrap">
-                                                {new Date(log.created_at).toLocaleString()}
+                                                {log?.created_at ? new Date(log.created_at).toLocaleString() : '--'}
                                             </td>
                                             <td className="py-4">
                                                 <span className={`px-2 py-1 rounded text-[10px] font-bold border ${
-                                                    log.status === 'success' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
-                                                    log.status === 'error' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                                    log?.status === 'success' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
+                                                    log?.status === 'error' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                                                 }`}>
-                                                    {log.status.toUpperCase()}
+                                                    {log?.status?.toUpperCase() || 'UNKNOWN'}
                                                 </span>
                                             </td>
-                                            <td className="py-4 font-mono text-xs text-slate-400">{log.error_code || '--'}</td>
-                                            <td className="py-4 text-slate-300 max-w-md truncate" title={log.summary}>{log.summary}</td>
-                                            <td className="py-4 text-slate-500 text-xs">{log.duration_ms ? `${log.duration_ms}ms` : '--'}</td>
+                                            <td className="py-4 font-mono text-xs text-slate-400">{log?.error_code || '--'}</td>
+                                            <td className="py-4 text-slate-300 max-w-md truncate" title={log?.summary}>{log?.summary || '--'}</td>
+                                            <td className="py-4 text-slate-500 text-xs">{log?.duration_ms ? `${log.duration_ms}ms` : '--'}</td>
                                         </tr>
                                     ))}
-                                    {logs.length === 0 && (
+                                    {(!logs || logs.length === 0) && (
                                         <tr>
                                             <td colSpan="5" className="py-12 text-center text-slate-600">No audit logs detected. Run a smoke test to verify.</td>
                                         </tr>
@@ -197,5 +255,11 @@ const DevStatus = () => {
         </div>
     );
 };
+
+const DevStatus = () => (
+    <ErrorBoundary>
+        <DevStatusContent />
+    </ErrorBoundary>
+);
 
 export default DevStatus;
