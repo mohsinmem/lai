@@ -1,9 +1,17 @@
+require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
 
-// Use service role key for backend functions to bypass RLS
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY || process.env.SUPABASE_SERVICE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Supabase configuration missing!');
+  console.error('Ensure SUPABASE_URL and SUPABASE_KEY (service_role) are set in Netlify Environment Variables.');
+}
+
 const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseKey || 'placeholder'
 );
 
 module.exports = supabase;
