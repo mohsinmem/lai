@@ -129,6 +129,7 @@ exports.handler = async (event) => {
       AFERR_WORDS.reflection.forEach(w => refCount += (signals.match(new RegExp(`\\b${w}\\b`, 'gi')) || []).length);
       const reflectionScore = Math.min(100, 40 + (refCount * 12));
 
+      const hits = proCount + reCount + expCount + refCount;
       const overallScore = Math.round((activationScore + forecastingScore + experimentationScore + realizationScore + reflectionScore) / 5);
 
       // 4. Persistence - Upsert to diagnostic_results
@@ -157,7 +158,7 @@ exports.handler = async (event) => {
       // Update last scanned timestamp
       await supabase.from('organizations').update({ last_scanned: new Date().toISOString() }).eq('name', companyName);
 
-      scanResults.push({ company: companyName, score: overallScore, framing: proCount > reCount ? 'proactive' : 'reactive' });
+      scanResults.push({ company: companyName, signals: hits, score: overallScore, framing: proCount > reCount ? 'proactive' : 'reactive' });
     }
 
     // 5. Audit Logging

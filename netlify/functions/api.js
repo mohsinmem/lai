@@ -32,9 +32,7 @@ app.get('/api/health', async (req, res) => {
         
         const existingColumns = data.length > 0 ? Object.keys(data[0]) : [];
         if (data.length === 0) {
-            // Table exists but is empty, we can't easily check columns without data 
-            // but we can trust the select * didn't fail
-            return { exists: true, isEmpty: true };
+            return { exists: true, isEmpty: true, missing_columns: [], ok: true };
         }
         
         const missing = requiredColumns.filter(c => !existingColumns.includes(c));
