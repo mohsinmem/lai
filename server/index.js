@@ -23,16 +23,26 @@ app.get('/api/stats', (req, res) => {
 
 // Submit Diagnostic Result
 app.post('/api/diagnostic', (req, res) => {
-  const { overall_score, signal_score, emotional_score, resource_score, decision_score, execution_score } = req.body;
+  const { 
+    organization_name, industry, region,
+    overall_score, signal_score, emotional_score, resource_score, decision_score, execution_score 
+  } = req.body;
   
   try {
     const stmt = db.prepare(`
-      INSERT INTO diagnostic_results (overall_score, signal_score, emotional_score, resource_score, decision_score, execution_score)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO diagnostic_results (
+        organization_name, industry, region,
+        overall_score, signal_score, emotional_score, resource_score, decision_score, execution_score
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    const info = stmt.run(overall_score, signal_score, emotional_score, resource_score, decision_score, execution_score);
+    const info = stmt.run(
+      organization_name, industry, region,
+      overall_score, signal_score, emotional_score, resource_score, decision_score, execution_score
+    );
     res.status(201).json({ id: info.lastInsertRowid });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Failed to save diagnostic outcome' });
   }
 });

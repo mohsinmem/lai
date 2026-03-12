@@ -8,6 +8,9 @@ const db = new Database(dbPath);
 db.exec(`
   CREATE TABLE IF NOT EXISTS diagnostic_results (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    organization_name TEXT,
+    industry TEXT,
+    region TEXT,
     overall_score INTEGER,
     signal_score REAL,
     emotional_score REAL,
@@ -16,6 +19,9 @@ db.exec(`
     execution_score REAL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE INDEX IF NOT EXISTS idx_region ON diagnostic_results(region);
+  CREATE INDEX IF NOT EXISTS idx_industry ON diagnostic_results(industry);
 
   CREATE TABLE IF NOT EXISTS demo_requests (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
