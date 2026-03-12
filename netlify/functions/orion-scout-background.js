@@ -33,9 +33,14 @@ const LAI_MATRIX = {
 exports.handler = async (event) => {
   const startTime = Date.now();
   
+  let body = {};
+  try {
+    body = JSON.parse(event.body || '{}');
+  } catch (e) {}
+
   // 0. Security & Trigger Check
   const isCron = event.headers['x-netlify-cron'] === 'true';
-  const hasSecret = event.headers['x-orion-secret'] === process.env.ORION_SECRET;
+  const hasSecret = event.headers['x-orion-secret'] === process.env.ORION_SECRET || body.secret === process.env.ORION_SECRET;
   
   if (!isCron && !hasSecret) {
     console.error('Unauthorized access attempt to Orion Scout');
@@ -46,21 +51,35 @@ exports.handler = async (event) => {
 
   let browser = null;
   try {
-    // 1. Fetch "Stale" or "High-Volatility" Companies
-    // For this implementation, we pick companies that haven't been scanned in 30 days
+    // 1. Fetch "Stale" or "New" Companies
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
     
-    // We'll use the 'company_research' table as our organizations source
-    const { data: companies, error: fetchError } = await supabase
+    // Attempt 1: Get companies from research table that haven't been scanned recently
+    let { data: companies, error: fetchError } = await supabase
       .from('company_research')
       .select('company_name, region')
       .lt('last_researched', thirtyDaysAgo)
-      .limit(2); // Process 2 companies per run to be sustainable
+      .limit(2);
+
+    // Attempt 2: If nothing stale, get companies from latest diagnostics that aren't in research yet
+    if (!companies || companies.length === 0) {
+      console.log('No stale companies found. Checking latest diagnostics for new targets...');
+      const { data: diagComps } = await supabase
+        .from('diagnostic_results')
+        .select('organization_name, region')
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      if (diagComps) {
+        // Map organization_name to company_name
+        companies = diagComps.map(c => ({ company_name: c.organization_name, region: c.region }));
+      }
+    }
 
     if (fetchError) throw fetchError;
     if (!companies || companies.length === 0) {
-      console.log('No stale companies to scan.');
-      return;
+      console.log('No companies found to scan. Seeding a default test target...');
+      companies = [{ company_name: 'Microsoft', region: 'North America' }];
     }
 
     // 2. Launch Browser

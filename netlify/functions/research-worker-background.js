@@ -7,7 +7,14 @@ const supabase = require('./lib/supabase');
  * triggered asynchronously.
  */
 exports.handler = async (event) => {
-  const { company_id, company_name, region } = JSON.parse(event.body || '{}');
+  let body = {};
+  try {
+    body = JSON.parse(event.body || '{}');
+  } catch (e) {
+    console.error('Failed to parse event body:', e.message);
+  }
+  
+  const { company_id, company_name, region } = body;
 
   if (!company_name) {
     console.error('Missing company_name in request body');

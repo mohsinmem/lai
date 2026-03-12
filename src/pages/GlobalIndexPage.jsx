@@ -85,21 +85,31 @@ const GlobalIndexPage = () => {
               <span>Trend</span>
               <span>Status</span>
             </div>
-            {rankings.map((r) => (
-              <motion.div 
-                key={r.country}
-                className="table-row"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-              >
-                <span className="rank-num">#{r.rank}</span>
-                <span className="country-name">{r.country}</span>
-                <span className="iai-score">{r.score}</span>
-                <span className={`trend ${r.trend.startsWith('+') ? 'up' : 'down'}`}>{r.trend}</span>
-                <span className={`status-pill ${r.status.toLowerCase()}`}>{r.status}</span>
-              </motion.div>
-            ))}
+            {rankings.length > 0 ? (
+              rankings.map((r) => (
+                <motion.div 
+                  key={r.country}
+                  className="table-row"
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                >
+                  <span className="rank-num">#{r.rank}</span>
+                  <span className="country-name">{r.country}</span>
+                  <span className="iai-score">{r.score}</span>
+                  <span className={`trend ${r.trend.startsWith('+') ? 'up' : 'down'}`}>{r.trend}</span>
+                  <span className={`status-pill ${r.status.toLowerCase()}`}>{r.status}</span>
+                </motion.div>
+              ))
+            ) : (
+              <div className="empty-ranking py-20 text-center">
+                <Globe className="w-12 h-12 text-slate-200 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-slate-400">No Regional Data Detected</h3>
+                <p className="text-slate-500 max-w-sm mx-auto mt-2">
+                  Participate in the diagnostic measurement or wait for the Orion Scout agent to populate global scores.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="cta-box">

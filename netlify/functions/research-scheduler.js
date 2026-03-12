@@ -55,9 +55,14 @@ exports.handler = async (event) => {
       // Trigger the research worker background function
       console.log(`Triggering background worker for: ${item.company_name}`);
       
-      // We use the absolute URL if possible, or construct it from the request headers
-      // For Netlify, background functions are fire-and-forget
-      await fetch(`${process.env.URL || 'https://lai.institute'}/.netlify/functions/research-worker-background`, {
+      // Determine the base URL for triggering background workers
+      // In Netlify, we can often rely on the site's primary URL
+      const baseUrl = process.env.URL || `https://${event.headers.host}` || 'https://lai.institute';
+      const triggerUrl = `${baseUrl.replace(/\/$/, '')}/.netlify/functions/research-worker-background`;
+      
+      console.log(`Target trigger URL: ${triggerUrl}`);
+
+      await fetch(triggerUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
