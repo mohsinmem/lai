@@ -128,8 +128,8 @@ app.get('/api/analytics/global', async (req, res) => {
   try {
     // Graceful fetch - don't crash if one table is missing
     const results = await Promise.allSettled([
-      supabase.from('diagnostic_results').select('region, overall_score'),
-      supabase.from('company_research').select('region, adaptiveness_score')
+      supabaseClient.from('diagnostic_results').select('region, overall_score'),
+      supabaseClient.from('company_research').select('region, adaptiveness_score')
     ]);
 
     const diagData = results[0].status === 'fulfilled' ? results[0].value.data : [];
@@ -260,7 +260,7 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
 
     // 2. Persistence
     const { error: insertOrgError } = await supabaseClient
-      .from('organizations')
+      .from('diagnostic_results')
       .insert([{
         organization_name,
         region: region || 'Global',
