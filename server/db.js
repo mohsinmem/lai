@@ -1,9 +1,14 @@
 const Database = require('better-sqlite3');
 const path = require('path');
+const fs = require('fs');
 
 const dbPath = process.env.NODE_ENV === 'production' 
   ? '/data/lai.db' 
   : path.resolve(__dirname, 'lai.db');
+
+// Ensure the directory exists (critical for Railway volume mounts)
+fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+
 const db = new Database(dbPath);
 
 // Initialize schema
