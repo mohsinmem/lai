@@ -1,4 +1,4 @@
-const supabase = require('./lib/supabase');
+const supabase = require('./lib/supabase.cjs');
 
 /**
  * Netlify Background Function: research-worker-background

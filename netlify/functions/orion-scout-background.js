@@ -1,6 +1,6 @@
 const chromium = require('@sparticuz/chromium');
 const puppeteer = require('puppeteer-core');
-const supabase = require('./lib/supabase');
+const supabase = require('./lib/supabase.cjs');
 
 /**
  * Orion Scout - Automated Adaptiveness Scraper
