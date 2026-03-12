@@ -13,13 +13,15 @@ exports.handler = async (event) => {
   try {
     const { data, error } = await supabase
       .from('organizations')
-      .upsert([{ 
+      .insert([{ 
         name: "PG Miners", 
         region: "Global", 
         industry: "Mining/Technology" 
-      }], { onConflict: 'name' });
+      }]);
 
-    if (error) throw error;
+    if (error && !error.message.includes('duplicate key value')) {
+      throw error;
+    }
 
     return {
       statusCode: 200,
