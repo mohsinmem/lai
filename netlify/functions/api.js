@@ -166,4 +166,68 @@ app.get('/api/research/live', async (req, res) => {
   }
 });
 
+// Evivve Multiplayer Ingestion
+app.post('/api/ingest-multiplayer', async (req, res) => {
+  const { data, organization_name, region } = req.body;
+  const startTime = Date.now();
+
+  try {
+    if (!data || !organization_name) {
+      throw new Error('Missing multiplayer data or organization name');
+    }
+
+    // Mapping Logic:
+    // MV_COST_CHANGE latency -> Signal Detection (Signal Score)
+    // Activity density -> Execution Responsiveness (Execution Score)
+    // tribeValue efficiency -> Resource Reallocation (Resource Score)
+    
+    // Mock mapping logic based on user rules:
+    const latency = data.MV_COST_CHANGE_latency || 0;
+    const density = data.activity_density || 0;
+    const efficiency = data.tribeValue_efficiency || 0;
+
+    // Normalizing to 0-100 (Simplified)
+    const signalScore = Math.max(0, Math.min(100, 100 - (latency / 10)));
+    const executionScore = Math.max(0, Math.min(100, density * 100));
+    const resourceScore = Math.max(0, Math.min(100, efficiency * 100));
+    const overallScore = Math.round((signal_score + execution_score + resource_score) / 3) || 70;
+
+    const { error: insertError } = await supabase
+      .from('diagnostic_results')
+      .insert([{
+        organization_name,
+        region: region || 'Global',
+        industry: 'Evivve Multiplayer',
+        overall_score: overallScore,
+        signal_score: Math.round(signalScore),
+        execution_score: Math.round(executionScore),
+        resource_score: Math.round(resourceScore),
+        emotional_score: 75, // Default for non-mapped dimension
+        decision_score: 75
+      }]);
+
+    if (insertError) throw insertError;
+
+    // Report success to DevStatus via logs
+    await supabase.from('scraper_logs').insert([{
+      status: 'success',
+      duration_ms: Date.now() - startTime,
+      signals_found: 3,
+      summary: `Evivve Ingestion: ${organization_name} | Latency: ${latency}ms | Density: ${density} | Efficiency: ${efficiency}`
+    }]);
+
+    res.json({ status: 'ok', organization_name });
+  } catch (err) {
+    console.error('Ingestion Error:', err.message);
+    
+    // Log failure
+    await supabase.from('scraper_logs').insert([{
+      status: 'error',
+      summary: `Evivve Ingestion Failed: ${err.message}`
+    }]).catch(e => console.error('Double failure logging ingestion:', e));
+
+    res.status(500).json({ status: 'error', message: err.message });
+  }
+});
+
 module.exports.handler = serverless(app);

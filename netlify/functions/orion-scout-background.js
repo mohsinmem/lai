@@ -8,24 +8,24 @@ const supabase = require('./lib/supabase');
  */
 
 const LAI_MATRIX = {
-  signal_detection: {
-    keywords: ['predict', 'outlook', 'trend', 'forecast', 'anticipate', 'early indicator', 'market shift'],
+  activation: {
+    keywords: ['predict', 'outlook', 'trend', 'forecast', 'anticipate', 'early indicator', 'market shift', 'trigger', 'launch'],
     weight: 1.2
   },
-  emotional_framing: {
-    keywords: ['curiosity', 'opportunity', 'challenge', 'optimism', 'uncertainty', 'resilience', 'pivot'],
+  forecasting: {
+    keywords: ['roadmap', 'projection', 'long-term', 'strategy planning', 'future', 'horizon', 'modeling'],
     weight: 1.0
   },
-  resource_reallocation: {
-    keywords: ['restructure', 'investment', 'budget shift', 'layoff', 'hiring surge', 'acquisition', 'divestiture'],
+  experimentation: {
+    keywords: ['pilot', 'prototype', 'test', 'beta', 'innovation lab', 'trial', 'sandbox', 'mvp'],
     weight: 1.5
   },
-  decision_alignment: {
-    keywords: ['consensus', 'leadership team', 'strategic board', 'unanimous', 'vision alignment', 'reorg'],
+  realization: {
+    keywords: ['revenue', 'value', 'outcome', 'success', 'roi', 'profit', 'attainment', 'deployment', 'scale'],
     weight: 1.1
   },
-  execution_responsiveness: {
-    keywords: ['rapid', 'agile', 'deployment', 'operational change', 'speed to market', 'implementation', 'rollout'],
+  reflection: {
+    keywords: ['review', 'audit', 'feedback', 'lessons learned', 'pivot', 'correction', 'post-mortem', 'adjustment'],
     weight: 1.3
   }
 };
@@ -51,35 +51,17 @@ exports.handler = async (event) => {
 
   let browser = null;
   try {
-    // 1. Fetch "Stale" or "New" Companies
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    
-    // Attempt 1: Get companies from research table that haven't been scanned recently
+    // 1. Fetch targets from diagnostic_results (unique organizations)
     let { data: companies, error: fetchError } = await supabase
-      .from('company_research')
-      .select('company_name, region')
-      .lt('last_researched', thirtyDaysAgo)
-      .limit(2);
-
-    // Attempt 2: If nothing stale, get companies from latest diagnostics that aren't in research yet
-    if (!companies || companies.length === 0) {
-      console.log('No stale companies found. Checking latest diagnostics for new targets...');
-      const { data: diagComps } = await supabase
-        .from('diagnostic_results')
-        .select('organization_name, region')
-        .order('created_at', { ascending: false })
-        .limit(5);
-      
-      if (diagComps) {
-        // Map organization_name to company_name
-        companies = diagComps.map(c => ({ company_name: c.organization_name, region: c.region }));
-      }
-    }
+      .from('diagnostic_results')
+      .select('organization_name, region')
+      .order('created_at', { ascending: false })
+      .limit(5);
 
     if (fetchError) throw fetchError;
     if (!companies || companies.length === 0) {
-      console.log('No companies found to scan. Seeding a default test target...');
-      companies = [{ company_name: 'Microsoft', region: 'North America' }];
+      console.log('No organizations found in diagnostic_results. Seeding default test target...');
+      companies = [{ organization_name: 'NVIDIA', region: 'North America' }];
     }
 
     // 2. Launch Browser
@@ -95,8 +77,9 @@ exports.handler = async (event) => {
     const scanResults = [];
 
     for (const company of companies) {
-      console.log(`Scanning signals for: ${company.company_name}`);
-      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(company.company_name + ' leadership strategy change')}&tbm=nws`;
+      const companyName = company.organization_name;
+      console.log(`Scanning signals for: ${companyName}`);
+      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(companyName + ' leadership strategy change')}&tbm=nws`;
       
       await page.goto(searchUrl, { waitUntil: 'networkidle2' });
       
@@ -111,11 +94,11 @@ exports.handler = async (event) => {
 
       // 3. LAI Intelligence Logic (The Matrix)
       const scores = {
-        signal_detection: 0,
-        emotional_framing: 0,
-        resource_reallocation: 0,
-        decision_alignment: 0,
-        execution_responsiveness: 0
+        activation: 50,
+        forecasting: 50,
+        experimentation: 50,
+        realization: 50,
+        reflection: 50
       };
 
       let totalSignalsFound = 0;
@@ -125,32 +108,40 @@ exports.handler = async (event) => {
           const regex = new RegExp(`\\b${word}\\b`, 'gi');
           const count = (signals.match(regex) || []).length;
           if (count > 0) {
-            scores[dimension] += count * LAI_MATRIX[dimension].weight;
+            scores[dimension] = Math.min(100, scores[dimension] + (count * LAI_MATRIX[dimension].weight * 5));
             totalSignalsFound += count;
           }
         });
       });
 
-      // Calculate localized adaptiveness score (Base 50 + weighted signals)
-      const adaptivenessScore = Math.min(100, 50 + (totalSignalsFound * 2));
+      const overallScore = Math.round(
+          (scores.activation + scores.forecasting + scores.experimentation + scores.realization + scores.reflection) / 5
+      );
 
-      // 4. Persistence
+      // 4. Persistence - Update diagnostic_results
+      // We look for the latest entry for this organization and update it, 
+      // or we can treat this as an "Intelligence" type entry.
+      // For simplicity, we update the existing diagnostic if present.
       const { error: upsertError } = await supabase
-        .from('company_research')
-        .upsert({
-          company_name: company.company_name,
+        .from('diagnostic_results')
+        .insert([{
+          organization_name: companyName,
           region: company.region,
-          adaptiveness_score: adaptivenessScore,
-          research_notes: `Orion Scout found ${totalSignalsFound} strategic signals in latest news.`,
-          last_researched: new Date().toISOString()
-        }, { onConflict: 'company_name' });
+          overall_score: overallScore,
+          signal_score: Math.round(scores.activation),
+          emotional_score: Math.round(scores.forecasting), // Mapping for existing columns
+          resource_score: Math.round(scores.experimentation),
+          decision_score: Math.round(scores.realization),
+          execution_score: Math.round(scores.reflection),
+          industry: 'Automated Insight'
+        }]);
 
       if (upsertError) throw upsertError;
 
       scanResults.push({
-        company: company.company_name,
+        company: companyName,
         signals: totalSignalsFound,
-        score: adaptivenessScore
+        score: overallScore
       });
     }
 
