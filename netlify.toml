@@ -6,6 +6,9 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+[functions."orion-scout-background"]
+  schedule = "0 */12 * * *"
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api"
