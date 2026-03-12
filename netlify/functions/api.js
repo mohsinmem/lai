@@ -301,7 +301,7 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
       status: 'error',
       error_code: 'AFERR_INGEST_ERR',
       summary: `Evivve AFERR Ingestion Failed: ${err.message}`
-    }]).catch(e => console.error('Double fail:', e));
+    }]);
 
     res.status(500).json({ status: 'error', message: err.message });
   }
