@@ -89,7 +89,27 @@ const DiagnosticPage = () => {
     }
   };
 
-  const calculateResults = () => {
+  const calculateResults = async () => {
+    const overallScore = parseFloat(getOverallScore());
+    const resultData = {
+      overall_score: overallScore,
+      signal_score: parseFloat(getDimScore('signal')),
+      emotional_score: parseFloat(getDimScore('emotional')),
+      resource_score: parseFloat(getDimScore('resource')),
+      decision_score: parseFloat(getDimScore('decision')),
+      execution_score: parseFloat(getDimScore('execution'))
+    };
+
+    try {
+      await fetch('http://localhost:5000/api/diagnostic', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(resultData)
+      });
+    } catch (err) {
+      console.error('Failed to save result to backend:', err);
+    }
+
     setIsFinished(true);
     setStep(2);
   };

@@ -1,19 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Globe, TrendingUp, Search, Filter } from 'lucide-react';
 
-const rankings = [
-  { rank: 1, country: 'Switzerland', score: 88, trend: '+2', status: 'High' },
-  { rank: 2, country: 'Singapore', score: 86, trend: '+1', status: 'High' },
-  { rank: 3, country: 'Denmark', score: 85, trend: '0', status: 'High' },
-  { rank: 4, country: 'USA', score: 82, trend: '-1', status: 'High' },
-  { rank: 5, country: 'Germany', score: 81, trend: '+3', status: 'High' },
-  { rank: 6, country: 'South Korea', score: 79, trend: '+4', status: 'Moderate' },
-  { rank: 7, country: 'Japan', score: 78, trend: '0', status: 'Moderate' },
-  { rank: 8, country: 'Sweden', score: 77, trend: '-2', status: 'Moderate' },
-];
-
 const GlobalIndexPage = () => {
+  const [rankings, setRankings] = useState([]);
+
+  useEffect(() => {
+    fetch('http://localhost:5000/api/stats')
+      .then(res => res.json())
+      .then(data => setRankings(data))
+      .catch(err => console.error('Failed to fetch stats:', err));
+  }, []);
   return (
     <div className="glai-page">
       <header className="page-header">
