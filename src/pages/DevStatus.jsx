@@ -90,15 +90,15 @@ const DevStatus = () => {
                         <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                             <ShieldCheck className="text-emerald-500" /> Core Environment
                         </h2>
-                        {health ? (
+                        {health && health.status === 'ok' ? (
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center p-3 bg-black/20 rounded-lg">
                                     <span className="text-slate-400">Database Connection</span>
-                                    {health.env.has_url ? <span className="text-emerald-400 font-mono text-sm">CONNECTED</span> : <span className="text-red-400 font-mono text-sm">OFFLINE</span>}
+                                    {health.env?.has_url ? <span className="text-emerald-400 font-mono text-sm">CONNECTED</span> : <span className="text-red-400 font-mono text-sm">OFFLINE</span>}
                                 </div>
                                 <div className="flex justify-between items-center p-3 bg-black/20 rounded-lg">
                                     <span className="text-slate-400">API Gateway</span>
-                                    <span className="text-emerald-400 font-mono text-sm">READY (v{health.version})</span>
+                                    <span className="text-emerald-400 font-mono text-sm">READY (v{health.version || '1.1.0'})</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 bg-black/20 rounded-lg">
                                     <span className="text-slate-400">Pipeline Status</span>
@@ -108,7 +108,14 @@ const DevStatus = () => {
                                 </div>
                                 <div className="flex justify-between items-center p-3 bg-black/20 rounded-lg">
                                     <span className="text-slate-400">Last Ping</span>
-                                    <span className="text-slate-500 font-mono text-xs">{new Date(health.timestamp).toLocaleTimeString()}</span>
+                                    <span className="text-slate-500 font-mono text-xs">{new Date(health.timestamp || Date.now()).toLocaleTimeString()}</span>
+                                </div>
+                            </div>
+                        ) : health && health.status === 'error' ? (
+                            <div className="space-y-4">
+                                <div className="p-4 bg-red-950/30 border border-red-500/30 rounded-xl text-red-400 text-sm">
+                                    <AlertCircle className="w-5 h-5 mb-2" />
+                                    Backend Check Failed: {health.message}
                                 </div>
                             </div>
                         ) : (
@@ -126,7 +133,7 @@ const DevStatus = () => {
                             <Database className="text-blue-500" /> Database Schema Integrity
                         </h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {health && Object.entries(health.tables).map(([name, status]) => (
+                            {health && health.status === 'ok' && health.tables ? Object.entries(health.tables).map(([name, status]) => (
                                 <div key={name} className="p-4 bg-black/20 rounded-xl border border-slate-800/30">
                                     <div className="flex justify-between items-start mb-2">
                                         <span className="font-mono text-sm font-bold text-slate-300">{name}</span>
@@ -138,7 +145,9 @@ const DevStatus = () => {
                                         ) : 'Table Not Found'}
                                     </div>
                                 </div>
-                            ))}
+                            )) : (
+                                <div className="col-span-2 text-slate-600 text-sm text-center py-4">Database checks unavailable.</div>
+                            )}
                         </div>
                     </div>
 

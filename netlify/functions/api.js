@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const serverless = require('serverless-http');
-const supabase = require('./lib/supabase');
+const supabaseClient = require('./lib/supabase');
 
 const app = express();
 
@@ -27,7 +27,7 @@ app.get('/api/health', async (req, res) => {
     // Deep Schema Check
     const checkTableSchema = async (tableName, requiredColumns) => {
       try {
-        const { data, error } = await supabase.from(tableName).select('*').limit(1);
+        const { data, error } = await supabaseClient.from(tableName).select('*').limit(1);
         if (error) return { exists: false, error: error.message };
         
         const existingColumns = data.length > 0 ? Object.keys(data[0]) : [];
@@ -53,7 +53,7 @@ app.get('/api/health', async (req, res) => {
     health.tables.scraper_logs = await checkTableSchema('scraper_logs', ['status', 'summary']);
 
     // Pipeline Health Check (Last 24h)
-    const { data: recentErrors } = await supabase
+    const { data: recentErrors } = await supabaseClient
       .from('scraper_logs')
       .select('id')
       .eq('status', 'error')
@@ -74,7 +74,7 @@ app.get('/api/health', async (req, res) => {
 // Scraper Logs Audit
 app.get('/api/scraper-logs', async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('scraper_logs')
       .select('*')
       .order('created_at', { ascending: false })
@@ -100,7 +100,7 @@ app.post('/api/diagnostic', async (req, res) => {
   }
   
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('diagnostic_results')
       .insert([{
         organization_name,
@@ -168,8 +168,8 @@ app.get('/api/analytics/global', async (req, res) => {
 app.post('/api/demo-request', async (req, res) => {
   const { name, email, organization } = req.body;
   try {
-    const { data, error } = await supabase
-      .from('demo_requests')
+    const { data: check, error: checkError } = await supabaseClient
+      .from('organizations')
       .insert([{ name, email, organization }])
       .select();
 
@@ -184,7 +184,7 @@ app.post('/api/demo-request', async (req, res) => {
 // Live Research Signals
 app.get('/api/research/live', async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('company_research')
       .select('*')
       .order('last_researched', { ascending: false })
@@ -259,8 +259,8 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
     const overallScore = Math.round((activationScore + forecastingScore + experimentationScore + realizationScore + reflectionScore) / 5);
 
     // 2. Persistence
-    const { error: insertError } = await supabase
-      .from('diagnostic_results')
+    const { error: insertOrgError } = await supabaseClient
+      .from('organizations')
       .insert([{
         organization_name,
         region: region || 'Global',
@@ -285,7 +285,7 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
     if (insertError) throw insertError;
 
     // 3. Audit Log
-    await supabase.from('scraper_logs').insert([{
+    await supabaseClient.from('scraper_logs').insert([{
       status: 'success',
       duration_ms: Date.now() - startTime,
       signals_found: market_events.length,
@@ -296,7 +296,7 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
   } catch (err) {
     console.error('AFERR Ingestion Error:', err.message);
     
-    await supabase.from('scraper_logs').insert([{
+    await supabaseClient.from('scraper_logs').insert([{
       status: 'error',
       error_code: 'AFERR_INGEST_ERR',
       summary: `Evivve AFERR Ingestion Failed: ${err.message}`
