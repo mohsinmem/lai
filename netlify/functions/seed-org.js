@@ -27,6 +27,7 @@ exports.handler = async (event) => {
       }]);
 
     if (error && !error.message.includes('duplicate key value')) {
+      console.error('Seed Error Object:', JSON.stringify(error, null, 2));
       throw error;
     }
 
