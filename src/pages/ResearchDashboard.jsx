@@ -15,8 +15,8 @@ const ResearchDashboard = () => {
     setMessage(`Triggering research for ${companyName}...`);
 
     try {
-      // Direct call to Netlify Background Function
-      const response = await fetch('/.netlify/functions/research-worker', {
+      // Trigger the renamed Netlify Background Function
+      const response = await fetch('/.netlify/functions/research-worker-background', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ company_name: companyName })
