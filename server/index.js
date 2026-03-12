@@ -101,7 +101,7 @@ app.get('/api/analytics/global', (req, res) => {
 });
 
 // SPA catch-all: any route not handled by API returns the React app
-app.get('*', (req, res) => {
+app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
