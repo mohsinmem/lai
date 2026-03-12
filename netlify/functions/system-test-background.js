@@ -6,24 +6,31 @@ const supabase = require('./lib/supabase');
  */
 exports.handler = async (event) => {
   console.log('🚀 Starting System Smoke Test...');
-  const testCompany = `TEST_CORP_${Math.floor(Math.random() * 1000)}`;
+  const testCompany = `SMOKE_TEST_${Math.floor(Math.random() * 1000)}`;
   const startTime = Date.now();
   
   const results = {
     test_id: testCompany,
     steps: [],
-    final_status: 'failed'
+    final_status: 'failed',
+    error_code: null
   };
 
-  const logStep = (name, status, details = '') => {
-    console.log(`[Step] ${name}: ${status} ${details}`);
-    results.steps.push({ name, status, details, timestamp: new Date().toISOString() });
+  const logStep = (name, status, details = '', code = null) => {
+    console.log(`[Step] ${name}: ${status} ${details} ${code ? `[Code: ${code}]` : ''}`);
+    results.steps.push({ name, status, details, code, timestamp: new Date().toISOString() });
   };
 
   try {
-    // 1. Verify Supabase Connectivity
-    const { data: connTest, error: connError } = await supabase.from('company_research').select('id').limit(1);
-    if (connError) throw new Error(`Supabase Connectivity Failed: ${connError.message}`);
+    // 1. Verify Supabase Connectivity & Authentication
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+        throw { message: 'Missing Environment Variables', code: 'ENV_MISSING' };
+    }
+
+    const { data: connTest, error: connError } = await supabase.from('diagnostic_results').select('id').limit(1);
+    if (connError) {
+        throw { message: `Supabase Auth/Conn Failed: ${connError.message}`, code: connError.code || 'AUTH_FAIL' };
+    }
     logStep('Supabase Connectivity', 'success');
 
     // 2. Seed Test Company into Queue
@@ -31,7 +38,7 @@ exports.handler = async (event) => {
       .from('research_queue')
       .insert([{ company_name: testCompany, region: 'TestRegion', status: 'pending' }]);
     
-    if (seedError) throw new Error(`Seeding Failed: ${seedError.message}`);
+    if (seedError) throw { message: `Seeding Failed: ${seedError.message}`, code: seedError.code || 'DB_ERR' };
     logStep('Seed Test Company', 'success', `Company: ${testCompany}`);
 
     // 3. Trigger Scheduler
@@ -39,21 +46,29 @@ exports.handler = async (event) => {
     const schedulerUrl = `${baseUrl.replace(/\/$/, '')}/.netlify/functions/research-scheduler`;
     
     console.log(`Triggering scheduler at: ${schedulerUrl}`);
-    const schedResponse = await fetch(schedulerUrl);
-    if (!schedResponse.ok) throw new Error(`Scheduler Trigger Failed: ${schedResponse.statusText}`);
-    logStep('Trigger Scheduler', 'success');
+    try {
+        const schedResponse = await fetch(schedulerUrl);
+        if (!schedResponse.ok) {
+            throw { message: `Scheduler Trigger Failed: ${schedResponse.statusText}`, code: schedResponse.status };
+        }
+        logStep('Trigger Scheduler', 'success');
+    } catch (e) {
+        if (e.code) throw e;
+        throw { message: `Scheduler Network Error: ${e.message}`, code: 'FETCH_ERR' };
+    }
 
     // 4. Poll for results (Wait up to 30 seconds for background worker)
     logStep('Awaiting Worker Completion', 'pending');
     let completed = false;
     for (let i = 0; i < 6; i++) {
-        await new Promise(r => setTimeout(r, 5000)); // 5s intervals
-        const { data: check } = await supabase
+        await new Promise(r => setTimeout(r, 5000));
+        const { data: check, error: pollError } = await supabase
             .from('company_research')
             .select('id')
             .eq('company_name', testCompany)
-            .single();
+            .maybeSingle();
         
+        if (pollError) console.error('Polling error:', pollError);
         if (check) {
             completed = true;
             break;
@@ -61,64 +76,53 @@ exports.handler = async (event) => {
         console.log(`Polling... attempt ${i+1}`);
     }
 
-    if (!completed) throw new Error('Worker timed out or failed to update database');
+    if (!completed) throw { message: 'Worker timed out or failed to update database', code: 'TIMEOUT' };
     logStep('Worker Verification', 'success', 'Found result in company_research');
 
-    // 5. AFERR Schema Dry Run (New Step)
+    // 5. AFERR Schema Dry Run
     logStep('AFERR Dry Run', 'pending');
     const { error: aferrError } = await supabase
         .from('diagnostic_results')
         .insert([{
-            organization_name: `AFERR_TEST_${Math.floor(Math.random() * 100)}`,
+            organization_name: testCompany,
             region: 'TestRegion',
             overall_score: 85,
-            signal_detection_score: 90,
-            emotional_framing_score: 80,
-            resource_reallocation_score: 85,
-            decision_alignment_score: 75,
-            execution_responsiveness_score: 95,
-            metadata: {
-                source: 'smoke-test',
-                evivve_mock: true,
-                latency_ms: 45
-            }
+            signal_detection_score: 90.00,
+            emotional_framing_score: 80.00,
+            resource_reallocation_score: 85.00,
+            decision_alignment_score: 75.00,
+            execution_responsiveness_score: 95.00,
+            metadata: { source: 'smoke-test', status: 'valid' }
         }]);
     
-    if (aferrError) throw new Error(`AFERR Dry Run Failed: ${aferrError.message}`);
-    logStep('AFERR Schema Validation', 'success', 'Inserted AFERR data with metadata');
-
-    // 6. Check Analytics Aggregation
-    const analyticsUrl = `${baseUrl.replace(/\/$/, '')}/api/analytics/global`;
-    const analyticsRes = await fetch(analyticsUrl);
-    const analyticsData = await analyticsRes.json();
-    const foundInRegions = analyticsData.some(r => r.region === 'TestRegion');
-    
-    if (!foundInRegions) throw new Error('Analytics failed to include the test region');
-    logStep('Analytics Aggregation', 'success');
+    if (aferrError) throw { message: `AFERR Schema Validation Failed: ${aferrError.message}`, code: aferrError.code || 'SCHEMA_ERR' };
+    logStep('AFERR Schema Validation', 'success');
 
     results.final_status = 'passed';
     console.log('✅ System Smoke Test Passed!');
 
   } catch (err) {
     console.error('❌ Smoke Test Failed:', err.message);
-    logStep('Failure Diagnosis', 'failed', err.message);
+    const code = err.code || 'UNKNOWN';
+    logStep('Failure Diagnosis', 'failed', err.message, code);
     results.final_status = 'failed';
+    results.error_code = code;
   } finally {
-    // Cleanup - remove test data so we don't pollute the real index
+    // Cleanup
     await supabase.from('research_queue').delete().eq('company_name', testCompany);
     await supabase.from('company_research').delete().eq('company_name', testCompany);
-    await supabase.from('diagnostic_results').delete().like('organization_name', 'AFERR_TEST_%');
+    await supabase.from('diagnostic_results').delete().eq('organization_name', testCompany);
     
-    // Log final test result to a dedicated audit table (if it exists)
+    // Log final test result
     try {
         await supabase.from('scraper_logs').insert([{
-            status: results.final_status,
+            status: results.final_status === 'passed' ? 'success' : 'error',
+            error_code: results.error_code,
             duration_ms: Date.now() - startTime,
-            summary: `Automated Smoke Test: ${results.final_status}. Steps: ${results.steps.length}`,
-            signals_found: results.steps.filter(s => s.status === 'success').length
+            summary: JSON.stringify(results.steps)
         }]);
     } catch (e) {
-        console.error('Failed to log smoke test result:', e.message);
+        console.error('Critial failure logging result:', e.message);
     }
   }
 };

@@ -16,10 +16,7 @@ const DevStatus = () => {
     };
 
     const fetchLogs = () => {
-        // Fetch from the research/live endpoint which uses company_research 
-        // but we'll adapt to show scraper_logs if we had an endpoint for it.
-        // For now, we'll use the live signals as a proxy for activity.
-        fetch('/api/research/live')
+        fetch('/api/scraper-logs')
             .then(res => res.json())
             .then(data => setLogs(data))
             .catch(err => console.error('Failed to fetch logs', err));
@@ -28,7 +25,10 @@ const DevStatus = () => {
     useEffect(() => {
         fetchHealth();
         fetchLogs();
-        const interval = setInterval(fetchHealth, 30000);
+        const interval = setInterval(() => {
+            fetchHealth();
+            fetchLogs();
+        }, 15000);
         return () => clearInterval(interval);
     }, []);
 
@@ -36,13 +36,12 @@ const DevStatus = () => {
         setTesting(true);
         setTestResult(null);
         try {
-            // Background functions are triggered by POST
-            // In a real scenario, we'd have a secret, but for dev we'll just trigger it
             const res = await fetch('/.netlify/functions/system-test-background', { method: 'POST' });
             if (res.ok) {
-                setTestResult({ status: 'success', message: 'Smoke Test Triggered. Background process started.' });
+                setTestResult({ status: 'success', message: 'Smoke Test Triggered. Pipeline is running...' });
+                setTimeout(fetchLogs, 5000); // Polling delay
             } else {
-                setTestResult({ status: 'error', message: 'Failed to trigger smoke test.' });
+                setTestResult({ status: 'error', message: `Trigger Failed (${res.status})` });
             }
         } catch (e) {
             setTestResult({ status: 'error', message: e.message });
@@ -136,37 +135,41 @@ const DevStatus = () => {
                         </div>
                     </div>
 
-                    {/* Activity Log */}
                     <div className="bg-[#12161e] rounded-2xl p-6 border border-slate-800/50 col-span-3">
-                        <h3 className="text-lg font-bold text-white mb-6">Recent Research Activity</h3>
+                        <h3 className="text-lg font-bold text-white mb-6">Recent System & Research Audit</h3>
                         <div className="overflow-x-auto">
                             <table className="w-full text-left">
                                 <thead className="text-slate-500 text-xs uppercase tracking-wider">
                                     <tr>
-                                        <th className="pb-4 font-medium">Company</th>
-                                        <th className="pb-4 font-medium">Region</th>
-                                        <th className="pb-4 font-medium">LAI Score</th>
-                                        <th className="pb-4 font-medium">Status</th>
                                         <th className="pb-4 font-medium">Timestamp</th>
+                                        <th className="pb-4 font-medium">Status</th>
+                                        <th className="pb-4 font-medium">Code</th>
+                                        <th className="pb-4 font-medium">Summary</th>
+                                        <th className="pb-4 font-medium">Duration</th>
                                     </tr>
                                 </thead>
                                 <tbody className="text-sm border-t border-slate-800/50">
                                     {logs.map((log, i) => (
                                         <tr key={i} className="border-b border-slate-800/30">
-                                            <td className="py-4 font-bold text-slate-300">{log.company_name}</td>
-                                            <td className="py-4 text-slate-500">{log.region}</td>
+                                            <td className="py-4 text-slate-500 text-xs whitespace-nowrap">
+                                                {new Date(log.created_at).toLocaleString()}
+                                            </td>
                                             <td className="py-4">
-                                                <span className="bg-blue-500/10 text-blue-400 px-2 py-1 rounded text-xs font-bold border border-blue-500/20">
-                                                    {log.adaptiveness_score}
+                                                <span className={`px-2 py-1 rounded text-[10px] font-bold border ${
+                                                    log.status === 'success' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 
+                                                    log.status === 'error' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                                }`}>
+                                                    {log.status.toUpperCase()}
                                                 </span>
                                             </td>
-                                            <td className="py-4 text-emerald-400 font-mono text-xs">VERIFIED</td>
-                                            <td className="py-4 text-slate-500 text-xs">{new Date(log.last_researched).toLocaleString()}</td>
+                                            <td className="py-4 font-mono text-xs text-slate-400">{log.error_code || '--'}</td>
+                                            <td className="py-4 text-slate-300 max-w-md truncate" title={log.summary}>{log.summary}</td>
+                                            <td className="py-4 text-slate-500 text-xs">{log.duration_ms ? `${log.duration_ms}ms` : '--'}</td>
                                         </tr>
                                     ))}
                                     {logs.length === 0 && (
                                         <tr>
-                                            <td colSpan="5" className="py-12 text-center text-slate-600">No activity detected. Run a smoke test to seed data.</td>
+                                            <td colSpan="5" className="py-12 text-center text-slate-600">No audit logs detected. Run a smoke test to verify.</td>
                                         </tr>
                                     )}
                                 </tbody>

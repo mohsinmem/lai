@@ -44,7 +44,12 @@ app.get('/api/health', async (req, res) => {
       }
     };
 
-    health.tables.diagnostic_results = await checkTableSchema('diagnostic_results', ['organization_name', 'overall_score', 'region', 'metadata']);
+    health.tables.diagnostic_results = await checkTableSchema('diagnostic_results', [
+        'organization_name', 
+        'overall_score', 
+        'signal_detection_score', 
+        'metadata'
+    ]);
     health.tables.company_research = await checkTableSchema('company_research', ['company_name', 'adaptiveness_score', 'region']);
     health.tables.research_queue = await checkTableSchema('research_queue', ['company_name', 'status']);
     health.tables.scraper_logs = await checkTableSchema('scraper_logs', ['status', 'summary']);
@@ -52,6 +57,23 @@ app.get('/api/health', async (req, res) => {
     res.json(health);
   } catch (err) {
     res.status(500).json({ status: 'error', message: err.message });
+  }
+});
+
+// Scraper Logs Audit
+app.get('/api/scraper-logs', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('scraper_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    console.error('Logs Error:', err);
+    res.json([]);
   }
 });
 
