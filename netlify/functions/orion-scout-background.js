@@ -76,43 +76,60 @@ exports.handler = async (event) => {
     const page = await browser.newPage();
     const scanResults = [];
 
+    const AFERR_WORDS = {
+        proactive: ['launch', 'pioneer', 'predict', 'anticipate', 'create', 'foresee', 'vision', 'blueprint', 'expand', 'invest'],
+        reactive: ['responding', 'recovery', 'restoring', 'compensating', 'mitigate', 'downsize', 'defend', 'legacy', 'crisis'],
+        experimentation: ['pilot', 'test', 'beta', 'sandbox', 'trial', 'prototype', 'exploratory', 'variant', 'innovation'],
+        reflection: ['pivot', 'lessons', 'feedback', 'review', 'adjustment', 'correction', 'post-mortem', 'calibration']
+    };
+
     for (const company of targets) {
       const companyName = company.name;
-      console.log(`Scanning signals for: ${companyName}`);
-      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(companyName + ' leadership strategy adaptiveness news')}&tbm=nws`;
+      console.log(`Analyzing AFERR alignment for: ${companyName}`);
+      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(companyName + ' leadership strategy news')}&tbm=nws`;
       
       await page.goto(searchUrl, { waitUntil: 'networkidle2', timeout: 30000 });
       
-      const signals = await page.evaluate(() => {
-        const results = [];
-        document.querySelectorAll('div.So033e, div.nS4uS, div.mCBkyc').forEach(el => {
-          results.push(el.innerText.toLowerCase());
-        });
-        return results.join(' ');
+      const newsItems = await page.evaluate(() => {
+        return Array.from(document.querySelectorAll('div.So033e, div.nS4uS')).map(el => ({
+            text: el.innerText.toLowerCase(),
+            date: el.querySelector('span')?.innerText || 'recently'
+        }));
       });
 
-      // 3. AFERR Intelligence Scoring
-      const scores = {
-        activation: 40,      // Baseline
-        forecasting: 40,
-        experimentation: 40,
-        realization: 40,
-        reflection: 40
-      };
+      const signals = newsItems.map(i => i.text).join(' ');
 
-      let hits = 0;
-      Object.keys(LAI_MATRIX).forEach(dim => {
-        LAI_MATRIX[dim].keywords.forEach(word => {
-          const regex = new RegExp(`\\b${word}\\b`, 'gi');
-          const count = (signals.match(regex) || []).length;
-          if (count > 0) {
-            scores[dim] = Math.min(100, scores[dim] + (count * LAI_MATRIX[dim].weight * 5.5));
-            hits += count;
-          }
-        });
-      });
+      // 1. Signal Detection (Activation): Latency Scoring
+      // Score higher if "fresh" news contains strategic keywords
+      let activationScore = 40; 
+      const freshNews = newsItems.filter(i => i.date.includes('hour') || i.date.includes('minute') || i.date.includes('day ago'));
+      activationScore = Math.min(100, 40 + (freshNews.length * 10));
 
-      const overallScore = Math.round((scores.activation + scores.forecasting + scores.experimentation + scores.realization + scores.reflection) / 5);
+      // 2. Cognitive Framing (Forecasting): Proactive vs Reactive
+      let proCount = 0;
+      let reCount = 0;
+      AFERR_WORDS.proactive.forEach(w => proCount += (signals.match(new RegExp(`\\b${w}\\b`, 'gi')) || []).length);
+      AFERR_WORDS.reactive.forEach(w => reCount += (signals.match(new RegExp(`\\b${w}\\b`, 'gi')) || []).length);
+      
+      const totalFraming = proCount + reCount;
+      const forecastingScore = totalFraming === 0 ? 50 : Math.min(100, (proCount / (proCount + reCount + 1)) * 120);
+
+      // 3. Resource Reallocation (Experimentation): Keyword Diversity
+      let expCount = 0;
+      AFERR_WORDS.experimentation.forEach(w => expCount += (signals.match(new RegExp(`\\b${w}\\b`, 'gi')) || []).length);
+      const experimentationScore = Math.min(100, 40 + (expCount * 8));
+
+      // 4. Decision Alignment (Realization): Signal Coherence
+      // Logic: If signals are found across multiple categories, they are "aligned"
+      const categoriesFound = [proCount > 0, reCount > 0, expCount > 0].filter(Boolean).length;
+      const realizationScore = 40 + (categoriesFound * 20);
+
+      // 5. Execution Responsiveness (Reflection): Pivoting Ratio
+      let refCount = 0;
+      AFERR_WORDS.reflection.forEach(w => refCount += (signals.match(new RegExp(`\\b${w}\\b`, 'gi')) || []).length);
+      const reflectionScore = Math.min(100, 40 + (refCount * 12));
+
+      const overallScore = Math.round((activationScore + forecastingScore + experimentationScore + realizationScore + reflectionScore) / 5);
 
       // 4. Persistence - Upsert to diagnostic_results
       const { error: insertError } = await supabase
@@ -120,16 +137,17 @@ exports.handler = async (event) => {
         .insert([{
           organization_name: companyName,
           region: company.region || 'Global',
-          industry: 'Automated Research',
+          industry: 'AFERR Scraper',
           overall_score: overallScore,
-          signal_detection_score: parseFloat(scores.activation.toFixed(2)),
-          emotional_framing_score: parseFloat(scores.forecasting.toFixed(2)),
-          resource_reallocation_score: parseFloat(scores.experimentation.toFixed(2)),
-          decision_alignment_score: parseFloat(scores.realization.toFixed(2)),
-          execution_responsiveness_score: parseFloat(scores.reflection.toFixed(2)),
+          signal_detection_score: parseFloat(activationScore.toFixed(2)),
+          emotional_framing_score: parseFloat(forecastingScore.toFixed(2)),
+          resource_reallocation_score: parseFloat(experimentationScore.toFixed(2)),
+          decision_alignment_score: parseFloat(realizationScore.toFixed(2)),
+          execution_responsiveness_score: parseFloat(reflectionScore.toFixed(2)),
           metadata: {
-              source: 'orion-scout',
-              signals_found: hits,
+              source: 'orion-scout-v2',
+              proactive_ratio: proCount / (totalFraming || 1),
+              pivoting_hits: refCount,
               timestamp: new Date().toISOString()
           }
         }]);
@@ -139,7 +157,7 @@ exports.handler = async (event) => {
       // Update last scanned timestamp
       await supabase.from('organizations').update({ last_scanned: new Date().toISOString() }).eq('name', companyName);
 
-      scanResults.push({ company: companyName, signals: hits, score: overallScore });
+      scanResults.push({ company: companyName, score: overallScore, framing: proCount > reCount ? 'proactive' : 'reactive' });
     }
 
     // 5. Audit Logging

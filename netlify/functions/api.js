@@ -201,7 +201,7 @@ app.get('/api/research/live', async (req, res) => {
   }
 });
 
-// Evivve Multiplayer Ingestion (High-Fidelity)
+// Evivve Multiplayer Ingestion (Refined AFERR-LAI Alignment)
 app.post('/api/ingest-multiplayer', async (req, res) => {
   const payload = req.body;
   const { organization_name, region, multiplayer_data } = payload;
@@ -209,33 +209,56 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
 
   try {
     if (!multiplayer_data || !organization_name) {
-      throw new Error('Missing high-fidelity data or organization name');
+      throw new Error('Missing AFERR source data or organization name');
     }
 
-    // 1. Behavioral Extraction (AFERR)
+    const { market_events = [], actions = [], state = {} } = multiplayer_data;
+
+    // 1. Activation (Signal Detection): Time Delta Scoring
+    // Calculate delta between first market signal and first player action
+    const firstSignal = market_events.sort((a, b) => a._at - b._at)[0];
+    const firstAction = actions.sort((a, b) => a._at - b._at)[0];
     
-    // Forecasting: Calculate delta between cost changes and team adjustments (offers)
-    const costChanges = multiplayer_data.market_events?.filter(e => e.type === 'MV_COST_CHANGE') || [];
-    const offers = multiplayer_data.actions?.filter(a => a.type === 'SUBMIT_OFFER') || [];
-    
-    let forecastingScore = 70; // Baseline
-    if (costChanges.length > 0 && offers.length > 0) {
-        // Simple logic: more offers following cost changes = better forecasting/responsiveness
-        const responsivenessRatio = Math.min(1, offers.length / costChanges.length);
-        forecastingScore = 50 + (responsivenessRatio * 50);
+    let activationScore = 50; // Baseline
+    if (firstSignal && firstAction) {
+        const delta = Math.max(0, firstAction._at - firstSignal._at);
+        // Faster activation = higher score (Max 100, drops as delta increases)
+        activationScore = Math.max(20, Math.min(100, 100 - (delta / 5000)));
     }
 
-    // Experimentation: Unique landBlockId interactions
-    const uniqueBlocks = new Set(multiplayer_data.actions?.map(a => a.landBlockId).filter(Boolean));
-    const experimentationScore = Math.min(100, 40 + (uniqueBlocks.size * 5));
+    // 2. Forecasting (Cognitive Framing): Proactive Trade Offers
+    // Score based on whether offers are submitted before or after price spikes
+    const costSpikes = market_events.filter(e => e.type === 'MV_COST_CHANGE' && e.value > 1.2);
+    const proactiveOffers = actions.filter(a => {
+        if (a.type !== 'SUBMIT_OFFER') return false;
+        // Check if offer exists before the first spike
+        return costSpikes.length > 0 && a._at < costSpikes[0]._at;
+    });
+    
+    const forecastingScore = 40 + (proactiveOffers.length * 15);
 
-    // Realization: tribeValue evolution
-    const startValue = multiplayer_data.state?.initial_tribe_value || 1000;
-    const endValue = multiplayer_data.state?.final_tribe_value || startValue;
-    const growth = (endValue - startValue) / startValue;
-    const realizationScore = Math.min(100, 50 + (growth * 100));
+    // 3. Experimentation (Resource Reallocation): Diversity/Velocity
+    const uniqueBlocks = new Set(actions.map(a => a.landBlockId).filter(Boolean));
+    const uniqueResources = new Set(actions.map(a => a.resourceType).filter(Boolean));
+    const diversityIndex = (uniqueBlocks.size + uniqueResources.size) / 2;
+    const experimentationScore = Math.min(100, 30 + (diversityIndex * 12));
 
-    const overallScore = Math.round((forecastingScore + experimentationScore + realizationScore + 140) / 5); // Default 70 for others
+    // 4. Realization (Decision Alignment): Coherence Velocity
+    // Time taken to reach Tribe Value stabilization
+    const startValue = state.initial_tribe_value || 1000;
+    const endValue = state.final_tribe_value || 1000;
+    const completionTime = state.completion_at || (actions.length > 0 ? actions[actions.length - 1]._at : 0);
+    const velocity = (endValue - startValue) / (completionTime || 1000);
+    const realizationScore = Math.min(100, 40 + (velocity * 200000));
+
+    // 5. Reflection (Execution Responsiveness): Pivoting Ratio
+    // Compare rejected offers vs subsequent offer adjustments
+    const rejected = actions.filter(a => a.type === 'OFFER_REJECTED');
+    const modified = actions.filter(a => a.type === 'SUBMIT_OFFER' && a.previousPrice);
+    const pivotingRatio = rejected.length === 0 ? 0.7 : (modified.length / rejected.length);
+    const reflectionScore = Math.min(100, 40 + (pivotingRatio * 60));
+
+    const overallScore = Math.round((activationScore + forecastingScore + experimentationScore + realizationScore + reflectionScore) / 5);
 
     // 2. Persistence
     const { error: insertError } = await supabase
@@ -243,19 +266,20 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
       .insert([{
         organization_name,
         region: region || 'Global',
-        industry: 'Evivve Behavioral Ingestion',
+        industry: 'Evivve AFERR Ingestion',
         overall_score: overallScore,
+        signal_detection_score: parseFloat(activationScore.toFixed(2)),
         emotional_framing_score: parseFloat(forecastingScore.toFixed(2)),
         resource_reallocation_score: parseFloat(experimentationScore.toFixed(2)),
         decision_alignment_score: parseFloat(realizationScore.toFixed(2)),
-        signal_detection_score: 75.00, // Baseline
-        execution_responsiveness_score: 75.00,
+        execution_responsiveness_score: parseFloat(reflectionScore.toFixed(2)),
         metadata: {
-            raw_evivve: multiplayer_data,
-            ingestion_id: `EVIVVE_${startTime}`,
-            metrics: {
-                unique_blocks: uniqueBlocks.size,
-                growth_rate: growth
+            activation_delta: firstSignal && firstAction ? firstAction._at - firstSignal._at : null,
+            pivoting_ratio: pivotingRatio,
+            raw_payload_id: `AFERR_${Date.now()}`,
+            data_points: {
+                signals: market_events.length,
+                actions: actions.length
             }
         }
       }]);
@@ -266,19 +290,19 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
     await supabase.from('scraper_logs').insert([{
       status: 'success',
       duration_ms: Date.now() - startTime,
-      signals_found: uniqueBlocks.size,
-      summary: `Evivve Ingested: ${organization_name} | AFERR Mapping Complete`
+      signals_found: market_events.length,
+      summary: `AFERR Ingested: ${organization_name} | Overall: ${overallScore} | Latency: ${Date.now() - startTime}ms`
     }]);
 
-    res.json({ status: 'ok', organization_name, score: overallScore });
+    res.json({ status: 'ok', organization_name, aferr_overall: overallScore });
   } catch (err) {
-    console.error('High-Fidelity Ingestion Error:', err.message);
+    console.error('AFERR Ingestion Error:', err.message);
     
     await supabase.from('scraper_logs').insert([{
       status: 'error',
-      error_code: 'INGEST_FAIL',
-      summary: `Evivve Ingestion Failed: ${err.message}`
-    }]).catch(e => console.error('Logging fail:', e));
+      error_code: 'AFERR_INGEST_ERR',
+      summary: `Evivve AFERR Ingestion Failed: ${err.message}`
+    }]).catch(e => console.error('Double fail:', e));
 
     res.status(500).json({ status: 'error', message: err.message });
   }
