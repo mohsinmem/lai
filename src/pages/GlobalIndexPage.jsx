@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Globe, TrendingUp, Search, Filter } from 'lucide-react';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 const GlobalIndexPage = () => {
   const [rankings, setRankings] = useState([]);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/stats')
+    fetch(`${API_BASE_URL}/api/stats`)
       .then(res => res.json())
       .then(data => setRankings(data))
       .catch(err => console.error('Failed to fetch stats:', err));

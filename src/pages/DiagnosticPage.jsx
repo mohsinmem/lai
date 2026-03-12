@@ -103,7 +103,8 @@ const DiagnosticPage = () => {
     };
 
     try {
-      await fetch('http://localhost:5000/api/diagnostic', {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+      await fetch(`${API_BASE_URL}/api/diagnostic`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(resultData)
