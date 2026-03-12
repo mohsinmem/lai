@@ -6,7 +6,17 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:5173', 
+    'https://leadershipadaptiveness.institute', 
+    'https://www.leadershipadaptiveness.institute',
+    'https://lai.institute',
+    'https://www.lai.institute',
+    'https://adaptiveness.institute',
+    'https://www.adaptiveness.institute'
+  ]
+}));
 app.use(express.json());
 
 // API Routes
@@ -57,6 +67,31 @@ app.post('/api/demo-request', (req, res) => {
     res.status(201).json({ id: info.lastInsertRowid });
   } catch (err) {
     res.status(500).json({ error: 'Failed to process demo request' });
+  }
+});
+
+// Get Global Analytics (Heatmap/Regional Data)
+app.get('/api/analytics/global', (req, res) => {
+  try {
+    const data = db.prepare(`
+      SELECT 
+        region, 
+        COUNT(*) as participants,
+        ROUND(AVG(overall_score), 1) as avg_score,
+        ROUND(AVG(signal_score), 1) as avg_signal,
+        ROUND(AVG(emotional_score), 1) as avg_emotional,
+        ROUND(AVG(resource_score), 1) as avg_resource,
+        ROUND(AVG(decision_score), 1) as avg_decision,
+        ROUND(AVG(execution_score), 1) as avg_execution
+      FROM diagnostic_results 
+      WHERE region IS NOT NULL AND region != ''
+      GROUP BY region
+      ORDER BY avg_score DESC
+    `).all();
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch global analytics' });
   }
 });
 

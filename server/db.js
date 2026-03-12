@@ -1,7 +1,9 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 
-const dbPath = path.resolve(__dirname, 'lai.db');
+const dbPath = process.env.NODE_ENV === 'production' 
+  ? '/data/lai.db' 
+  : path.resolve(__dirname, 'lai.db');
 const db = new Database(dbPath);
 
 // Initialize schema
