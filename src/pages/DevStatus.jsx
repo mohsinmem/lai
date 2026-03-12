@@ -42,10 +42,7 @@ class ErrorBoundary extends Component {
 const DevStatusContent = () => {
     const [health, setHealth] = useState(null);
     const [logs, setLogs] = useState([]);
-    const [testing, setTesting] = useState(false);
-    const [testResult, setTestResult] = useState(null);
     const [loading, setLoading] = useState(true);
-
     const [testing, setTesting] = useState(false);
     const [testResult, setTestResult] = useState(null);
 

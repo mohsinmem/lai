@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const serverless = require('serverless-http');
-const supabaseClient = require('./lib/supabase.cjs');
+const { supabase: supabaseClient } = require('./lib/supabase.cjs');
 
 const app = express();
 
