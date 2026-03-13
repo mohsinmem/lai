@@ -48,9 +48,10 @@ const Footer = () => {
         </div>
         
         <div className="footer-bottom">
-          <p>&copy; 2024 Leadership Adaptiveness Institute. All rights reserved.</p>
+          <p>&copy; 2026 Leadership Adaptiveness Institute. All rights reserved.</p>
           <div className="footer-meta">
             <span><Globe size={14} /> Global Secretariat: Geneva / New York</span>
+            <span style={{ marginLeft: '1.5rem', fontFamily: 'monospace', fontSize: '0.72rem', color: '#94a3b8' }}>LAI v1.2.0-FINAL</span>
           </div>
         </div>
       </div>

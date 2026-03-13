@@ -6,11 +6,26 @@ import {
   FileChartPie, Building2, BarChart3, Layers, Presentation, Newspaper
 } from 'lucide-react';
 
-// ── Safe date formatter ────────────────────────────────────────────────────────
+// ── Relative time formatter ────────────────────────────────────────────────────
 const formatDate = (val) => {
   if (!val) return null;
   const d = new Date(val);
-  return isNaN(d.getTime()) ? null : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  if (isNaN(d.getTime())) return null;
+  const now = Date.now();
+  const diff = now - d.getTime();
+  const mins  = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days  = Math.floor(diff / 86400000);
+  if (mins  <  2)   return 'Just now';
+  if (mins  < 60)   return `${mins} minutes ago`;
+  if (hours <  2)   return '1 hour ago';
+  if (hours < 24)   return `${hours} hours ago`;
+  if (days  <  2)   return 'Yesterday';
+  if (days  <  7)   return `${days} days ago`;
+  if (days  < 14)   return '1 week ago';
+  if (days  < 60)   return `${Math.floor(days / 7)} weeks ago`;
+  // Older: show Month Year (e.g. "Feb 2026")
+  return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 };
 
 // ── Type Badge config ─────────────────────────────────────────────────────────

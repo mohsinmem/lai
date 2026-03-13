@@ -13,30 +13,74 @@ const getEvolutionaryState = (score) => {
 const formatDate = (val) => {
   if (!val) return 'N/A';
   const d = new Date(val);
-  return isNaN(d.getTime()) ? 'N/A' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  if (isNaN(d.getTime())) return 'N/A';
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
-// ── Map Dot (positioned deterministically from org name hash) ─────────────────
-const MapDot = ({ org, onClick, selected }) => {
+// ── Region → approximate lat/lng bucket (8-column × 5-row grid) ──────────────
+// Each region maps to a rough [top%, left%] bounding box center.
+// Dots are jittered within ±8% of the region center to avoid overlap.
+const REGION_ANCHORS = {
+  'North America': [30, 18],  'USA': [30, 18],  'Canada': [22, 18],
+  'Latin America': [60, 25],  'South America': [60, 25],  'Brazil': [62, 28],
+  'Western Europe': [28, 44], 'Europe': [28, 44], 'UK': [24, 40], 'Germany': [26, 46],
+  'Eastern Europe': [26, 52], 'Middle East': [42, 58],
+  'Africa': [58, 46],
+  'South Asia': [44, 68],     'India': [46, 70],
+  'East Asia': [34, 80],      'China': [32, 78], 'Japan': [30, 84],
+  'Southeast Asia': [52, 80], 'APAC': [48, 80],
+  'Oceania': [68, 84],        'Australia': [68, 84],
+  'Global': [50, 50],
+};
+
+function getRegionBucket(region = '') {
+  const key = Object.keys(REGION_ANCHORS).find(k =>
+    region.toLowerCase().includes(k.toLowerCase())
+  );
+  return REGION_ANCHORS[key] || REGION_ANCHORS['Global'];
+}
+
+// Deterministic jitter within ±7% of region anchor, using name hash for stability
+function getDotPosition(org) {
   const hash = org.organization.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  const top  = 15 + (hash % 65);
-  const left = 5  + ((hash * 7) % 88);
-  const ev   = getEvolutionaryState(org.score);
+  const [baseTop, baseLeft] = getRegionBucket(org.region);
+  const jitterTop  = ((hash * 13) % 15) - 7;   // -7 to +7
+  const jitterLeft = ((hash * 7)  % 15) - 7;
+  return {
+    top:  Math.max(5, Math.min(92, baseTop  + jitterTop)),
+    left: Math.max(2, Math.min(96, baseLeft + jitterLeft)),
+  };
+}
+
+// ── Map Dot ───────────────────────────────────────────────────────────────────
+const MapDot = ({ org, onClick, selected }) => {
+  const ev          = getEvolutionaryState(org.score);
+  const isTop       = org.score >= 70;
+  const { top, left } = getDotPosition(org);
 
   return (
     <motion.button
       title={`${org.organization} — Adaptiveness Velocity: ${org.score}`}
       onClick={() => onClick(org)}
       initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: selected ? 1.6 : 1, opacity: 1 }}
-      transition={{ type: 'spring', delay: 0.02 }}
-      style={{ position: 'absolute', top: `${top}%`, left: `${left}%`,
-               width: 16, height: 16, borderRadius: '50%',
-               background: ev.color, border: '3px solid white',
-               boxShadow: selected
-                 ? `0 0 0 4px ${ev.color}55, 0 0 20px ${ev.color}`
-                 : `0 2px 8px rgba(0,0,0,0.25)`,
-               cursor: 'pointer', zIndex: selected ? 20 : 10 }}
+      animate={{ scale: selected ? 1.7 : 1, opacity: 1 }}
+      transition={{ type: 'spring', stiffness: 260, damping: 20, delay: Math.random() * 0.3 }}
+      style={{
+        position: 'absolute', top: `${top}%`, left: `${left}%`,
+        width: isTop ? 14 : 11,
+        height: isTop ? 14 : 11,
+        borderRadius: '50%',
+        background: ev.color,
+        border: `${isTop ? 3 : 2}px solid ${isTop ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.7)'}`,
+        boxShadow: selected
+          ? `0 0 0 5px ${ev.color}55, 0 0 24px ${ev.color}`
+          : isTop
+          ? `0 0 0 3px ${ev.color}33, 0 0 12px ${ev.color}88`
+          : `0 1px 6px rgba(0,0,0,0.3)`,
+        cursor: 'pointer',
+        zIndex: selected ? 30 : isTop ? 15 : 10,
+        animation: isTop && !selected ? 'antifragilePulse 2.4s ease-in-out infinite' : 'none',
+      }}
     />
   );
 };
@@ -45,16 +89,16 @@ const MapDot = ({ org, onClick, selected }) => {
 const ScoreBar = ({ score }) => {
   const ev = getEvolutionaryState(score);
   return (
-    <div className="flex items-center gap-3 w-full">
-      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%' }}>
+      <div style={{ flex: 1, height: 5, background: '#f1f5f9', borderRadius: 9999, overflow: 'hidden' }}>
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${score}%` }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
+          transition={{ duration: 0.9, ease: 'easeOut' }}
           style={{ height: '100%', background: ev.color, borderRadius: 9999 }}
         />
       </div>
-      <span className="font-mono font-bold text-sm" style={{ color: ev.color, minWidth: 34 }}>
+      <span style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: '0.85rem', color: ev.color, minWidth: 28 }}>
         {score}
       </span>
     </div>
@@ -94,7 +138,7 @@ const GlobalIndexPage = () => {
   const displayed = useMemo(() => {
     let list = rankings;
     if (filter !== 'All') list = list.filter(r => getEvolutionaryState(r.score).label === filter);
-    if (search.trim()) list = list.filter(r =>
+    if (search.trim())    list = list.filter(r =>
       r.organization?.toLowerCase().includes(search.toLowerCase()) ||
       r.region?.toLowerCase().includes(search.toLowerCase()));
     return list;
@@ -109,11 +153,20 @@ const GlobalIndexPage = () => {
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', paddingBottom: '6rem', fontFamily: 'Inter, sans-serif' }}>
 
+      {/* ── Global keyframes ─────────────────────────────────────────────── */}
+      <style>{`
+        @keyframes antifragilePulse {
+          0%   { box-shadow: 0 0 0 0 rgba(59,130,246,0.55), 0 0 8px rgba(59,130,246,0.5); }
+          50%  { box-shadow: 0 0 0 6px rgba(59,130,246,0),  0 0 18px rgba(59,130,246,0.7); }
+          100% { box-shadow: 0 0 0 0 rgba(59,130,246,0),    0 0 8px rgba(59,130,246,0.3); }
+        }
+      `}</style>
+
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <header style={{ paddingTop: '8rem', paddingBottom: '4rem', background: '#0a192f', textAlign: 'center', color: 'white' }}>
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} style={{ maxWidth: 700, margin: '0 auto', padding: '0 1.5rem' }}>
           <span style={{ display: 'inline-block', padding: '0.35rem 1.2rem', background: 'rgba(13,148,136,0.2)', color: '#2dd4bf', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', borderRadius: 9999, border: '1px solid rgba(45,212,191,0.3)', marginBottom: '1.5rem' }}>
-            AFERR Methodology · v1.2.0
+            AFERR Methodology · v1.2.0-FINAL
           </span>
           <h1 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', fontFamily: 'Georgia,serif', marginBottom: '1rem', lineHeight: 1.15 }}>
             Leadership Adaptiveness Index
@@ -145,22 +198,21 @@ const GlobalIndexPage = () => {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
           style={{ background: 'white', borderRadius: 24, border: '1px solid #e2e8f0', overflow: 'hidden', marginTop: '-2rem', boxShadow: '0 20px 60px rgba(0,0,0,0.08)', marginBottom: '2.5rem' }}>
 
-          {/* Map area */}
-          <div style={{ position: 'relative', height: 360, background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)', overflow: 'hidden' }}>
+          <div style={{ position: 'relative', height: 380, background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)', overflow: 'hidden' }}>
             {/* Grid lines */}
             {[...Array(8)].map((_, i) => (
-              <div key={i} style={{ position: 'absolute', top: 0, bottom: 0, left: `${(i + 1) * 12.5}%`, borderLeft: '1px solid rgba(255,255,255,0.04)' }} />
+              <div key={`v${i}`} style={{ position: 'absolute', top: 0, bottom: 0, left: `${(i + 1) * 12.5}%`, borderLeft: '1px solid rgba(255,255,255,0.04)' }} />
             ))}
             {[...Array(5)].map((_, i) => (
-              <div key={i} style={{ position: 'absolute', left: 0, right: 0, top: `${(i + 1) * 20}%`, borderTop: '1px solid rgba(255,255,255,0.04)' }} />
+              <div key={`h${i}`} style={{ position: 'absolute', left: 0, right: 0, top: `${(i + 1) * 20}%`, borderTop: '1px solid rgba(255,255,255,0.04)' }} />
             ))}
 
-            {/* World-map silhouette overlay */}
+            {/* World-map silhouette */}
             <img src="https://images.unsplash.com/photo-1521295121783-8a321d551ad2?auto=format&fit=crop&q=60&w=1400"
-              alt="World Map" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.07, filter: 'grayscale(1)' }} />
+              alt="World Map" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.08, filter: 'grayscale(1)' }} />
 
-            {/* Dynamic dots — live from Supabase via /api/analytics/global */}
-            {!loading && displayed.slice(0, 120).map((org, i) => (
+            {/* Dynamic dots — region-aware placement */}
+            {!loading && displayed.slice(0, 150).map((org, i) => (
               <MapDot key={org.organization + i} org={org}
                 selected={focusDot?.organization === org.organization}
                 onClick={(o) => {
@@ -169,27 +221,39 @@ const GlobalIndexPage = () => {
                 }} />
             ))}
 
-            {/* Tooltip on focused dot */}
+            {/* Focused tooltip */}
             <AnimatePresence>
               {focusDot && (
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                   style={{ position: 'absolute', bottom: '1.5rem', left: '50%', transform: 'translateX(-50%)',
-                    background: 'rgba(15,23,42,0.95)', backdropFilter: 'blur(12px)', color: 'white',
-                    borderRadius: 16, padding: '1rem 1.5rem', border: '1px solid rgba(255,255,255,0.1)',
-                    textAlign: 'center', minWidth: 220, zIndex: 30 }}>
-                  <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, color: '#64748b', marginBottom: '0.25rem' }}>{focusDot.industry || 'Global Baseline'} · {focusDot.region}</div>
-                  <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '0.25rem' }}>{focusDot.organization}</div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'Georgia,serif', color: getEvolutionaryState(focusDot.score).color }}>{focusDot.score}</div>
-                  <div style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 700, marginTop: '0.2rem' }}>Adaptiveness Velocity</div>
+                    background: 'rgba(15,23,42,0.96)', backdropFilter: 'blur(16px)', color: 'white',
+                    borderRadius: 16, padding: '1rem 1.5rem', border: '1px solid rgba(255,255,255,0.12)',
+                    textAlign: 'center', minWidth: 230, zIndex: 40 }}>
+                  <div style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, color: '#64748b', marginBottom: '0.2rem' }}>
+                    {focusDot.industry || 'Global Baseline'} · {focusDot.region}
+                  </div>
+                  <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '0.2rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 200 }}>
+                    {focusDot.organization}
+                  </div>
+                  <div style={{ fontSize: '1.8rem', fontWeight: 800, fontFamily: 'Georgia,serif', color: getEvolutionaryState(focusDot.score).color, lineHeight: 1 }}>
+                    {focusDot.score}
+                  </div>
+                  <div style={{ fontSize: '0.62rem', color: '#64748b', fontWeight: 700, marginTop: '0.2rem', textTransform: 'uppercase', letterSpacing: 1.5 }}>
+                    Adaptiveness Velocity
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
             {/* Legend */}
             <div style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(8px)', borderRadius: 12, padding: '0.75rem 1rem', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              {[['#3b82f6','Antifragile (>70)'],['#0d9488','Emergent (40-70)'],['#64748b','Fragile (<40)']].map(([color, label]) => (
-                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', color: '#94a3b8', fontWeight: 600 }}>
-                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: color, display: 'inline-block', border: '2px solid white' }} />
+              {[['#3b82f6','Antifragile (>70)', true],['#0d9488','Emergent (40-70)', false],['#64748b','Fragile (<40)', false]].map(([color, label, pulse]) => (
+                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.68rem', color: '#94a3b8', fontWeight: 600 }}>
+                  <span style={{
+                    width: 10, height: 10, borderRadius: '50%', background: color, display: 'inline-block',
+                    border: '2px solid rgba(255,255,255,0.7)',
+                    animation: pulse ? 'antifragilePulse 2.4s ease-in-out infinite' : 'none'
+                  }} />
                   {label}
                 </div>
               ))}
@@ -222,7 +286,6 @@ const GlobalIndexPage = () => {
         {/* ── Ranking Table ───────────────────────────────────────────────── */}
         <div style={{ background: 'white', borderRadius: 20, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
 
-          {/* Header */}
           <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 180px 130px 180px', padding: '1rem 1.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#94a3b8' }}>
             <span>Adaptiveness Rank</span>
             <span>Organization Profile (Region)</span>
@@ -250,27 +313,27 @@ const GlobalIndexPage = () => {
                   <motion.div
                     onClick={() => { setExpandedId(isOpen ? null : idx); setFocusDot(r); }}
                     whileHover={{ background: '#f8fafc' }}
-                    style={{ display: 'grid', gridTemplateColumns: '80px 1fr 180px 130px 180px', padding: '1rem 1.5rem',
-                      borderBottom: '1px solid #f1f5f9', alignItems: 'center', cursor: 'pointer', transition: 'background 0.15s',
+                    style={{ display: 'grid', gridTemplateColumns: '80px 1fr 180px 130px 180px', padding: '0.9rem 1.5rem',
+                      borderBottom: '1px solid #f1f5f9', alignItems: 'center', cursor: 'pointer', transition: 'background 0.12s',
                       background: isOpen ? '#f8fafc' : 'white' }}>
 
-                    <span style={{ fontWeight: 800, color: '#cbd5e1', fontFamily: 'Georgia,serif', fontSize: '1.1rem' }}>#{r.rank}</span>
+                    <span style={{ fontWeight: 800, color: '#cbd5e1', fontFamily: 'Georgia,serif', fontSize: '1.05rem' }}>#{r.rank}</span>
 
                     <span>
-                      <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.95rem' }}>{r.organization}</div>
-                      <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginTop: '0.2rem' }}>
+                      <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.9rem' }}>{r.organization}</div>
+                      <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginTop: '0.15rem' }}>
                         {r.industry || 'Global Baseline'} · {r.region}
                       </div>
                     </span>
 
                     <ScoreBar score={r.score} />
 
-                    <span style={{ fontWeight: 700, fontSize: '0.9rem', color: r.cognitiveShift?.startsWith('+') ? '#10b981' : '#ef4444' }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.88rem', color: r.cognitiveShift?.startsWith('+') ? '#10b981' : '#ef4444' }}>
                       {r.cognitiveShift}
                     </span>
 
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ padding: '0.25rem 0.75rem', borderRadius: 9999, fontSize: '0.68rem', fontWeight: 800, border: '1px solid' }}
+                      <span style={{ padding: '0.25rem 0.75rem', borderRadius: 9999, fontSize: '0.65rem', fontWeight: 800, border: '1px solid' }}
                         className={ev.pill}>
                         {ev.label}
                       </span>
@@ -283,16 +346,12 @@ const GlobalIndexPage = () => {
                       <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
                         style={{ overflow: 'hidden', borderBottom: '1px solid #e2e8f0' }}>
                         <div style={{ padding: '1.5rem 1.5rem 1.5rem 6rem', background: '#f8fafc', display: 'flex', gap: '3rem', flexWrap: 'wrap' }}>
-
-                          {/* Temporal Footprint */}
                           <div>
                             <p style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', color: '#94a3b8', marginBottom: '0.75rem' }}>Temporal Footprint</p>
                             <div style={{ display: 'flex', gap: '2rem' }}>
                               <div>
                                 <p style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#cbd5e1', marginBottom: '0.25rem' }}>Date Played</p>
-                                <p style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.875rem' }}>
-                                  {formatDate(r.session_date)}
-                                </p>
+                                <p style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.875rem' }}>{formatDate(r.session_date)}</p>
                               </div>
                               <div>
                                 <p style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#cbd5e1', marginBottom: '0.25rem' }}>Session Duration</p>
@@ -306,8 +365,6 @@ const GlobalIndexPage = () => {
                               </div>
                             </div>
                           </div>
-
-                          {/* LAI Evolutionary Profile */}
                           <div style={{ flex: 1 }}>
                             <p style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', color: '#94a3b8', marginBottom: '0.75rem' }}>Evolutionary Profile</p>
                             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
