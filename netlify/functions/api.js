@@ -15,7 +15,7 @@ app.get('/api/health', async (req, res) => {
   try {
     const health = {
       status: 'ok',
-      version: '1.1.21',
+      version: '1.1.22',
       timestamp: new Date().toISOString(),
       env: {
         has_url: !!process.env.SUPABASE_URL,
@@ -308,8 +308,6 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
             }
         }
     };
-
-    console.log('DEBUG Ingest Row:', JSON.stringify(row, null, 2));
 
     // 3. Persistence
     const { error: insertOrgError } = await supabaseClient
