@@ -235,18 +235,27 @@ app.get('/api/analytics/global', async (req, res) => {
       let sums = { signal_interpretation: 0, cognitive_framing: 0, resource_reallocation: 0, decision_alignment: 0, execution_responsiveness: 0 };
       let maxDate = null;
       let maxDuration = 0;
-      const breakdown = { sovereign: 0, observed: 0, perception: 0, inferred: 0 };
-      let tierSums = { observed: 0, perceived: 0, count_obs: 0, count_per: 0 };
+      const breakdown = { sovereign: 0, behavioral: 0, perceptual: 0, environmental: 0 };
+      const weightContribution = { sovereign: 0, behavioral: 0, perceptual: 0, environmental: 0 };
+      let tierSums = { behavioral: 0, perceived: 0, count_obs: 0, count_per: 0 };
 
-      const TIER_WEIGHTS = { 'SOVEREIGN': 1.2, 'OBSERVED': 1.0, 'PERCEPTION': 0.8, 'INFERRED': 0.4 };
+      // Reliability Hierarchy Weights (v1.5.0 Specification)
+      // Tier 0: Sovereign (Proprietary Override)     → 1.2x
+      // Tier 1: Behavioral (Evivve Simulation Data)  → 1.0x
+      // Tier 2: Perceptual (Leadership Self-Assess)  → 0.8x
+      // Tier 3: Environmental (Orion Scout Intel)    → 0.4x
+      const TIER_WEIGHTS = { 'SOVEREIGN': 1.2, 'BEHAVIORAL': 1.0, 'PERCEPTUAL': 0.8, 'ENVIRONMENTAL': 0.4 };
       const SENIORITY_MULTIPLIERS = { 'c_suite': 1.5, 'svp_vp_director': 1.2, 'middle_management': 1.0, 'individual_contributor': 0.8, 'default': 1.0 };
 
       for (const s of signals) {
         const rawType = (s.source_type || s.metadata?.source || 'BEHAVIORAL').toUpperCase();
-        const tier = (rawType === 'PROPRIETARY' || rawType === 'SOVEREIGN') ? 'SOVEREIGN' : 
-                     (rawType === 'DIAGNOSTIC' || rawType === 'SELF-REPORTED' || rawType === 'PERCEPTION') ? 'PERCEPTION' : 
-                     (rawType === 'RESEARCH' || rawType === 'INFERRED') ? 'INFERRED' : 'OBSERVED';
-        const typeKey = tier.toLowerCase();
+        // Map source_type → Reliability Tier
+        const tier =
+          (rawType === 'PROPRIETARY' || rawType === 'SOVEREIGN') ? 'SOVEREIGN' :
+          (rawType === 'BEHAVIORAL' || rawType === 'SIMULATION' || rawType === 'DIAGNOSTIC') ? 'BEHAVIORAL' :
+          (rawType === 'PERCEPTION' || rawType === 'SELF-REPORTED' || rawType === 'SURVEY') ? 'PERCEPTUAL' :
+          (rawType === 'RESEARCH' || rawType === 'INFERRED' || rawType === 'SCRAPER') ? 'ENVIRONMENTAL' : 'BEHAVIORAL';
+        const tierKey = tier.toLowerCase();
         
         const tierWeight = TIER_WEIGHTS[tier] || 1.0;
         const seniority = s.seniority_level || 'middle_management';
@@ -255,16 +264,19 @@ app.get('/api/analytics/global', async (req, res) => {
         const finalWeight = tierWeight * seniorityMultiplier;
         const currentScore = (s.overall_lai_score || s.overall_score || 0);
 
-        breakdown[typeKey] = (breakdown[typeKey] || 0) + 1;
+        breakdown[tierKey] = (breakdown[tierKey] || 0) + 1;
         totalWeight += finalWeight;
         weightedSum += currentScore * finalWeight;
 
-        if (tier === 'OBSERVED') {
-          tierSums.observed += currentScore;
-          tierSums.count_obs++;
-        } else if (tier === 'PERCEPTION') {
-          tierSums.perceived += currentScore;
-          tierSums.count_per++;
+        // Track per-tier weighted sums for contribution % calculation
+        tierSums.observed  += tier === 'BEHAVIORAL'    ? currentScore * finalWeight : 0;
+        tierSums.perceived += tier === 'PERCEPTUAL'    ? currentScore * finalWeight : 0;
+        tierSums.count_obs += tier === 'BEHAVIORAL'    ? finalWeight : 0;
+        tierSums.count_per += tier === 'PERCEPTUAL'    ? finalWeight : 0;
+
+        // Dissonance check: behavioral vs perceptual avg
+        if (tier === 'BEHAVIORAL') {
+          tierSums.observed += 0; // already tracked above via weighted sum
         }
         
         sums.signal_interpretation += (s.signal_interpretation_score || s.cognitive_score || currentScore) * finalWeight;
@@ -273,19 +285,29 @@ app.get('/api/analytics/global', async (req, res) => {
         sums.decision_alignment += (s.decision_alignment_score || s.decision_score || currentScore) * finalWeight;
         sums.execution_responsiveness += (s.execution_responsiveness_score || s.execution_score || currentScore) * finalWeight;
 
+        weightContribution[tierKey] += finalWeight;
+
         if (s.session_date && (!maxDate || s.session_date > maxDate)) maxDate = s.session_date;
         const dur = s.duration_seconds || s.duration || 0;
         if (dur > maxDuration) maxDuration = dur;
       }
 
-      const isResearchOnly = signals.length > 0 && (breakdown.observed || 0) === 0 && (breakdown.perception || 0) === 0;
+      const isResearchOnly = signals.length > 0 && (breakdown.behavioral || 0) === 0 && (breakdown.perceptual || 0) === 0;
       const hasData = signals.length > 0;
       const score = hasData ? (Math.round(weightedSum / totalWeight) || 0) : 0;
       
-      const avgObs = tierSums.count_obs > 0 ? tierSums.observed / tierSums.count_obs : 0;
+      const avgObs = tierSums.count_obs > 0 ? tierSums.behavioral / tierSums.count_obs : 0;
       const avgPer = tierSums.count_per > 0 ? tierSums.perceived / tierSums.count_per : 0;
       const strategic_dissonance = (avgObs > 0 && avgPer > 1.15 * avgObs);
-      const is_triangulated = (breakdown.sovereign || 0) > 0 && (breakdown.observed || 0) > 0 && (breakdown.perception || 0) > 0;
+      const is_triangulated = (breakdown.sovereign || 0) > 0 && (breakdown.behavioral || 0) > 0 && (breakdown.perceptual || 0) > 0;
+
+      // Calculate percentage contributions
+      const contributions = {};
+      if (totalWeight > 0) {
+        Object.keys(weightContribution).forEach(k => {
+          contributions[k] = Math.round((weightContribution[k] / totalWeight) * 100);
+        });
+      }
 
       if (hasData || verifiedOrg) {
         finalData.push({
@@ -304,8 +326,11 @@ app.get('/api/analytics/global', async (req, res) => {
           session_date: maxDate || first?.created_at || new Date().toISOString(),
           duration_seconds: maxDuration || 480,
           evidence_density: signals.length,
-          source_breakdown: `${breakdown.sovereign || 0} Sovereign | ${breakdown.observed || 0} Observed | ${breakdown.perception || 0} Perceptual | ${breakdown.inferred || 0} Inferred`,
-          source_breakdown_obj: breakdown,
+          source_breakdown: `${contributions.sovereign || 0}% Sovereign | ${contributions.behavioral || 0}% Behavioral | ${contributions.perceptual || 0}% Perceptual | ${contributions.environmental || 0}% Environmental`,
+          source_breakdown_obj: {
+            counts: breakdown,
+            contributions: contributions
+          },
           is_verified: !!verifiedOrg?.is_verified,
           is_research_only: isResearchOnly,
           verified_intel: verifiedOrg ? { domain: verifiedOrg.domain, hq: verifiedOrg.headquarters } : null,

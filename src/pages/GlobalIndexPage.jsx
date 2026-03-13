@@ -147,17 +147,22 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
                 <p style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 2, color: '#94a3b8', marginBottom: '1rem' }}>Signal Architecture</p>
                 <div style={{ background: 'white', padding: '1.25rem', borderRadius: 16, border: '1px solid #e2e8f0' }}>
                   {[
-                    { label: 'Sovereign Research', val: breakdown.sovereign || 0, sub: 'Proprietary Intel' },
-                    { label: 'Observed Performance', val: breakdown.observed || 0, sub: 'Simulation Telemetry' },
-                    { label: 'Perceived Sentiment', val: breakdown.perception || 0, sub: 'Internal Surveys' },
-                    { label: 'Inferred Intelligence', val: breakdown.inferred || 0, sub: 'Digital Signal' }
+                    { label: 'Sovereign Override', key: 'sovereign', sub: 'Tier 0 · 1.2x Authority', weight: r.source_breakdown_obj?.contributions?.sovereign || 0 },
+                    { label: 'Behavioral Simulation', key: 'behavioral', sub: 'Tier 1 · 1.0x Observed', weight: r.source_breakdown_obj?.contributions?.behavioral || 0 },
+                    { label: 'Perceptual Sentiment', key: 'perceptual', sub: 'Tier 2 · 0.8x Attitude', weight: r.source_breakdown_obj?.contributions?.perceptual || 0 },
+                    { label: 'Environmental Scout', key: 'environmental', sub: 'Tier 3 · 0.4x Intelligence', weight: r.source_breakdown_obj?.contributions?.environmental || 0 }
                   ].map(tier => (
-                    <div key={tier.label} style={{ marginBottom: '0.75rem', borderBottom: tier.label !== 'Inferred Intelligence' ? '1px solid #f1f5f9' : 'none', paddingBottom: tier.label !== 'Inferred Intelligence' ? '0.75rem' : 0 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: '0.6rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>{tier.label}</span>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0f172a' }}>{tier.val}</span>
+                    <div key={tier.label} style={{ marginBottom: '0.75rem', borderBottom: tier.key !== 'environmental' ? '1px solid #f1f5f9' : 'none', paddingBottom: tier.key !== 'environmental' ? '0.75rem' : 0 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <div style={{ fontSize: '0.6rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>{tier.label}</div>
+                          <p style={{ fontSize: '0.55rem', color: '#94a3b8', marginTop: '2px' }}>{tier.sub}</p>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 900, color: tier.weight > 0 ? '#0f172a' : '#cbd5e1' }}>{tier.weight}%</span>
+                          <div style={{ fontSize: '0.45rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>Weight</div>
+                        </div>
                       </div>
-                      <p style={{ fontSize: '0.55rem', color: '#94a3b8' }}>{tier.sub}</p>
                     </div>
                   ))}
                 </div>
