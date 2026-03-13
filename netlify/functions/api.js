@@ -56,8 +56,9 @@ app.get('/api/health', async (req, res) => {
         'industry',
         'overall_score', 
         'signal_detection_score',
-        'emotional_framing_score',
+        'cognitive_framing_score',
         'resource_reallocation_score',
+
         'decision_alignment_score',
         'execution_responsiveness_score',
         'metadata'
@@ -105,8 +106,9 @@ app.get('/api/scraper-logs', async (req, res) => {
 app.post('/api/diagnostic', async (req, res) => {
   const { 
     organization_name, industry, region,
-    overall_score, signal_score, emotional_score, resource_score, decision_score, execution_score 
+    overall_score, signal_score, cognitive_score, resource_score, decision_score, execution_score 
   } = req.body;
+
   
   if (!organization_name) {
     return res.status(400).json({ error: 'Organization name is required' });
@@ -121,11 +123,18 @@ app.post('/api/diagnostic', async (req, res) => {
         region: region || 'Global',
         overall_score: overall_score || 0,
         signal_score: signal_score || 0,
-        emotional_score: emotional_score || 0,
+        cognitive_score: cognitive_score || 0,
         resource_score: resource_score || 0,
         decision_score: decision_score || 0,
-        execution_score: execution_score || 0
+        execution_score: execution_score || 0,
+        metadata: {
+          source: 'Self-Reported',
+          industry: industry || 'Other',
+          region: region || 'Global',
+          is_published: true
+        }
       }])
+
       .select();
 
     if (error) throw error;
@@ -387,6 +396,7 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
 
     // 2. Forecasting (Cognitive Framing): Proactive Trade Offers
     // Score based on whether offers are submitted before or after price spikes
+
     const costSpikes = market_events.filter(e => e.type === 'MV_COST_CHANGE' && e.value > 1.2);
     const proactiveOffers = actions.filter(a => {
         if (a.type !== 'SUBMIT_OFFER') return false;
@@ -395,6 +405,7 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
     });
     
     const forecastingScore = Math.min(100, 40 + (proactiveOffers.length * 15));
+
 
     // 3. Experimentation (Resource Reallocation): Diversity/Velocity
     const uniqueBlocks = new Set(actions.map(a => a.landBlockId).filter(Boolean));
@@ -437,8 +448,9 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
         region: region || 'Global',
         overall_score: Math.round(overallScore) || 0,
         signal_detection_score: Math.round(activationScore) || 0,
-        emotional_framing_score: Math.round(forecastingScore) || 0,
+        cognitive_framing_score: Math.round(forecastingScore) || 0,
         resource_reallocation_score: Math.round(experimentationScore) || 0,
+
         decision_alignment_score: Math.round(realizationScore) || 0,
         execution_responsiveness_score: Math.round(reflectionScore) || 0,
         session_date: session_date || new Date().toISOString(),
@@ -446,8 +458,10 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
         metadata: {
             activation_delta: firstSignal && firstAction ? firstAction._at - firstSignal._at : null,
             pivoting_ratio: pivotingRatio,
+            source: 'Behavioral',
             raw_payload_id: `AFERR_${Date.now()}`,
             data_points: {
+
                 signals: market_events.length,
                 actions: actions.length
             }

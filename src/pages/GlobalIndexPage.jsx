@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe, Search, ChevronDown, ChevronUp, Zap, Shield, TrendingUp } from 'lucide-react';
+import { Globe, Search, ChevronDown, ChevronUp, Zap, Shield, TrendingUp, Brain } from 'lucide-react';
+
 
 // ── Evolutionary State Logic ──────────────────────────────────────────────────
 const getEvolutionaryState = (score) => {
@@ -72,7 +73,8 @@ const MapDot = React.memo(({ org, onClick, selected }) => {
 
   return (
     <motion.button
-      title={`${org.organization} — Adaptiveness Velocity: ${org.score}`}
+      title={`${org.organization} [${org.metadata?.source || 'Behavioral'}] — Adaptiveness Velocity: ${org.score}`}
+
       onClick={() => onClick(org)}
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: selected ? 1.7 : 1, opacity: 1 }}
@@ -136,11 +138,28 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
         <span style={{ fontWeight: 800, color: '#cbd5e1', fontFamily: 'Georgia,serif', fontSize: '1.05rem' }}>#{r.rank}</span>
 
         <span style={{ minWidth: 0 }}>
-          <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.organization}</div>
-          <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginTop: '0.15rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.15rem' }}>
+            <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.organization}</div>
+            {r.metadata?.source && (
+              <span style={{ 
+                fontSize: '0.55rem', padding: '1px 5px', borderRadius: '4px', textTransform: 'uppercase', 
+                fontWeight: 800, letterSpacing: '0.5px',
+                background: r.metadata.source === 'Behavioral' ? 'rgba(0, 122, 255, 0.1)' : 
+                            r.metadata.source === 'Research' ? 'rgba(139, 92, 246, 0.1)' : 
+                            'rgba(16, 185, 129, 0.1)',
+                color: r.metadata.source === 'Behavioral' ? '#007aff' : 
+                       r.metadata.source === 'Research' ? '#8b5cf6' : 
+                       '#10b981'
+              }}>
+                {r.metadata.source}
+              </span>
+            )}
+          </div>
+          <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {r.industry || 'Global Baseline'} · {r.region}
           </div>
         </span>
+
 
         <ScoreBar score={r.score} />
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, CheckCircle2, ChevronLeft, AlertCircle, BarChart3, TrendingUp, Sparkles } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ChevronLeft, AlertCircle, BarChart3, TrendingUp, Sparkles, Brain } from 'lucide-react';
+
 
 const dimensions = [
   { 
@@ -14,8 +15,8 @@ const dimensions = [
     ] 
   },
   { 
-    id: 'emotional', 
-    name: 'Emotional Framing', 
+    id: 'cognitive', 
+    name: 'Cognitive Framing', 
     questions: [
       "When unexpected change occurs, how often do leaders treat it as an opportunity rather than a threat?",
       "When plans stop matching reality, how open are leaders to questioning their assumptions?",
@@ -70,7 +71,6 @@ const DiagnosticPage = () => {
     const dimId = dimensions[currentDimIndex].id;
     const qKey = `${dimId}_${currentQIndex}`;
     
-    // Reverse score for specific questions (14, 18 in 0-indexed: 15, 19 in 1-indexed)
     // 14 is dim 3 (decision), index 1
     // 17 is dim 4 (execution), index 1
     let scoredValue = value;
@@ -96,10 +96,11 @@ const DiagnosticPage = () => {
       ...meta,
       overall_score: overallScore,
       signal_score: parseFloat(getDimScore('signal')),
-      emotional_score: parseFloat(getDimScore('emotional')),
+      cognitive_score: parseFloat(getDimScore('cognitive')),
       resource_score: parseFloat(getDimScore('resource')),
       decision_score: parseFloat(getDimScore('decision')),
       execution_score: parseFloat(getDimScore('execution'))
+
     };
 
     try {

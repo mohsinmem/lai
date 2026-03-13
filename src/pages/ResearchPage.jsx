@@ -35,7 +35,9 @@ const TYPE_CONFIG = {
   'Case Study':     { color: '#0d9488', bg: '#ccfbf1', border: '#99f6e4', label: 'Case Study',     Icon: Building2 },
   Article:          { color: '#3b82f6', bg: '#dbeafe', border: '#bfdbfe', label: 'Article',         Icon: Newspaper },
   'Strategic Deck': { color: '#8b5cf6', bg: '#ede9fe', border: '#ddd6fe', label: 'Strategy Deck',  Icon: Presentation },
+  'Cognitive Framing': { color: '#Brain_Color_Placeholder', bg: '#Brain_BG_Placeholder', Icon: Brain }
 };
+
 
 const getTypeConfig = (resource) =>
   TYPE_CONFIG[resource.category] || TYPE_CONFIG[resource.type] || {
@@ -261,7 +263,8 @@ const ResearchPage = () => {
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '2rem' }}>
           {[
             { Icon: Target,      name: 'Signal Detection',        desc: 'Differentiating actionable market signals from background noise — measured against global industry baselines.' },
-            { Icon: Brain,       name: 'Emotional Framing',       desc: 'Interpreting uncertainty with executive composure and strategic curiosity rather than defensive posture.' },
+            { Icon: Brain,       name: 'Cognitive Framing',       desc: 'Interpreting uncertainty with executive composure and strategic curiosity rather than defensive posture.' },
+
             { Icon: ArrowDownUp, name: 'Resource Reallocation',   desc: 'Measurable velocity of capital, talent, and attention shifts toward emerging revenue opportunities.' },
             { Icon: Minimize,    name: 'Decision Alignment',      desc: 'Maintaining organizational coherence as leadership decisions cascade across business units.' },
             { Icon: FastForward, name: 'Execution Responsiveness',desc: 'Speed of translating updated strategy into measurable operational and financial outcomes.' },
