@@ -232,7 +232,7 @@ app.get('/api/analytics/global', async (req, res) => {
       const orgName = verifiedOrg ? verifiedOrg.name : (first?.organization_name?.trim() || 'Unknown');
             let totalWeight = 0;
       let weightedSum = 0;
-      let sums = { cognitive: 0, strategic: 0, challenge: 0, learning: 0, stamina: 0 };
+      let sums = { signal_interpretation: 0, cognitive_framing: 0, resource_reallocation: 0, decision_alignment: 0, execution_responsiveness: 0 };
       let maxDate = null;
       let maxDuration = 0;
       const breakdown = { sovereign: 0, observed: 0, perception: 0, inferred: 0 };
@@ -267,11 +267,11 @@ app.get('/api/analytics/global', async (req, res) => {
           tierSums.count_per++;
         }
         
-        sums.cognitive += (s.cognitive_framing_score || s.cognitive_score || currentScore) * finalWeight;
-        sums.strategic += (s.strategic_calibration_score || s.signal_detection_score || s.signal_score || currentScore) * finalWeight;
-        sums.challenge += (s.challenge_networks_score || s.resource_reallocation_score || s.resource_score || currentScore) * finalWeight;
-        sums.learning += (s.learning_agility_score || s.decision_alignment_score || s.decision_score || currentScore) * finalWeight;
-        sums.stamina += (s.psychological_stamina_score || s.execution_responsiveness_score || s.execution_score || currentScore) * finalWeight;
+        sums.signal_interpretation += (s.signal_interpretation_score || s.cognitive_score || currentScore) * finalWeight;
+        sums.cognitive_framing += (s.cognitive_framing_score || s.signal_detection_score || s.signal_score || currentScore) * finalWeight;
+        sums.resource_reallocation += (s.resource_reallocation_score || s.resource_score || currentScore) * finalWeight;
+        sums.decision_alignment += (s.decision_alignment_score || s.decision_score || currentScore) * finalWeight;
+        sums.execution_responsiveness += (s.execution_responsiveness_score || s.execution_score || currentScore) * finalWeight;
 
         if (s.session_date && (!maxDate || s.session_date > maxDate)) maxDate = s.session_date;
         const dur = s.duration_seconds || s.duration || 0;
@@ -295,11 +295,11 @@ app.get('/api/analytics/global', async (req, res) => {
           score:        score,
           strategic_dissonance,
           is_triangulated,
-          cognitive:    hasData ? (Math.round(sums.cognitive / totalWeight) || 0) : 0,
-          strategic:    hasData ? (Math.round(sums.strategic / totalWeight) || 0) : 0,
-          challenge:    hasData ? (Math.round(sums.challenge / totalWeight) || 0) : 0,
-          learning:     hasData ? (Math.round(sums.learning / totalWeight) || 0) : 0,
-          stamina:      hasData ? (Math.round(sums.stamina / totalWeight) || 0) : 0,
+          signal_interpretation:    hasData ? (Math.round(sums.signal_interpretation / totalWeight) || 0) : 0,
+          cognitive_framing:    hasData ? (Math.round(sums.cognitive_framing / totalWeight) || 0) : 0,
+          resource_reallocation:    hasData ? (Math.round(sums.resource_reallocation / totalWeight) || 0) : 0,
+          decision_alignment:    hasData ? (Math.round(sums.decision_alignment / totalWeight) || 0) : 0,
+          execution_responsiveness:    hasData ? (Math.round(sums.execution_responsiveness / totalWeight) || 0) : 0,
           
           session_date: maxDate || first?.created_at || new Date().toISOString(),
           duration_seconds: maxDuration || 480,

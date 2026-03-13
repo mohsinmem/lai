@@ -167,8 +167,11 @@ exports.handler = async (event) => {
         industry: sector,
         region: 'Global',
         source_type: 'RESEARCH',
-        overall_score: Math.min(100, avgScore + 15),
-        cognitive_score: Math.min(100, avgScore + 20),
+        signal_interpretation_score: Math.min(100, avgScore + 10), // Example value, adjust as needed
+        cognitive_framing_score: Math.min(100, avgScore + 15),    // Example value, adjust as needed
+        resource_reallocation_score: Math.min(100, avgScore + 5), // Example value, adjust as needed
+        decision_alignment_score: Math.min(100, avgScore + 12),   // Example value, adjust as needed
+        execution_responsiveness_score: Math.min(100, avgScore + 8), // Example value, adjust as needed
         confidence_score: 0.75,
         metadata: {
           source: 'Research',

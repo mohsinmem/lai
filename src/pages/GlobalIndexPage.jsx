@@ -4,11 +4,11 @@ import { Globe, Search, ChevronDown, ChevronUp, Zap, Shield, TrendingUp, Brain, 
 import { supabase } from '../supabase';
 
 const PILLAR_DEFINITIONS = {
-  cognitive: "The ability to reframe threats as opportunities and pivot mental models under pressure.",
-  strategic: "Precision in detecting environmental signals and translating them into strategy.",
-  challenge: "The presence of psychological safety and dissent channels to stress-test decisions.",
-  learning: "The speed of skill acquisition and knowledge transfer across the leadership team.",
-  stamina: "The capacity to maintain high-performance decision-making during extended disruption."
+  signal_interpretation: "The ability to reframe threats as opportunities and pivot mental models under pressure.",
+  cognitive_framing: "Precision in detecting environmental signals and translating them into strategy.",
+  resource_reallocation: "The presence of psychological safety and dissent channels to stress-test decisions.",
+  decision_alignment: "The speed of skill acquisition and knowledge transfer across the leadership team.",
+  execution_responsiveness: "The capacity to maintain high-performance decision-making during extended disruption."
 };
 
 // ── Evolutionary State Logic ──────────────────────────────────────────────────
@@ -81,7 +81,6 @@ const ScoreBar = ({ score }) => {
         <motion.div initial={{ width: 0 }} animate={{ width: `${score}%` }}
           style={{ height: '100%', background: ev.color, borderRadius: 9999 }} />
       </div>
-      <span style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: '0.75rem', color: ev.color, minWidth: 24 }}>{score}</span>
     </div>
   );
 };
@@ -127,27 +126,13 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
               Data Pending
             </div>
           ) : (
-            <ScoreBar score={r.cognitive || r.score} />
+            <ScoreBar score={r.signal_interpretation || r.score} />
           )}
         </span>
         <span style={{ fontWeight: 700, fontSize: '0.85rem', color: r.cognitiveShift?.startsWith('+') ? '#10b981' : '#ef4444', opacity: (r.is_verified && r.evidence_density === 0) ? 0.3 : 1 }}>
           {r.score === 0 ? '--' : r.cognitiveShift}
         </span>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '1rem' }}>
-          {r.is_research_only && (
-            <span style={{ 
-              padding: '0.25rem 0.6rem', 
-              borderRadius: 6, 
-              fontSize: '0.6rem', 
-              fontWeight: 800, 
-              background: '#fef2f2', 
-              color: '#ef4444', 
-              border: '1px solid #fee2e2',
-              textTransform: 'uppercase'
-            }}>
-              Research Only
-            </span>
-          )}
           <span className={ev.pill} style={{ padding: '0.25rem 0.75rem', borderRadius: 9999, fontSize: '0.65rem', fontWeight: 800, border: '1px solid' }}>{ev.label}</span>
           {isOpen ? <ChevronUp size={14} color="#94a3b8" /> : <ChevronDown size={14} color="#cbd5e1" />}
         </div>
@@ -196,11 +181,11 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
                 <p style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 2, color: '#94a3b8', marginBottom: '1rem' }}>5-Parameter Adaptiveness Breakdown</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem 2rem' }}>
                   {[
-                    { label: 'Cognitive Framing', key: 'cognitive' },
-                    { label: 'Strategic Calibration', key: 'strategic' },
-                    { label: 'Challenge Networks', key: 'challenge' },
-                    { label: 'Learning Agility', key: 'learning' },
-                    { label: 'Psychological Stamina', key: 'stamina' }
+                    { label: 'Signal Interpretation', key: 'signal_interpretation' },
+                    { label: 'Cognitive Framing', key: 'cognitive_framing' },
+                    { label: 'Resource Reallocation', key: 'resource_reallocation' },
+                    { label: 'Decision Alignment', key: 'decision_alignment' },
+                    { label: 'Execution Responsiveness', key: 'execution_responsiveness' }
                   ].map(dim => (
                     <div key={dim.key} title={PILLAR_DEFINITIONS[dim.key]}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem', cursor: 'help' }}>
@@ -337,7 +322,7 @@ const GlobalIndexPage = () => {
           <div style={{ display: 'grid', gridTemplateColumns: '70px 2.5fr 150px 100px 180px', padding: '1.25rem 1.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.5, color: '#94a3b8' }}>
             <span>Rank</span>
             <span>Organization Profile</span>
-            <span>Cognitive Lead</span>
+            <span>Signal Interpretation Lead</span>
             <span>Trend</span>
             <span style={{ textAlign: 'right' }}>Evolutionary State</span>
           </div>

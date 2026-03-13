@@ -59,11 +59,11 @@ exports.handler = async (event) => {
     const { data, error } = await supabase.from('diagnostic_results').insert([{
       organization_name: organization_id, // In this model, name is used for resolution
       overall_lai_score: overall,
-      cognitive_framing_score: pillars.cognitive,
-      strategic_calibration_score: pillars.strategic,
-      challenge_networks_score: pillars.challenge,
-      learning_agility_score: pillars.learning,
-      psychological_stamina_score: pillars.stamina,
+      signal_interpretation_score: pillars.cognitive,
+      cognitive_framing_score: pillars.strategic,
+      resource_reallocation_score: pillars.challenge,
+      decision_alignment_score: pillars.learning,
+      execution_responsiveness_score: pillars.stamina,
       source_type: mode === 'SOVEREIGN' ? 'PROPRIETARY' : 'PERCEPTION',
       seniority_level: seniority,
       metadata: {

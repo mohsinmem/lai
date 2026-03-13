@@ -9,11 +9,11 @@ async function injectTestSignals() {
   await supabase.from('diagnostic_results').insert([{
     organization_name: orgName,
     overall_lai_score: 92,
-    cognitive_framing_score: 95,
-    strategic_calibration_score: 90,
-    challenge_networks_score: 88,
-    learning_agility_score: 94,
-    psychological_stamina_score: 93,
+    signal_interpretation_score: 95,
+    cognitive_framing_score: 90,
+    resource_reallocation_score: 88,
+    decision_alignment_score: 92,
+    execution_responsiveness_score: 96,
     source_type: 'PROPRIETARY',
     seniority_level: 'c_suite',
     metadata: { source: 'Expert Audit', notes: 'High strategic coherence observed at board level.' }
@@ -25,11 +25,11 @@ async function injectTestSignals() {
   await supabase.from('diagnostic_results').insert([{
     organization_name: orgName,
     overall_lai_score: 98, // Very high
-    cognitive_framing_score: 99,
-    strategic_calibration_score: 97,
-    challenge_networks_score: 95,
-    learning_agility_score: 98,
-    psychological_stamina_score: 98,
+    signal_interpretation_score: 99,
+    cognitive_framing_score: 97,
+    resource_reallocation_score: 98,
+    decision_alignment_score: 96,
+    execution_responsiveness_score: 100,
     source_type: 'PERCEPTION',
     seniority_level: 'vp_director',
     metadata: { source: 'Internal Survey', notes: 'Leaders feel extremely confident.' }
@@ -39,11 +39,11 @@ async function injectTestSignals() {
   await supabase.from('diagnostic_results').insert([{
     organization_name: orgName,
     overall_lai_score: 80,
-    cognitive_framing_score: 82,
-    strategic_calibration_score: 78,
-    challenge_networks_score: 75,
-    learning_agility_score: 85,
-    psychological_stamina_score: 80,
+    signal_interpretation_score: 82,
+    cognitive_framing_score: 78,
+    resource_reallocation_score: 75,
+    decision_alignment_score: 80,
+    execution_responsiveness_score: 85,
     source_type: 'SIMULATION',
     seniority_level: 'middle_management',
     metadata: { source: 'Evivve Simulation' }
