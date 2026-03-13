@@ -197,6 +197,56 @@ app.get('/api/resources', async (req, res) => {
   }
 });
 
+// Live Research Signals (Legacy Support)
+app.get('/api/research/live', async (req, res) => {
+    try {
+      const { data, error } = await supabaseClient
+        .from('diagnostic_results')
+        .select('organization_name, region, overall_score, session_date, duration_seconds, metadata')
+        .order('session_date', { ascending: false })
+        .limit(20);
+  
+      if (error) throw error;
+      
+      // Map it to the format ResearchPage.jsx expects for signals
+      const mapped = (data || []).map(d => ({
+          ...d,
+          research_notes: d.metadata?.summary || `AFERR Behavioral Protocol Validated: ${d.organization_name}`
+      }));
+
+      res.json(mapped);
+    } catch (err) {
+      console.error('Research Live Error:', err);
+      res.json([]);
+    }
+  });
+
+// Admin Force-Sync (Trigger Background Workers)
+app.post('/api/admin/force-sync', async (req, res) => {
+    const baseUrl = process.env.URL || `https://${req.headers.host}`;
+    const results = {};
+    
+    try {
+        console.log('Admin Force-Sync triggered...');
+        
+        // 1. Orion Scout
+        const scoutUrl = `${baseUrl}/.netlify/functions/orion-scout-background`;
+        results.orion_scout = await fetch(scoutUrl, { 
+            method: 'POST', 
+            headers: { 'x-orion-secret': process.env.ORION_SECRET } 
+        }).then(r => r.status).catch(e => e.message);
+
+        // 2. NotebookLM Synthesis
+        const synthUrl = `${baseUrl}/.netlify/functions/notebooklm-synthesis-background`;
+        results.notebooklm = await fetch(synthUrl, { method: 'POST' })
+            .then(r => r.status).catch(e => e.message);
+
+        res.json({ status: 'initiated', results });
+    } catch (err) {
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
+
 // Evivve Multiplayer Ingestion (Refined AFERR-LAI Alignment)
 app.post('/api/ingest-multiplayer', async (req, res) => {
   const payload = req.body;
