@@ -424,12 +424,13 @@ const GlobalIndexPage = () => {
         <div style={{ background: 'white', borderRadius: 20, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
 
           <div style={{ display: 'grid', gridTemplateColumns: '80px 2fr 120px 100px 140px', padding: '1rem 1.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#94a3b8' }}>
-            <span>Adaptiveness Rank</span>
-            <span>Organization Profile (Region)</span>
-            <span>Adaptiveness Velocity</span>
-            <span>Cognitive Trend</span>
-            <span>Evolutionary State</span>
+            <span>Rank</span>
+            <span>Organization Profile</span>
+            <span>Cognitive Lead</span>
+            <span>Trend</span>
+            <span style={{ textAlign: 'right', paddingRight: '1rem' }}>Evolutionary State</span>
           </div>
+
 
           {loading ? (
             <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>

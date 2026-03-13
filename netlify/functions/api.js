@@ -176,6 +176,8 @@ app.get('/api/analytics/global', async (req, res) => {
       let totalWeight = 0;
       let weightedSum = 0;
       let sums = { cognitive: 0, signal: 0, resource: 0, decision: 0, execution: 0 };
+      let maxDate = null;
+      let maxDuration = 0;
       
       const breakdown = { behavioral: 0, diagnostic: 0, research: 0 };
 
@@ -195,6 +197,11 @@ app.get('/api/analytics/global', async (req, res) => {
         sums.resource += (s.resource_score || s.overall_score) * weight;
         sums.decision += (s.decision_score || s.overall_score) * weight;
         sums.execution += (s.execution_score || s.overall_score) * weight;
+
+        // Keep track of most recent temporal data for frontend filters
+        if (!maxDate || s.session_date > maxDate) maxDate = s.session_date;
+        const dur = s.duration_seconds || s.duration || 0;
+        if (dur > maxDuration) maxDuration = dur;
       }
 
       const weightedScore = Math.round(weightedSum / totalWeight);
@@ -204,13 +211,14 @@ app.get('/api/analytics/global', async (req, res) => {
         region:       first.region || 'Global',
         industry:     first.industry || first.metadata?.industry || 'General Business',
         score:        weightedScore,
-        // Lead Metric: Cognitive score (v1.3.0)
         cognitive:    Math.round(sums.cognitive / totalWeight),
         signal:       Math.round(sums.signal / totalWeight),
         resource:     Math.round(sums.resource / totalWeight),
         decision:     Math.round(sums.decision / totalWeight),
         execution:    Math.round(sums.execution / totalWeight),
         
+        session_date: maxDate || new Date().toISOString(),
+        duration_seconds: maxDuration || 480, // Fallback for visibility
         evidence_density: signals.length,
         source_breakdown: `${breakdown.behavioral} Behavioral | ${breakdown.diagnostic} Diagnostic | ${breakdown.research} Research`,
         is_published: true,
