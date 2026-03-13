@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe, Search, ChevronDown, ChevronUp, Zap, Shield, TrendingUp, Brain, CheckCircle2, AlertTriangle, Info, Layers } from 'lucide-react';
+import { Globe, Search, ChevronDown, ChevronUp, Zap, Shield, ShieldCheck, TrendingUp, Brain, CheckCircle2, AlertTriangle, Info, Layers } from 'lucide-react';
 import { supabase } from '../supabase';
 
 const PILLAR_DEFINITIONS = {
@@ -106,16 +106,22 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
                 title={`Undisputed Data: ${r.evidence_density} Observed Performance Signals utilized.`} />
             )}
             {r.is_triangulated && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '3px', padding: '2px 6px', background: '#f0f9ff', color: '#0369a1', borderRadius: '4px', fontSize: '0.6rem', fontWeight: 800, border: '1px solid #bae6fd' }}>
-                <Layers size={10} /> TRIANGULATED
+              <span 
+                style={{ display: 'flex', alignItems: 'center', gap: '3px', padding: '2px 6px', background: '#f0f9ff', color: '#0369a1', borderRadius: '4px', fontSize: '0.6rem', fontWeight: 800, border: '1px solid #bae6fd', cursor: 'help' }}
+                title="Triangulated: Signal verified across Sovereign, Behavioral, and Perceptual sources for 360° reliability."
+              >
+                <ShieldCheck size={10} /> TRIANGULATED
               </span>
             )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase' }}>{r.industry || 'Global Baseline'} · {r.region}</div>
             {r.strategic_dissonance && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#d97706', fontSize: '0.65rem', fontWeight: 800 }}>
-                <AlertTriangle size={12} /> INSIGHT ALERT
+              <div 
+                style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#dc2626', fontSize: '0.65rem', fontWeight: 800, cursor: 'help' }}
+                title="Strategic Dissonance: A significant gap exists between awareness (Perception) and action (Behavior). The organization knows what to do but isn't executing yet."
+              >
+                <AlertTriangle size={12} /> ADAPTIVENESS GAP
               </div>
             )}
           </div>

@@ -269,14 +269,13 @@ app.get('/api/analytics/global', async (req, res) => {
         weightedSum += currentScore * finalWeight;
 
         // Track per-tier weighted sums for contribution % calculation
-        tierSums.observed  += tier === 'BEHAVIORAL'    ? currentScore * finalWeight : 0;
-        tierSums.perceived += tier === 'PERCEPTUAL'    ? currentScore * finalWeight : 0;
-        tierSums.count_obs += tier === 'BEHAVIORAL'    ? finalWeight : 0;
-        tierSums.count_per += tier === 'PERCEPTUAL'    ? finalWeight : 0;
-
-        // Dissonance check: behavioral vs perceptual avg
+        // Track per-tier weighted sums for calculation of averages and dissonance
         if (tier === 'BEHAVIORAL') {
-          tierSums.observed += 0; // already tracked above via weighted sum
+          tierSums.behavioral += currentScore * finalWeight;
+          tierSums.count_obs += finalWeight;
+        } else if (tier === 'PERCEPTUAL') {
+          tierSums.perceived += currentScore * finalWeight;
+          tierSums.count_per += finalWeight;
         }
         
         sums.signal_interpretation += (s.signal_interpretation_score || s.cognitive_score || currentScore) * finalWeight;
