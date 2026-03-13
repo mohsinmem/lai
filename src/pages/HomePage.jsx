@@ -148,11 +148,49 @@ const HomePage = () => {
             <Link to="/global-index" className="btn-primary">View Global Map</Link>
           </div>
           <div className="glai-heatmap">
-            {/* Visual Heatmap Representation */}
             <div className="heatmap-mockup">
               <div className="map-blob b1"></div>
               <div className="map-blob b2"></div>
               <div className="map-blob b3"></div>
+            </div>
+            
+            {/* Hierarchy of Truth Legend */}
+            <div className="intelligence-legend">
+              <h4 className="legend-title">Hierarchy of Truth</h4>
+              <div className="legend-items">
+                <div className="legend-item">
+                  <div className="legend-tier tier-0">Tier 0</div>
+                  <div>
+                    <strong>Sovereign</strong>
+<<<<<<< HEAD
+                    <p>Proprietary Research & Expert Overrides (1.5x)</p>
+=======
+                    <p>Proprietary Research & Expert Overrides (1.2x)</p>
+>>>>>>> e4da136a541935dba949a893d5c1a363975726a9
+                  </div>
+                </div>
+                <div className="legend-item">
+                  <div className="legend-tier tier-1">Tier 1</div>
+                  <div>
+                    <strong>Observed</strong>
+                    <p>Behavioral Simulation Telemetry (1.0x)</p>
+                  </div>
+                </div>
+                <div className="legend-item">
+                  <div className="legend-tier tier-2">Tier 2</div>
+                  <div>
+                    <strong>Perceived</strong>
+                    <p>Internal Diagnostic & Sentiment Surveys (0.8x)</p>
+                  </div>
+                </div>
+                <div className="legend-item">
+                  <div className="legend-tier tier-3">Tier 3</div>
+                  <div>
+                    <strong>Inferred</strong>
+                    <p>External Market Intelligence & Digital Signals (0.4x)</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -309,13 +347,31 @@ const HomePage = () => {
         .glai-stat p { margin: 0; font-size: 0.8rem; }
 
         .heatmap-mockup {
-          width: 100%; height: 400px; background: white; border-radius: 12px; position: relative; overflow: hidden;
-          box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+          width: 100%; height: 350px; background: white; border-radius: 12px; position: relative; overflow: hidden;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.05); margin-bottom: 2rem;
         }
         .map-blob { position: absolute; border-radius: 50%; filter: blur(40px); opacity: 0.4; }
         .b1 { width: 300px; height: 300px; background: var(--teal); top: -50px; left: -50px; }
         .b2 { width: 250px; height: 250px; background: var(--navy); bottom: -30px; right: -30px; }
         .b3 { width: 200px; height: 200px; background: var(--slate); top: 50%; left: 50%; }
+
+        .intelligence-legend { 
+          background: white; padding: 2rem; border-radius: 12px; 
+          border: 1px solid var(--border-color); box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        }
+        .legend-title { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: var(--slate-light); margin-bottom: 1.5rem; }
+        .legend-items { display: grid; gap: 1.25rem; }
+        .legend-item { display: flex; gap: 1rem; align-items: flex-start; }
+        .legend-tier { 
+          font-size: 0.6rem; font-weight: 800; padding: 0.2rem 0.5rem; border-radius: 4px; 
+          color: white; text-transform: uppercase; min-width: 48px; text-align: center; margin-top: 0.2rem;
+        }
+        .tier-0 { background: #0f172a; }
+        .tier-1 { background: #3b82f6; }
+        .tier-2 { background: #0d9488; }
+        .tier-3 { background: #64748b; }
+        .legend-item strong { display: block; font-size: 0.9rem; color: var(--navy); }
+        .legend-item p { font-size: 0.75rem; color: var(--text-muted); margin: 0; }
 
         @media (max-width: 992px) {
           .hero-content, .hero-image, .gap-text, .gap-visual, .glai-content, .glai-heatmap { grid-column: span 12; }
