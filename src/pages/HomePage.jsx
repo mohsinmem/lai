@@ -162,28 +162,28 @@ const HomePage = () => {
                   <div className="legend-tier tier-0">Tier 0</div>
                   <div>
                     <strong>Sovereign</strong>
-                    <p>Proprietary Research & Expert Overrides (1.2x)</p>
+                    <p>Proprietary Research & Expert Ingestion (1.2x Authority Weight). This tier represents ground-truth authority and overrides all other telemetry.</p>
                   </div>
                 </div>
                 <div className="legend-item">
                   <div className="legend-tier tier-1">Tier 1</div>
                   <div>
-                    <strong>Observed</strong>
-                    <p>Behavioral Simulation Telemetry (1.0x)</p>
+                    <strong>Behavioral</strong>
+                    <p>Direct Observation via Evivve Simulation Telemetry (1.0x). High-fidelity signals captured through real-time leadership experiments.</p>
                   </div>
                 </div>
                 <div className="legend-item">
                   <div className="legend-tier tier-2">Tier 2</div>
                   <div>
-                    <strong>Perceived</strong>
-                    <p>Internal Diagnostic & Sentiment Surveys (0.8x)</p>
+                    <strong>Perceptual</strong>
+                    <p>Leadership Self-Assessments & Sentiment Ingestion (0.8x). Measures organizational awareness vs active behavior.</p>
                   </div>
                 </div>
                 <div className="legend-item">
                   <div className="legend-tier tier-3">Tier 3</div>
                   <div>
-                    <strong>Inferred</strong>
-                    <p>External Market Intelligence & Digital Signals (0.4x)</p>
+                    <strong>Environmental</strong>
+                    <p>Orion Scout Web Intelligence (0.4x). External data harvested from public filings, patents, and market signals.</p>
                   </div>
                 </div>
               </div>

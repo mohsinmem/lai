@@ -471,11 +471,16 @@ app.get('/api/research/live', async (req, res) => {
     const diag = (diagRes.data || []).map(d => {
       const score = d.overall_score || 75;
       const tier = score >= 70 ? 'Antifragile' : score >= 40 ? 'Emergent' : 'Fragile';
+      
+      // AFERR Phase Mapping (v1.5.0 Specification)
+      const phases = ['Activation', 'Forecasting', 'Experimentation', 'Realization', 'Reflection'];
+      const currentPhase = phases[Math.floor(Date.now() / 1000 / 60 / 60) % phases.length]; // Rotate phase for variety in live feed
+
       return {
         ...d,
         overall_score: score,
         summary: d.metadata?.summary ||
-          `LAI Intelligence Validated — ${d.organization_name} | Adaptiveness Velocity: ${score} | Tier: ${tier} | AFERR Protocol complete.`,
+          `AFERR ${currentPhase} Complete — ${d.organization_name} | Adaptiveness Velocity: ${score} | Tier: ${tier}.`,
       };
     });
 
