@@ -197,29 +197,50 @@ app.get('/api/resources', async (req, res) => {
   }
 });
 
-// Live Research Signals (Legacy Support)
+// Live Research Signals — GLAM Feed (merged scraper_logs + diagnostic_results)
 app.get('/api/research/live', async (req, res) => {
-    try {
-      const { data, error } = await supabaseClient
+  try {
+    const [logsRes, diagRes] = await Promise.all([
+      supabaseClient
+        .from('scraper_logs')
+        .select('*')
+        .in('status', ['signal', 'success', 'info'])
+        .order('created_at', { ascending: false })
+        .limit(15),
+      supabaseClient
         .from('diagnostic_results')
         .select('organization_name, region, overall_score, session_date, duration_seconds, metadata')
         .order('session_date', { ascending: false })
-        .limit(20);
-  
-      if (error) throw error;
-      
-      // Map it to the format ResearchPage.jsx expects for signals
-      const mapped = (data || []).map(d => ({
-          ...d,
-          research_notes: d.metadata?.summary || `AFERR Behavioral Protocol Validated: ${d.organization_name}`
-      }));
+        .limit(10),
+    ]);
 
-      res.json(mapped);
-    } catch (err) {
-      console.error('Research Live Error:', err);
-      res.json([]);
-    }
-  });
+    const logs = (logsRes.data || []).map(l => ({
+      id:             l.id,
+      created_at:     l.created_at,
+      summary:        l.summary,
+      status:         l.status,
+      region:         null,
+      overall_score:  null,
+      session_date:   null,
+      duration_seconds: null,
+    }));
+
+    const diag = (diagRes.data || []).map(d => ({
+      ...d,
+      summary: d.metadata?.summary || `AFERR Behavioral Protocol Validated: ${d.organization_name}`,
+    }));
+
+    // Interleave: newest first across both sources
+    const merged = [...logs, ...diag]
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 20);
+
+    res.json(merged);
+  } catch (err) {
+    console.error('Research Live Error:', err);
+    res.json([]);
+  }
+});
 
 // Admin Force-Sync (Trigger Background Workers)
 app.post('/api/admin/force-sync', async (req, res) => {

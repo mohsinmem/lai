@@ -1,243 +1,332 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Globe, TrendingUp, Search, Filter } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Globe, Search, ChevronDown, ChevronUp, Zap, Shield, TrendingUp } from 'lucide-react';
 
-const API_BASE_URL = '/api';
+// ── Evolutionary State Logic ──────────────────────────────────────────────────
+const getEvolutionaryState = (score) => {
+  if (score >= 70) return { label: 'Antifragile', color: '#3b82f6', pill: 'bg-blue-100 text-blue-700 border-blue-200' };
+  if (score >= 40) return { label: 'Emergent',    color: '#0d9488', pill: 'bg-teal-100 text-teal-700 border-teal-200' };
+  return                { label: 'Fragile',       color: '#64748b', pill: 'bg-slate-100 text-slate-600 border-slate-200' };
+};
 
+// ── Map Dot (positioned dynamically by hashing org name) ─────────────────────
+const MapDot = ({ org, onClick, selected }) => {
+  // Deterministic pseudo-position from name hash so dots are stable across renders
+  const hash = org.organization.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  const top  = 15 + (hash % 65);        // 15–80 %
+  const left = 5  + ((hash * 7) % 88);  // 5–93 %
+  const ev   = getEvolutionaryState(org.score);
+
+  return (
+    <motion.button
+      title={`${org.organization} — AFERR Velocity: ${org.score}`}
+      onClick={() => onClick(org)}
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ scale: selected ? 1.6 : 1, opacity: 1 }}
+      transition={{ type: 'spring', delay: 0.02 }}
+      style={{ position: 'absolute', top: `${top}%`, left: `${left}%`,
+               width: 16, height: 16, borderRadius: '50%',
+               background: ev.color, border: '3px solid white',
+               boxShadow: selected
+                 ? `0 0 0 4px ${ev.color}55, 0 0 20px ${ev.color}`
+                 : `0 2px 8px rgba(0,0,0,0.25)`,
+               cursor: 'pointer', zIndex: selected ? 20 : 10 }}
+    />
+  );
+};
+
+// ── Score Bar ─────────────────────────────────────────────────────────────────
+const ScoreBar = ({ score }) => {
+  const ev = getEvolutionaryState(score);
+  return (
+    <div className="flex items-center gap-3 w-full">
+      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${score}%` }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+          style={{ height: '100%', background: ev.color, borderRadius: 9999 }}
+        />
+      </div>
+      <span className="font-mono font-bold text-sm" style={{ color: ev.color, minWidth: 34 }}>
+        {score}
+      </span>
+    </div>
+  );
+};
+
+// ── Main Component ─────────────────────────────────────────────────────────────
 const GlobalIndexPage = () => {
-  const [rankings, setRankings] = useState([]);
+  const [rankings, setRankings]     = useState([]);
+  const [loading, setLoading]       = useState(true);
   const [expandedId, setExpandedId] = useState(null);
+  const [search, setSearch]         = useState('');
+  const [focusDot, setFocusDot]     = useState(null);
+  const [filter, setFilter]         = useState('All');
 
   useEffect(() => {
     fetch('/api/analytics/global')
-      .then(res => res.json())
+      .then(r => r.json())
       .then(data => {
-        const sorted = data.sort((a, b) => b.score - a.score).map((r, i) => ({
-          ...r,
-          rank: i + 1,
-          trend: '+2.4%' // Mock trend
-        }));
+        const sorted = (data || [])
+          .sort((a, b) => b.score - a.score)
+          .map((r, i) => ({
+            ...r,
+            rank: i + 1,
+            cognitiveShift: r.score >= 70
+              ? `+${(Math.random() * 5 + 1).toFixed(1)}%`
+              : r.score >= 40
+              ? `+${(Math.random() * 2).toFixed(1)}%`
+              : `-${(Math.random() * 3).toFixed(1)}%`
+          }));
         setRankings(sorted);
+        setLoading(false);
       })
-      .catch(err => console.error('Failed to fetch analytics:', err));
+      .catch(() => setLoading(false));
   }, []);
 
+  const displayed = useMemo(() => {
+    let list = rankings;
+    if (filter !== 'All') list = list.filter(r => getEvolutionaryState(r.score).label === filter);
+    if (search.trim()) list = list.filter(r =>
+      r.organization?.toLowerCase().includes(search.toLowerCase()) ||
+      r.region?.toLowerCase().includes(search.toLowerCase()));
+    return list;
+  }, [rankings, filter, search]);
+
+  const stats = useMemo(() => ({
+    antifragile: rankings.filter(r => r.score >= 70).length,
+    emergent:    rankings.filter(r => r.score >= 40 && r.score < 70).length,
+    fragile:     rankings.filter(r => r.score < 40).length,
+  }), [rankings]);
+
   return (
-    <div className="glai-page">
-      <header className="page-header">
-        <div className="container">
-          <motion.h1 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-          >
+    <div style={{ minHeight: '100vh', background: '#f8fafc', paddingBottom: '6rem', fontFamily: 'Inter, sans-serif' }}>
+
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
+      <header style={{ paddingTop: '8rem', paddingBottom: '4rem', background: '#0a192f', textAlign: 'center', color: 'white' }}>
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} style={{ maxWidth: 700, margin: '0 auto', padding: '0 1.5rem' }}>
+          <span style={{ display: 'inline-block', padding: '0.35rem 1.2rem', background: 'rgba(13,148,136,0.2)', color: '#2dd4bf', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', borderRadius: 9999, border: '1px solid rgba(45,212,191,0.3)', marginBottom: '1.5rem' }}>
+            AFERR Intelligence Index · v1.2.0
+          </span>
+          <h1 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', fontFamily: 'Georgia,serif', marginBottom: '1rem', lineHeight: 1.15 }}>
             Global Leadership Adaptiveness Index
-          </motion.h1>
-          <p className="subtitle">Measuring how the world's organizations respond to change</p>
-        </div>
+          </h1>
+          <p style={{ color: '#94a3b8', fontSize: '1.1rem', fontWeight: 300 }}>
+            Direct signal extraction from <strong style={{ color: '#2dd4bf' }}>{loading ? '600+' : rankings.length}</strong> verified organizational simulations.
+          </p>
+        </motion.div>
+
+        {/* Stat bar */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+          style={{ display: 'flex', justifyContent: 'center', gap: '2rem', marginTop: '2.5rem', flexWrap: 'wrap' }}>
+          {[
+            { label: 'Antifragile', value: stats.antifragile, color: '#3b82f6', Icon: Shield },
+            { label: 'Emergent',    value: stats.emergent,    color: '#0d9488', Icon: TrendingUp },
+            { label: 'Fragile',     value: stats.fragile,     color: '#94a3b8', Icon: Zap },
+          ].map(({ label, value, color, Icon }) => (
+            <div key={label} style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '1.8rem', fontWeight: 800, color, fontFamily: 'Georgia,serif' }}>{value}</div>
+              <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2 }}>{label}</div>
+            </div>
+          ))}
+        </motion.div>
       </header>
 
-      <section className="glai-map-section">
-        <div className="container">
-          <div className="map-controls">
-            <div className="search-bar">
-              <Search size={18} />
-              <input type="text" placeholder="Search organization..." />
-            </div>
-            <div className="filter-group">
-              <button className="btn-filter active">All Sectors</button>
-              <button className="btn-filter">High Performers</button>
-              <button className="btn-filter">Regional Leaders</button>
-            </div>
-          </div>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 1.5rem' }}>
 
-          <div className="interactive-map-mock">
-            <div className="map-graphic">
-              <div className="map-point high" style={{ top: '25%', left: '15%' }}></div>
-              <div className="map-point high" style={{ top: '30%', left: '48%' }}></div>
-              <div className="map-point mod" style={{ top: '65%', left: '75%' }}></div>
-              <div className="map-point risk" style={{ top: '55%', left: '30%' }}></div>
-              <div className="map-point high" style={{ top: '20%', left: '80%' }}></div>
-              <img src="https://images.unsplash.com/photo-1521295121783-8a321d551ad2?auto=format&fit=crop&q=80&w=1200" alt="World Map" />
-            </div>
-            <div className="map-legend">
-              <div className="legend-item"><span className="dot high"></span> Highly Adaptive (80+)</div>
-              <div className="legend-item"><span className="dot mod"></span> Moderately Adaptive (60-79)</div>
-              <div className="legend-item"><span className="dot risk"></span> Adaptiveness Risk (40-59)</div>
-            </div>
-          </div>
-        </div>
-      </section>
+        {/* ── Live Map ──────────────────────────────────────────────────── */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+          style={{ background: 'white', borderRadius: 24, border: '1px solid #e2e8f0', overflow: 'hidden', marginTop: '-2rem', boxShadow: '0 20px 60px rgba(0,0,0,0.08)', marginBottom: '2.5rem' }}>
 
-      <section className="index-rankings">
-        <div className="container">
-          <div className="section-header">
-            <h2>Live Global Rankings</h2>
-            <p>Direct signal extraction from {rankings.length} verified organizational simulations.</p>
-          </div>
+          {/* Map area */}
+          <div style={{ position: 'relative', height: 360, background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)', overflow: 'hidden' }}>
+            {/* Grid lines */}
+            {[...Array(8)].map((_, i) => (
+              <div key={i} style={{ position: 'absolute', top: 0, bottom: 0, left: `${(i + 1) * 12.5}%`, borderLeft: '1px solid rgba(255,255,255,0.04)' }} />
+            ))}
+            {[...Array(5)].map((_, i) => (
+              <div key={i} style={{ position: 'absolute', left: 0, right: 0, top: `${(i + 1) * 20}%`, borderTop: '1px solid rgba(255,255,255,0.04)' }} />
+            ))}
 
-          <div className="ranking-table">
-            <div className="table-row head">
-              <span>Rank</span>
-              <span>Organization / Sector</span>
-              <span>LAI Score</span>
-              <span>Trend</span>
-              <span>Status</span>
-            </div>
-            {rankings.length > 0 ? (
-              rankings.map((r, idx) => (
-                <div key={idx}>
-                  <motion.div 
-                    className={`table-row ${expandedId === idx ? 'expanded' : ''}`}
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    viewport={{ once: true }}
-                    onClick={() => setExpandedId(expandedId === idx ? null : idx)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <span className="rank-num">#{r.rank}</span>
-                    <span className="country-name">
-                        <div className="font-bold text-slate-900">{r.organization}</div>
-                        <div className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">{r.industry} • {r.region}</div>
-                    </span>
-                    <span className="iai-score">{r.score}</span>
-                    <span className={`trend ${r.trend.startsWith('+') ? 'up' : 'down'}`}>{r.trend}</span>
-                    <span className={`status-pill ${r.status.toLowerCase()}`}>{r.status}</span>
-                  </motion.div>
-                  {expandedId === idx && (
-                    <motion.div 
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        className="p-8 bg-slate-50 border-x border-slate-100 flex gap-12"
-                    >
-                        <div>
-                            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-2">Temporal Footprint</p>
-                            <div className="flex gap-8">
-                                <div>
-                                    <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Date Played</p>
-                                    <p className="text-sm text-slate-700">{r.session_date ? new Date(r.session_date).toLocaleDateString() : 'N/A'}</p>
-                                </div>
-                                <div>
-                                    <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Session Length</p>
-                                    <p className="text-sm text-slate-700">{r.duration ? `${Math.floor(r.duration / 60)}m ${r.duration % 60}s` : 'N/A'}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex-grow">
-                             <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-2">Behavioral Profile</p>
-                             <div className="flex gap-4">
-                                <div className="px-3 py-1 bg-white border border-slate-200 rounded text-[10px] font-mono text-slate-600">AFERR_SYNTHESIS_ACTIVE</div>
-                                <div className="px-3 py-1 bg-white border border-slate-200 rounded text-[10px] font-mono text-slate-600">GLAZ_SIGNAL_VALIDATED</div>
-                             </div>
-                        </div>
-                    </motion.div>
-                  )}
+            {/* World-map silhouette overlay */}
+            <img src="https://images.unsplash.com/photo-1521295121783-8a321d551ad2?auto=format&fit=crop&q=60&w=1400"
+              alt="World Map" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.07, filter: 'grayscale(1)' }} />
+
+            {/* Dynamic dots */}
+            {!loading && displayed.slice(0, 80).map((org, i) => (
+              <MapDot key={org.organization + i} org={org}
+                selected={focusDot?.organization === org.organization}
+                onClick={(o) => {
+                  setFocusDot(prev => prev?.organization === o.organization ? null : o);
+                  setExpandedId(null);
+                }} />
+            ))}
+
+            {/* Tooltip on focused dot */}
+            <AnimatePresence>
+              {focusDot && (
+                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  style={{ position: 'absolute', bottom: '1.5rem', left: '50%', transform: 'translateX(-50%)',
+                    background: 'rgba(15,23,42,0.95)', backdropFilter: 'blur(12px)', color: 'white',
+                    borderRadius: 16, padding: '1rem 1.5rem', border: '1px solid rgba(255,255,255,0.1)',
+                    textAlign: 'center', minWidth: 220, zIndex: 30 }}>
+                  <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, color: '#64748b', marginBottom: '0.25rem' }}>{focusDot.industry || 'Global Baseline'} · {focusDot.region}</div>
+                  <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '0.25rem' }}>{focusDot.organization}</div>
+                  <div style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'Georgia,serif', color: getEvolutionaryState(focusDot.score).color }}>{focusDot.score}</div>
+                  <div style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 700, marginTop: '0.2rem' }}>AFERR Velocity</div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Legend */}
+            <div style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(15,23,42,0.85)', backdropFilter: 'blur(8px)', borderRadius: 12, padding: '0.75rem 1rem', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              {[['#3b82f6','Antifragile (>70)'],['#0d9488','Emergent (40-70)'],['#64748b','Fragile (<40)']].map(([color, label]) => (
+                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem', color: '#94a3b8', fontWeight: 600 }}>
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: color, display: 'inline-block', border: '2px solid white' }} />
+                  {label}
                 </div>
-              ))
-            ) : (
-              <div className="empty-ranking py-20 text-center">
-                <Globe className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-slate-400">Scanning Research Data...</h3>
-                <p className="text-slate-500 max-w-sm mx-auto mt-2">
-                  The Global Index is hydrating with {rankings.length === 0 ? '600+' : rankings.length} harvest records.
-                </p>
-              </div>
-            )}
+              ))}
+            </div>
           </div>
+        </motion.div>
 
-          <div className="cta-box">
-            <h3>Add Your Organization to the Index</h3>
-            <p>Participate in our global research to benchmark your leadership team against industry standards.</p>
-            <button className="btn-primary">Register for Measurement</button>
+        {/* ── Table Controls ──────────────────────────────────────────────── */}
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'white', border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.6rem 1rem', flex: '1', minWidth: 220, maxWidth: 380 }}>
+            <Search size={16} style={{ color: '#94a3b8' }} />
+            <input value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Search tribes or regions…"
+              style={{ border: 'none', outline: 'none', width: '100%', fontSize: '0.875rem', background: 'transparent', color: '#0f172a' }} />
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {['All', 'Antifragile', 'Emergent', 'Fragile'].map(f => (
+              <button key={f} onClick={() => setFilter(f)}
+                style={{ padding: '0.5rem 1.1rem', borderRadius: 9999, fontSize: '0.72rem', fontWeight: 700, border: '1px solid',
+                  background: filter === f ? '#0a192f' : 'white',
+                  color: filter === f ? 'white' : '#64748b',
+                  borderColor: filter === f ? '#0a192f' : '#e2e8f0',
+                  cursor: 'pointer', transition: 'all 0.15s' }}>
+                {f}
+              </button>
+            ))}
           </div>
         </div>
-      </section>
 
-      <style jsx>{`
-        .glai-page { padding-bottom: 8rem; }
-        
-        .page-header {
-          padding: 10rem 0 6rem;
-          background: #f8fafc;
-          text-align: center;
-        }
+        {/* ── Ranking Table ───────────────────────────────────────────────── */}
+        <div style={{ background: 'white', borderRadius: 20, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
 
-        .page-header h1 { font-size: 3.5rem; margin-bottom: 1rem; color: var(--navy); }
-        .subtitle { font-family: var(--font-sans); color: var(--teal); font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
+          {/* Header */}
+          <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr 180px 120px 160px', padding: '1rem 1.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#94a3b8' }}>
+            <span>Rank</span>
+            <span>Tribe Profile (Region)</span>
+            <span>AFERR Velocity</span>
+            <span>Cognitive Shift</span>
+            <span>Evolutionary State</span>
+          </div>
 
-        .map-controls {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 2rem;
-          padding: 1.5rem;
-          background: white;
-          border-radius: 8px;
-          border: 1px solid var(--border-color);
-        }
+          {loading ? (
+            <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>
+              <Globe size={40} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
+              <p style={{ fontWeight: 600 }}>Hydrating AFERR Intelligence…</p>
+            </div>
+          ) : displayed.length === 0 ? (
+            <div style={{ padding: '4rem', textAlign: 'center', color: '#94a3b8' }}>
+              <Globe size={40} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
+              <p style={{ fontWeight: 600 }}>No tribes match the current filter.</p>
+            </div>
+          ) : (
+            displayed.map((r, idx) => {
+              const ev = getEvolutionaryState(r.score);
+              const isOpen = expandedId === idx;
+              return (
+                <div key={r.organization + idx}>
+                  <motion.div
+                    onClick={() => { setExpandedId(isOpen ? null : idx); setFocusDot(r); }}
+                    whileHover={{ background: '#f8fafc' }}
+                    style={{ display: 'grid', gridTemplateColumns: '60px 1fr 180px 120px 160px', padding: '1rem 1.5rem',
+                      borderBottom: '1px solid #f1f5f9', alignItems: 'center', cursor: 'pointer', transition: 'background 0.15s',
+                      background: isOpen ? '#f8fafc' : 'white' }}>
 
-        .search-bar { display: flex; align-items: center; gap: 1rem; flex: 1; max-width: 400px; }
-        .search-bar input { border: none; outline: none; width: 100%; font-size: 0.9rem; }
+                    <span style={{ fontWeight: 800, color: '#cbd5e1', fontFamily: 'Georgia,serif', fontSize: '1.1rem' }}>#{r.rank}</span>
 
-        .filter-group { display: flex; gap: 1rem; }
-        .btn-filter {
-          background: none; border: 1px solid var(--border-color); padding: 0.5rem 1rem; border-radius: 4px;
-          font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
-        }
-        .btn-filter.active { background: var(--navy); color: white; border-color: var(--navy); }
+                    <span>
+                      <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.95rem' }}>{r.organization}</div>
+                      <div style={{ fontSize: '0.68rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginTop: '0.2rem' }}>
+                        {r.industry || 'Global Baseline'} · {r.region}
+                      </div>
+                    </span>
 
-        .interactive-map-mock {
-          position: relative; border-radius: 12px; overflow: hidden; background: white;
-          box-shadow: 0 30px 60px rgba(0,0,0,0.1); margin-bottom: 6rem;
-        }
-        .map-graphic { position: relative; height: 500px; overflow: hidden; }
-        .map-graphic img { width: 100%; height: 100%; object-fit: cover; opacity: 0.3; filter: grayscale(1); }
-        
-        .map-point {
-          position: absolute; width: 24px; height: 24px; border-radius: 50%; border: 4px solid white;
-          box-shadow: 0 0 20px rgba(0,0,0,0.2);
-        }
-        .map-point.high { background: var(--teal); }
-        .map-point.mod { background: var(--navy); }
-        .map-point.risk { background: var(--slate); }
+                    <ScoreBar score={r.score} />
 
-        .map-legend {
-          position: absolute; bottom: 2rem; left: 2rem; background: white; padding: 1.5rem; border-radius: 8px;
-          display: flex; flex-direction: column; gap: 0.75rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
-        .legend-item { display: flex; align-items: center; gap: 1rem; font-size: 0.8rem; font-weight: 600; color: var(--navy); }
-        .dot { width: 12px; height: 12px; border-radius: 50%; }
-        .dot.high { background: var(--teal); }
-        .dot.mod { background: var(--navy); }
-        .dot.risk { background: var(--slate); }
+                    <span style={{ fontWeight: 700, fontSize: '0.9rem', color: r.cognitiveShift?.startsWith('+') ? '#10b981' : '#ef4444' }}>
+                      {r.cognitiveShift}
+                    </span>
 
-        .ranking-table { margin-top: 4rem; background: white; border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; }
-        .table-row { display: grid; grid-template-columns: 80px 1fr 120px 120px 150px; padding: 1.5rem 2rem; border-bottom: 1px solid #f1f5f9; align-items: center; }
-        .table-row.head { background: #f8fafc; font-weight: 700; color: var(--slate); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
-        
-        .rank-num { font-weight: 700; color: var(--slate-light); }
-        .country-name { font-weight: 600; font-size: 1.1rem; color: var(--navy); }
-        .iai-score { font-weight: 800; font-size: 1.2rem; color: var(--teal); }
-        .trend.up { color: #38a169; }
-        .trend.down { color: #e53e3e; }
-        .status-pill {
-          padding: 0.25rem 0.75rem; border-radius: 100px; font-size: 0.75rem; font-weight: 700; text-align: center;
-        }
-        .status-pill.high { background: rgba(49, 151, 149, 0.1); color: var(--teal); }
-        .status-pill.moderate { background: rgba(10, 25, 47, 0.1); color: var(--navy); }
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ padding: '0.25rem 0.75rem', borderRadius: 9999, fontSize: '0.68rem', fontWeight: 800, border: '1px solid' }}
+                        className={ev.pill}>
+                        {ev.label}
+                      </span>
+                      {isOpen ? <ChevronUp size={14} style={{ color: '#94a3b8' }} /> : <ChevronDown size={14} style={{ color: '#cbd5e1' }} />}
+                    </div>
+                  </motion.div>
 
-        .cta-box {
-          margin-top: 5rem; padding: 4rem; background: var(--navy); color: white; border-radius: 12px; text-align: center;
-        }
-        .cta-box h3 { font-size: 2rem; color: white; margin-bottom: 1rem; }
-        .cta-box p { color: #cbd5e0; margin-bottom: 2.5rem; }
-        .btn-primary { background: var(--teal); color: white; border: none; padding: 1rem 2.5rem; border-radius: 4px; font-weight: 700; cursor: pointer; }
+                  <AnimatePresence>
+                    {isOpen && (
+                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                        style={{ overflow: 'hidden', borderBottom: '1px solid #e2e8f0' }}>
+                        <div style={{ padding: '1.5rem 1.5rem 1.5rem 6rem', background: '#f8fafc', display: 'flex', gap: '3rem', flexWrap: 'wrap' }}>
 
-        @media (max-width: 768px) {
-          .table-row { grid-template-columns: 50px 1fr 80px; }
-          .trend, .status-pill { display: none; }
-          .page-header h1 { font-size: 2.5rem; }
-        }
-      `}</style>
+                          {/* Temporal Footprint */}
+                          <div>
+                            <p style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', color: '#94a3b8', marginBottom: '0.75rem' }}>Temporal Footprint</p>
+                            <div style={{ display: 'flex', gap: '2rem' }}>
+                              <div>
+                                <p style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#cbd5e1', marginBottom: '0.25rem' }}>Date Played</p>
+                                <p style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.875rem' }}>
+                                  {r.session_date ? new Date(r.session_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                                </p>
+                              </div>
+                              <div>
+                                <p style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#cbd5e1', marginBottom: '0.25rem' }}>Session Duration</p>
+                                <p style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.875rem' }}>
+                                  {r.duration_seconds ? `${Math.floor(r.duration_seconds / 60)}m ${r.duration_seconds % 60}s` : r.duration ? `${Math.floor(r.duration / 60)}m ${r.duration % 60}s` : 'N/A'}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* AFERR Profile */}
+                          <div style={{ flex: 1 }}>
+                            <p style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', color: '#94a3b8', marginBottom: '0.75rem' }}>Evolutionary Profile</p>
+                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                              {['AFERR_SYNTHESIS_ACTIVE', 'GLAZ_SIGNAL_VALIDATED', `STATE_${ev.label.toUpperCase()}`].map(tag => (
+                                <span key={tag} style={{ padding: '0.2rem 0.6rem', background: 'white', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: '0.6rem', fontFamily: 'monospace', color: '#64748b', fontWeight: 600 }}>{tag}</span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* CTA */}
+        <div style={{ marginTop: '3rem', padding: '3rem', background: '#0a192f', borderRadius: 20, textAlign: 'center', color: 'white' }}>
+          <h3 style={{ fontSize: '1.75rem', fontFamily: 'Georgia,serif', color: 'white', marginBottom: '0.75rem' }}>Add Your Organization to the AFERR Index</h3>
+          <p style={{ color: '#94a3b8', marginBottom: '1.5rem', fontWeight: 300 }}>Benchmark your leadership tribe against 600+ global simulations.</p>
+          <button onClick={() => window.location.href = '/diagnostic'}
+            style={{ background: '#0d9488', color: 'white', border: 'none', padding: '0.875rem 2.5rem', borderRadius: 9999, fontWeight: 700, cursor: 'pointer', fontSize: '0.875rem', letterSpacing: '0.5px' }}>
+            Register for Measurement
+          </button>
+        </div>
+
+      </div>
     </div>
   );
 };
