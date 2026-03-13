@@ -40,17 +40,29 @@ function getRegionCoordinates(region = '') {
   return REGION_COORDINATES[key] || REGION_COORDINATES['Global'];
 }
 
-// Minimal jitter (±2%) for natural clustering over landmasses
+// Minimal jitter (±3%) for natural clustering over landmasses
 function getDotPosition(org) {
   const hash = org.organization.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  const [baseTop, baseLeft] = getRegionCoordinates(org.region);
-  const jitterTop  = ((hash * 13) % 4) - 2;   // -2 to +2
-  const jitterLeft = ((hash * 7)  % 4) - 2;
+  let [baseTop, baseLeft] = getRegionCoordinates(org.region);
+
+  // v1.2.0-FINAL Fix: If region is 'Global' or missing, distribute across all region anchors
+  // This avoids the [50,50] "blob" effect seen when source data is region-agnostic.
+  const isGlobal = !org.region || org.region.toLowerCase() === 'global';
+  if (isGlobal) {
+    const regionKeys = Object.keys(REGION_COORDINATES).filter(k => k !== 'Global');
+    const pseudoRegion = regionKeys[hash % regionKeys.length];
+    [baseTop, baseLeft] = REGION_COORDINATES[pseudoRegion];
+  }
+
+  // Increased jitter (±4%) for a more organic global spread
+  const jitterTop  = ((hash * 13) % 8) - 4;   // -4 to +4
+  const jitterLeft = ((hash * 7)  % 8) - 4;
   return {
     top:  Math.max(5, Math.min(92, baseTop  + jitterTop)),
     left: Math.max(2, Math.min(96, baseLeft + jitterLeft)),
   };
 }
+
 
 // ── Map Dot ───────────────────────────────────────────────────────────────────
 const MapDot = React.memo(({ org, onClick, selected }) => {
