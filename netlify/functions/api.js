@@ -233,11 +233,7 @@ app.get('/api/analytics/global', async (req, res) => {
       const breakdown = { sovereign: 0, observed: 0, perception: 0, inferred: 0 };
       let tierSums = { observed: 0, perceived: 0, count_obs: 0, count_per: 0 };
 
-<<<<<<< HEAD
-      const TIER_WEIGHTS = { 'SOVEREIGN': 1.5, 'OBSERVED': 1.0, 'PERCEPTION': 0.8, 'INFERRED': 0.4 };
-=======
       const TIER_WEIGHTS = { 'SOVEREIGN': 1.2, 'OBSERVED': 1.0, 'PERCEPTION': 0.8, 'INFERRED': 0.4 };
->>>>>>> e4da136a541935dba949a893d5c1a363975726a9
       const SENIORITY_MULTIPLIERS = { 'c_suite': 1.5, 'svp_vp_director': 1.2, 'middle_management': 1.0, 'individual_contributor': 0.8, 'default': 1.0 };
 
       for (const s of signals) {
