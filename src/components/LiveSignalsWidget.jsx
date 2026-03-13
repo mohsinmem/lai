@@ -1,28 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Radio, Zap, Globe, Activity } from 'lucide-react';
+import { supabase } from '../supabase';
 
 const LiveSignalsWidget = () => {
   const [signals, setSignals] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSignals = async () => {
-      try {
-        const response = await fetch('/api/research/live');
-        const data = await response.json();
-        setSignals(data);
-        setLoading(false);
-      } catch (err) {
-        console.error('Failed to fetch signals:', err);
-        setLoading(false);
-      }
-    };
-
     fetchSignals();
-    const interval = setInterval(fetchSignals, 30000); // Poll every 30s
-    return () => clearInterval(interval);
+
+    // Supabase Realtime Subscription
+    const channel = supabase
+      .channel('live-signals')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'diagnostic_results' },
+        (payload) => {
+          console.log('New signal detected:', payload);
+          fetchSignals();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
+
+  const fetchSignals = async () => {
+    try {
+      const response = await fetch('/api/research/live');
+      const data = await response.json();
+      setSignals(data);
+      setLoading(false);
+    } catch (err) {
+      console.error('Failed to fetch signals:', err);
+      setLoading(false);
+    }
+  };
 
   if (loading) return null;
 

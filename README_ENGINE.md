@@ -5,9 +5,10 @@ The engine does not treat all data equally. It filters every signal through a We
 
 | Tier | Source | Weight (W) | Description |
 | :--- | :--- | :--- | :--- |
-| **Tier 1: Observed** | Evivve Simulation | 1.0 | Behavioral telemetry. How leaders actually act under pressure. |
-| **Tier 2: Perceived** | Self-Diagnostic | 0.6 | Internal sentiment. How the organization thinks it is doing. |
-| **Tier 3: Inferred** | Market Intelligence | 0.4 | External context. Strategic signals from global news and filings. |
+| **Tier 0: Sovereign** | Proprietary Research | 1.2 | High-priority overrides. Direct expert injection. |
+| **Tier 1: Observed** | Evivve Simulation | 1.0 | Behavioral telemetry. How leaders act under pressure. |
+| **Tier 2: Perception** | Self-Diagnostic / Survey | 0.8 | Internal sentiment. How the org perceives its own adaptiveness. |
+| **Tier 3: Inferred** | Market Intelligence | 0.4 | External context. Signals from global news and filings. |
 
 ## 2. The Seniority Multiplier ($S_m$)
 The engine applies a secondary weighting layer based on the source's organizational authority. This ensures that strategic "framing" from leadership carries more weight than operational feedback.

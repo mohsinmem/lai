@@ -225,20 +225,22 @@ app.get('/api/analytics/global', async (req, res) => {
       }
       
       const orgName = verifiedOrg ? verifiedOrg.name : (first?.organization_name || 'Unknown');
-      
-      let totalWeight = 0;
+            let totalWeight = 0;
       let weightedSum = 0;
-      let sums = { cognitive: 0, signal: 0, resource: 0, decision: 0, execution: 0 };
+      let sums = { cognitive: 0, strategic: 0, challenge: 0, learning: 0, stamina: 0 };
       let maxDate = null;
       let maxDuration = 0;
-      const breakdown = { observed: 0, perceived: 0, inferred: 0 };
+      const breakdown = { sovereign: 0, observed: 0, perception: 0, inferred: 0 };
+      let tierSums = { observed: 0, perceived: 0, count_obs: 0, count_per: 0 };
 
-      const TIER_WEIGHTS = { 'OBSERVED': 1.0, 'PERCEIVED': 0.6, 'INFERRED': 0.4 };
+      const TIER_WEIGHTS = { 'SOVEREIGN': 1.2, 'OBSERVED': 1.0, 'PERCEPTION': 0.8, 'INFERRED': 0.4 };
       const SENIORITY_MULTIPLIERS = { 'c_suite': 1.5, 'svp_vp_director': 1.2, 'middle_management': 1.0, 'individual_contributor': 0.8, 'default': 1.0 };
 
       for (const s of signals) {
         const rawType = (s.source_type || s.metadata?.source || 'BEHAVIORAL').toUpperCase();
-        const tier = (rawType === 'DIAGNOSTIC' || rawType === 'SELF-REPORTED') ? 'PERCEIVED' : (rawType === 'RESEARCH' || rawType === 'INFERRED') ? 'INFERRED' : 'OBSERVED';
+        const tier = (rawType === 'PROPRIETARY' || rawType === 'SOVEREIGN') ? 'SOVEREIGN' : 
+                     (rawType === 'DIAGNOSTIC' || rawType === 'SELF-REPORTED' || rawType === 'PERCEPTION') ? 'PERCEPTION' : 
+                     (rawType === 'RESEARCH' || rawType === 'INFERRED') ? 'INFERRED' : 'OBSERVED';
         const typeKey = tier.toLowerCase();
         
         const tierWeight = TIER_WEIGHTS[tier] || 1.0;
@@ -246,44 +248,58 @@ app.get('/api/analytics/global', async (req, res) => {
         const seniorityMultiplier = SENIORITY_MULTIPLIERS[seniority] || SENIORITY_MULTIPLIERS['default'];
         
         const finalWeight = tierWeight * seniorityMultiplier;
+        const currentScore = (s.overall_lai_score || s.overall_score || 0);
 
-        breakdown[typeKey]++;
+        breakdown[typeKey] = (breakdown[typeKey] || 0) + 1;
         totalWeight += finalWeight;
-        weightedSum += (s.overall_lai_score || s.overall_score || 0) * finalWeight;
+        weightedSum += currentScore * finalWeight;
+
+        if (tier === 'OBSERVED') {
+          tierSums.observed += currentScore;
+          tierSums.count_obs++;
+        } else if (tier === 'PERCEPTION') {
+          tierSums.perceived += currentScore;
+          tierSums.count_per++;
+        }
         
-        sums.cognitive += (s.cognitive_framing_score || s.cognitive_score || s.overall_lai_score || 0) * finalWeight;
-        sums.signal += (s.strategic_calibration_score || s.signal_detection_score || s.signal_score || s.overall_lai_score || 0) * finalWeight;
-        sums.resource += (s.challenge_networks_score || s.resource_reallocation_score || s.resource_score || s.overall_lai_score || 0) * finalWeight;
-        sums.decision += (s.learning_agility_score || s.decision_alignment_score || s.decision_score || s.overall_lai_score || 0) * finalWeight;
-        sums.execution += (s.psychological_stamina_score || s.execution_responsiveness_score || s.execution_score || s.overall_lai_score || 0) * finalWeight;
+        sums.cognitive += (s.cognitive_framing_score || s.cognitive_score || currentScore) * finalWeight;
+        sums.strategic += (s.strategic_calibration_score || s.signal_detection_score || s.signal_score || currentScore) * finalWeight;
+        sums.challenge += (s.challenge_networks_score || s.resource_reallocation_score || s.resource_score || currentScore) * finalWeight;
+        sums.learning += (s.learning_agility_score || s.decision_alignment_score || s.decision_score || currentScore) * finalWeight;
+        sums.stamina += (s.psychological_stamina_score || s.execution_responsiveness_score || s.execution_score || currentScore) * finalWeight;
 
         if (s.session_date && (!maxDate || s.session_date > maxDate)) maxDate = s.session_date;
         const dur = s.duration_seconds || s.duration || 0;
         if (dur > maxDuration) maxDuration = dur;
       }
 
-      // v1.3.3: Handle Research Only state
-      const isResearchOnly = signals.length > 0 && breakdown.observed === 0 && breakdown.perceived === 0;
+      const isResearchOnly = signals.length > 0 && (breakdown.observed || 0) === 0 && (breakdown.perception || 0) === 0;
       const hasData = signals.length > 0;
-      
       const score = hasData ? (Math.round(weightedSum / totalWeight) || 0) : 0;
       
+      const avgObs = tierSums.count_obs > 0 ? tierSums.observed / tierSums.count_obs : 0;
+      const avgPer = tierSums.count_per > 0 ? tierSums.perceived / tierSums.count_per : 0;
+      const strategic_dissonance = (avgObs > 0 && avgPer > 1.15 * avgObs);
+      const is_triangulated = (breakdown.sovereign || 0) > 0 && (breakdown.observed || 0) > 0 && (breakdown.perception || 0) > 0;
+
       if (hasData || verifiedOrg) {
         finalData.push({
-        organization: orgName,
+          organization: orgName,
           region:       verifiedOrg ? verifiedOrg.region : (first?.region || 'Global'),
           industry:     first?.industry || 'General Business',
           score:        score,
+          strategic_dissonance,
+          is_triangulated,
           cognitive:    hasData ? (Math.round(sums.cognitive / totalWeight) || 0) : 0,
-          strategic:    hasData ? (Math.round(sums.signal / totalWeight) || 0) : 0,
-          challenge:    hasData ? (Math.round(sums.resource / totalWeight) || 0) : 0,
-          learning:     hasData ? (Math.round(sums.decision / totalWeight) || 0) : 0,
-          stamina:      hasData ? (Math.round(sums.execution / totalWeight) || 0) : 0,
+          strategic:    hasData ? (Math.round(sums.strategic / totalWeight) || 0) : 0,
+          challenge:    hasData ? (Math.round(sums.challenge / totalWeight) || 0) : 0,
+          learning:     hasData ? (Math.round(sums.learning / totalWeight) || 0) : 0,
+          stamina:      hasData ? (Math.round(sums.stamina / totalWeight) || 0) : 0,
           
           session_date: maxDate || first?.created_at || new Date().toISOString(),
           duration_seconds: maxDuration || 480,
           evidence_density: signals.length,
-          source_breakdown: `${breakdown.observed} Observed | ${breakdown.perceived} Perceived | ${breakdown.inferred} Inferred`,
+          source_breakdown: `${breakdown.sovereign || 0} Sovereign | ${breakdown.observed || 0} Observed | ${breakdown.perception || 0} Perceptual | ${breakdown.inferred || 0} Inferred`,
           source_breakdown_obj: breakdown,
           is_verified: !!verifiedOrg?.is_verified,
           is_research_only: isResearchOnly,
@@ -292,6 +308,7 @@ app.get('/api/analytics/global', async (req, res) => {
         });
       }
     });
+
 
     // v1.3.3-FINAL-FIX: The "Final 72" Purge
     // Any record that is NOT mapped to a verified entity and has exactly 72 must be hidden.

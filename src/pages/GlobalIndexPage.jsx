@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe, Search, ChevronDown, ChevronUp, Zap, Shield, TrendingUp, Brain, CheckCircle2 } from 'lucide-react';
+import { Globe, Search, ChevronDown, ChevronUp, Zap, Shield, TrendingUp, Brain, CheckCircle2, AlertTriangle, Info, Layers } from 'lucide-react';
+import { supabase } from '../supabase';
+
+const PILLAR_DEFINITIONS = {
+  cognitive: "The ability to reframe threats as opportunities and pivot mental models under pressure.",
+  strategic: "Precision in detecting environmental signals and translating them into strategy.",
+  challenge: "The presence of psychological safety and dissent channels to stress-test decisions.",
+  learning: "The speed of skill acquisition and knowledge transfer across the leadership team.",
+  stamina: "The capacity to maintain high-performance decision-making during extended disruption."
+};
 
 // ── Evolutionary State Logic ──────────────────────────────────────────────────
 const getEvolutionaryState = (score) => {
@@ -97,8 +106,20 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
                 style={{ cursor: 'help' }} 
                 title={`Undisputed Data: ${r.evidence_density} Observed Performance Signals utilized.`} />
             )}
+            {r.is_triangulated && (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '3px', padding: '2px 6px', background: '#f0f9ff', color: '#0369a1', borderRadius: '4px', fontSize: '0.6rem', fontWeight: 800, border: '1px solid #bae6fd' }}>
+                <Layers size={10} /> TRIANGULATED
+              </span>
+            )}
           </div>
-          <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase' }}>{r.industry || 'Global Baseline'} · {r.region}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase' }}>{r.industry || 'Global Baseline'} · {r.region}</div>
+            {r.strategic_dissonance && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#d97706', fontSize: '0.65rem', fontWeight: 800 }}>
+                <AlertTriangle size={12} /> INSIGHT ALERT
+              </div>
+            )}
+          </div>
         </span>
         <span>
           {r.is_verified && r.evidence_density === 0 ? (
@@ -141,9 +162,10 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
                 <p style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 2, color: '#94a3b8', marginBottom: '1rem' }}>Signal Architecture</p>
                 <div style={{ background: 'white', padding: '1.25rem', borderRadius: 16, border: '1px solid #e2e8f0' }}>
                   {[
-                    { label: 'Observed Performance', val: breakdown.observed, sub: 'Simulation Telemetry' },
-                    { label: 'Perceived Sentiment', val: breakdown.perceived, sub: 'Self-Diagnostic' },
-                    { label: 'Inferred Intelligence', val: breakdown.inferred, sub: 'Market Context' }
+                    { label: 'Sovereign Research', val: breakdown.sovereign || 0, sub: 'Proprietary Intel' },
+                    { label: 'Observed Performance', val: breakdown.observed || 0, sub: 'Simulation Telemetry' },
+                    { label: 'Perceived Sentiment', val: breakdown.perception || 0, sub: 'Internal Surveys' },
+                    { label: 'Inferred Intelligence', val: breakdown.inferred || 0, sub: 'Digital Signal' }
                   ].map(tier => (
                     <div key={tier.label} style={{ marginBottom: '0.75rem', borderBottom: tier.label !== 'Inferred Intelligence' ? '1px solid #f1f5f9' : 'none', paddingBottom: tier.label !== 'Inferred Intelligence' ? '0.75rem' : 0 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -180,9 +202,11 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
                     { label: 'Learning Agility', key: 'learning' },
                     { label: 'Psychological Stamina', key: 'stamina' }
                   ].map(dim => (
-                    <div key={dim.key}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
-                        <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{dim.label}</span>
+                    <div key={dim.key} title={PILLAR_DEFINITIONS[dim.key]}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem', cursor: 'help' }}>
+                        <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          {dim.label} <Info size={10} />
+                        </span>
                         <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#0f172a' }}>{r[dim.key] || 0}</span>
                       </div>
                       <ScoreBar score={r[dim.key] || 0} />
@@ -208,18 +232,41 @@ const GlobalIndexPage = () => {
 
   useEffect(() => {
     fetch('/api/analytics/global')
-      .then(r => r.json())
-      .then(data => {
-        const sorted = (data || []).sort((a, b) => b.score - a.score).map((r, i) => ({
-          ...r,
-          rank: i + 1,
-          cognitiveShift: r.score >= 70 ? `+${(Math.random() * 5 + 1).toFixed(1)}%` : r.score >= 40 ? `+${(Math.random() * 2).toFixed(1)}%` : `-${(Math.random() * 3).toFixed(1)}%`
-        }));
-        setRankings(sorted);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    fetchData();
+
+    // Supabase Realtime Subscription
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'diagnostic_results' },
+        (payload) => {
+          console.log('Real-time signal received:', payload);
+          fetchData(); // Re-index to get new scores/weighted averages
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
+
+  const fetchData = async () => {
+    try {
+      const resp = await fetch('/api/analytics/global');
+      const data = await resp.json();
+      const sorted = (data || []).sort((a, b) => b.score - a.score).map((r, i) => ({
+        ...r,
+        rank: i + 1,
+        cognitiveShift: r.score >= 70 ? `+${(Math.random() * 5 + 1).toFixed(1)}%` : r.score >= 40 ? `+${(Math.random() * 2).toFixed(1)}%` : `-${(Math.random() * 3).toFixed(1)}%`
+      }));
+      setRankings(sorted);
+      setLoading(false);
+    } catch (err) {
+      setLoading(false);
+    }
+  };
 
   const displayed = useMemo(() => {
     let list = rankings;

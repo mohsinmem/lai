@@ -11,6 +11,7 @@ import AboutPage from './pages/AboutPage';
 import ResearchPage from './pages/ResearchPage';
 import ResearchDashboard from './pages/ResearchDashboard';
 import AdminMappingPage from './pages/AdminMappingPage';
+import AdminIntel from './pages/AdminIntel';
 import DevStatus from './pages/DevStatus';
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
             <Route path="/research" element={<ResearchPage />} />
             <Route path="/admin" element={<ResearchDashboard />} />
             <Route path="/admin/mapping" element={<AdminMappingPage />} />
+            <Route path="/admin/intel" element={<AdminIntel />} />
             <Route path="/status" element={<DevStatus />} />
           </Routes>
         </main>
