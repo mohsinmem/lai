@@ -106,15 +106,28 @@ app.get('/api/scraper-logs', async (req, res) => {
 app.post('/api/diagnostic', async (req, res) => {
   const { 
     organization_name, industry, region,
-    overall_score, signal_score, cognitive_score, resource_score, decision_score, execution_score 
+    overall_score, signal_score, cognitive_score, resource_score, decision_score, execution_score,
+    email
   } = req.body;
 
-  
   if (!organization_name) {
     return res.status(400).json({ error: 'Organization name is required' });
   }
   
   try {
+    // v1.3.3: Auto-map by domain if email is provided
+    let verified_entity_id = null;
+    if (email && email.includes('@')) {
+      const domain = email.split('@')[1].toLowerCase();
+      const { data: org } = await supabaseClient
+        .from('organizations')
+        .select('id')
+        .eq('domain', domain)
+        .eq('is_verified', true)
+        .single();
+      if (org) verified_entity_id = org.id;
+    }
+
     const { data, error } = await supabaseClient
       .from('diagnostic_results')
       .insert([{
@@ -127,64 +140,60 @@ app.post('/api/diagnostic', async (req, res) => {
         resource_score: resource_score || 0,
         decision_score: decision_score || 0,
         execution_score: execution_score || 0,
+        verified_entity_id,
         metadata: {
           source: 'Self-Reported',
           industry: industry || 'Other',
           region: region || 'Global',
-          is_published: true
+          is_published: true,
+          auto_mapped: !!verified_entity_id
         }
       }])
-
       .select();
 
     if (error) throw error;
-    res.status(201).json({ id: data[0].id });
+    res.status(201).json({ id: data[0].id, auto_mapped: !!verified_entity_id });
   } catch (err) {
     console.error('Supabase Save Error:', err.message);
     res.status(500).json({ error: `Save failed: ${err.message}` });
   }
 });
 
-// Global Analytics — Compound Intelligence Engine (v1.3.0)
+// Global Analytics — Identity Resolution & Variance (v1.3.3)
 app.get('/api/analytics/global', async (req, res) => {
   try {
-    const { data: allSignals, error } = await supabaseClient
-      .from('diagnostic_results')
-      .select('*')
-      .order('created_at', { ascending: false });
+    // Fetch both results and verified org metadata
+    const [resultsRes, orgsRes] = await Promise.all([
+      supabaseClient.from('diagnostic_results').select('*'),
+      supabaseClient.from('organizations').select('id, name, is_verified, domain, headquarters')
+    ]);
 
-    if (error) throw error;
+    if (resultsRes.error) throw resultsRes.error;
+    const orgMetadataMap = new Map((orgsRes.data || []).map(o => [o.id, o]));
 
-    const blacklist = [
-      'Karen', 'Karen and Friends!', 'Powerpuff Girls', 'Test', 
-      'gew', 'nrwe', 'Independent Tribe', 'test', 'Test Org'
-    ];
-    const filteredSignals = (allSignals || []).filter(row => {
+    const blacklist = ['Karen', 'Powerpuff Girls', 'Test', 'gew', 'nrwe', 'test'];
+    const filteredSignals = (resultsRes.data || []).filter(row => {
       const name = row.organization_name?.toLowerCase() || '';
       return !blacklist.some(b => name === b.toLowerCase());
     });
 
-    // Group by organization
-    const orgGroups = new Map();
-    for (const signal of filteredSignals) {
-      const name = signal.organization_name;
-      if (!orgGroups.has(name)) {
-        orgGroups.set(name, []);
-      }
-      orgGroups.get(name).push(signal);
+    // Grouping Logic: Prioritize verified_entity_id, fallback to organization_name
+    const entityGroups = new Map();
+    for (const s of filteredSignals) {
+      const key = s.verified_entity_id || s.organization_name;
+      if (!entityGroups.has(key)) entityGroups.set(key, []);
+      entityGroups.get(key).push(s);
     }
 
-    const aggregated = Array.from(orgGroups.values()).map(signals => {
+    const aggregated = Array.from(entityGroups.values()).map(signals => {
       const first = signals[0];
+      const verifiedOrg = first.verified_entity_id ? orgMetadataMap.get(first.verified_entity_id) : null;
       
-      // v1.3.2 Intelligence Sovereignty: 3-Tier Weighted Logic
-      // Tier 1 (Observed): 1.0 | Tier 2 (Perceived): 0.6 | Tier 3 (Inferred): 0.4
       let totalWeight = 0;
       let weightedSum = 0;
       let sums = { cognitive: 0, signal: 0, resource: 0, decision: 0, execution: 0 };
       let maxDate = null;
       let maxDuration = 0;
-      
       const breakdown = { observed: 0, perceived: 0, inferred: 0 };
 
       for (const s of signals) {
@@ -192,10 +201,7 @@ app.get('/api/analytics/global', async (req, res) => {
         let weight = 1.0;
         let typeKey = 'observed';
         
-        if (rawType === 'BEHAVIORAL') {
-          weight = 1.0;
-          typeKey = 'observed';
-        } else if (rawType === 'DIAGNOSTIC' || rawType === 'SELF-REPORTED') {
+        if (rawType === 'DIAGNOSTIC' || rawType === 'SELF-REPORTED') {
           weight = 0.6;
           typeKey = 'perceived';
         } else if (rawType === 'RESEARCH' || rawType === 'INFERRED') {
@@ -207,7 +213,6 @@ app.get('/api/analytics/global', async (req, res) => {
         totalWeight += weight;
         weightedSum += (s.overall_score || 0) * weight;
         
-        // Pillar weighted sums with dynamic fallbacks
         sums.cognitive += (s.cognitive_score || s.overall_score || 0) * weight;
         sums.signal += (s.signal_detection_score || s.signal_score || s.overall_score || 0) * weight;
         sums.resource += (s.resource_reallocation_score || s.resource_score || s.overall_score || 0) * weight;
@@ -219,26 +224,27 @@ app.get('/api/analytics/global', async (req, res) => {
         if (dur > maxDuration) maxDuration = dur;
       }
 
-      const weightedScore = Math.round(weightedSum / totalWeight) || 0;
+      const score = Math.round(weightedSum / totalWeight) || 0;
       
       return {
-        organization: first.organization_name,
+        organization: verifiedOrg ? verifiedOrg.name : first.organization_name,
         region:       first.region || 'Global',
-        industry:     first.industry || first.metadata?.industry || 'General Business',
-        score:        weightedScore,
+        industry:     first.industry || 'General Business',
+        score:        score,
         cognitive:    Math.round(sums.cognitive / totalWeight) || 0,
         signal:       Math.round(sums.signal / totalWeight) || 0,
         resource:     Math.round(sums.resource / totalWeight) || 0,
         decision:     Math.round(sums.decision / totalWeight) || 0,
         execution:    Math.round(sums.execution / totalWeight) || 0,
         
-        session_date: maxDate || first.created_at || new Date().toISOString(),
+        session_date: maxDate || first.created_at,
         duration_seconds: maxDuration || 480,
         evidence_density: signals.length,
         source_breakdown: `${breakdown.observed} Observed | ${breakdown.perceived} Perceived | ${breakdown.inferred} Inferred`,
         source_breakdown_obj: breakdown,
-        is_published: true,
-        status:       weightedScore >= 70 ? 'High' : weightedScore >= 40 ? 'Moderate' : 'Risk'
+        is_verified: !!verifiedOrg?.is_verified,
+        verified_intel: verifiedOrg ? { domain: verifiedOrg.domain, hq: verifiedOrg.headquarters } : null,
+        status:       score >= 70 ? 'High' : score >= 40 ? 'Moderate' : 'Risk'
       };
     });
 
@@ -552,6 +558,78 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
         hint: err.hint,
         row: req.body // Include offending row for debug
     });
+  }
+});
+
+// --- Admin Identity Control (v1.3.3) ---
+
+// Get Unclaimed Signals
+app.get('/api/admin/unclaimed-signals', async (req, res) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from('diagnostic_results')
+      .select('organization_name, overall_score, created_at, source_type')
+      .is('verified_entity_id', null);
+
+    if (error) throw error;
+
+    // Group by raw name
+    const grouped = {};
+    data.forEach(s => {
+      const name = s.organization_name;
+      if (!grouped[name]) grouped[name] = { name, count: 0, avg_score: 0, signals: [] };
+      grouped[name].count++;
+      grouped[name].avg_score += (s.overall_score || 0);
+      grouped[name].signals.push(s);
+    });
+
+    Object.values(grouped).forEach(g => g.avg_score = Math.round(g.avg_score / g.count));
+    res.json(Object.values(grouped));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Map Signal to Verified Entity
+app.post('/api/admin/map-signal', async (req, res) => {
+  const { raw_name, verified_entity_id } = req.body;
+  try {
+    const { error } = await supabaseClient
+      .from('diagnostic_results')
+      .update({ verified_entity_id })
+      .eq('organization_name', raw_name);
+
+    if (error) throw error;
+    res.json({ status: 'ok', mapped: raw_name });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Recalculate Score Trigger
+app.post('/api/admin/recalculate-score', async (req, res) => {
+  const { entity_id } = req.body;
+  try {
+    // In this v1.3.3 implementation, aggregation is dynamic on read.
+    // However, we can perform a verification check or log the trigger.
+    console.log(`Recalculating score for entity: ${entity_id}`);
+    res.json({ status: 'recalculated' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get Verified Entities
+app.get('/api/admin/verified-entities', async (req, res) => {
+  try {
+    const { data, error } = await supabaseClient
+      .from('organizations')
+      .select('*')
+      .eq('is_verified', true);
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

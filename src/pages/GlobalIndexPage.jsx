@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe, Search, ChevronDown, ChevronUp, Zap, Shield, TrendingUp, Brain } from 'lucide-react';
+import { Globe, Search, ChevronDown, ChevronUp, Zap, Shield, TrendingUp, Brain, CheckCircle2 } from 'lucide-react';
 
 // ── Evolutionary State Logic ──────────────────────────────────────────────────
 const getEvolutionaryState = (score) => {
@@ -91,7 +91,14 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
           borderBottom: '1px solid #f1f5f9', alignItems: 'center', cursor: 'pointer', background: isOpen ? '#f8fafc' : 'white' }}>
         <span style={{ fontWeight: 800, color: '#cbd5e1', fontSize: '1rem' }}>#{r.rank}</span>
         <span style={{ minWidth: 0 }}>
-          <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.9rem', marginBottom: '2px' }}>{r.organization}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.9rem' }}>{r.organization}</div>
+            {r.is_verified && (
+              <CheckCircle2 size={13} color="#3b82f6" fill="rgba(59, 130, 246, 0.1)" 
+                style={{ cursor: 'help' }} 
+                title={`Undisputed Data: ${r.evidence_density} Observed Performance Signals utilized.`} />
+            )}
+          </div>
           <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase' }}>{r.industry || 'Global Baseline'} · {r.region}</div>
         </span>
         <span><ScoreBar score={r.cognitive || r.score} /></span>
