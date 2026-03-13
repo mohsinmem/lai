@@ -20,32 +20,32 @@ const formatDate = (val) => {
 // ── Region → approximate lat/lng bucket (8-column × 5-row grid) ──────────────
 // Each region maps to a rough [top%, left%] bounding box center.
 // Dots are jittered within ±8% of the region center to avoid overlap.
-const REGION_ANCHORS = {
-  'North America': [30, 18],  'USA': [30, 18],  'Canada': [22, 18],
-  'Latin America': [60, 25],  'South America': [60, 25],  'Brazil': [62, 28],
-  'Western Europe': [28, 44], 'Europe': [28, 44], 'UK': [24, 40], 'Germany': [26, 46],
-  'Eastern Europe': [26, 52], 'Middle East': [42, 58],
-  'Africa': [58, 46],
-  'South Asia': [44, 68],     'India': [46, 70],
-  'East Asia': [34, 80],      'China': [32, 78], 'Japan': [30, 84],
-  'Southeast Asia': [52, 80], 'APAC': [48, 80],
-  'Oceania': [68, 84],        'Australia': [68, 84],
+const REGION_COORDINATES = {
+  'North America': [38, 18],  'USA': [38, 20],  'Canada': [25, 20],
+  'Latin America': [65, 30],  'South America': [70, 32],  'Brazil': [68, 35],
+  'Western Europe': [32, 48], 'Europe': [30, 50], 'UK': [28, 46], 'Germany': [30, 51],
+  'Eastern Europe': [32, 56], 'Middle East': [45, 58],
+  'Africa': [60, 52],         'Nigeria': [55, 48], 'South Africa': [82, 58],
+  'South Asia': [48, 72],     'India': [52, 74],
+  'East Asia': [38, 85],      'China': [40, 82], 'Japan': [35, 88],
+  'Southeast Asia': [58, 85], 'APAC': [55, 88], 'Singapore': [62, 84],
+  'Oceania': [75, 88],        'Australia': [78, 88],
   'Global': [50, 50],
 };
 
-function getRegionBucket(region = '') {
-  const key = Object.keys(REGION_ANCHORS).find(k =>
+function getRegionCoordinates(region = '') {
+  const key = Object.keys(REGION_COORDINATES).find(k =>
     region.toLowerCase().includes(k.toLowerCase())
   );
-  return REGION_ANCHORS[key] || REGION_ANCHORS['Global'];
+  return REGION_COORDINATES[key] || REGION_COORDINATES['Global'];
 }
 
-// Deterministic jitter within ±7% of region anchor, using name hash for stability
+// Minimal jitter (±2%) for natural clustering over landmasses
 function getDotPosition(org) {
   const hash = org.organization.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  const [baseTop, baseLeft] = getRegionBucket(org.region);
-  const jitterTop  = ((hash * 13) % 15) - 7;   // -7 to +7
-  const jitterLeft = ((hash * 7)  % 15) - 7;
+  const [baseTop, baseLeft] = getRegionCoordinates(org.region);
+  const jitterTop  = ((hash * 13) % 4) - 2;   // -2 to +2
+  const jitterLeft = ((hash * 7)  % 4) - 2;
   return {
     top:  Math.max(5, Math.min(92, baseTop  + jitterTop)),
     left: Math.max(2, Math.min(96, baseLeft + jitterLeft)),
@@ -141,7 +141,9 @@ const GlobalIndexPage = () => {
     if (search.trim())    list = list.filter(r =>
       r.organization?.toLowerCase().includes(search.toLowerCase()) ||
       r.region?.toLowerCase().includes(search.toLowerCase()));
-    return list;
+    
+    // v1.2.0-FINAL: Executive Scrub - Hide rows with missing vital temporal data
+    return list.filter(r => r.session_date && (r.duration_seconds || r.duration));
   }, [rankings, filter, search]);
 
   const stats = useMemo(() => ({
@@ -286,7 +288,7 @@ const GlobalIndexPage = () => {
         {/* ── Ranking Table ───────────────────────────────────────────────── */}
         <div style={{ background: 'white', borderRadius: 20, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 180px 130px 180px', padding: '1rem 1.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#94a3b8' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '80px 2fr 120px 100px 140px', padding: '1rem 1.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#94a3b8' }}>
             <span>Adaptiveness Rank</span>
             <span>Organization Profile (Region)</span>
             <span>Adaptiveness Velocity</span>
@@ -302,7 +304,9 @@ const GlobalIndexPage = () => {
           ) : displayed.length === 0 ? (
             <div style={{ padding: '4rem', textAlign: 'center', color: '#94a3b8' }}>
               <Globe size={40} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
-              <p style={{ fontWeight: 600 }}>No organizations match the current filter.</p>
+              <p style={{ fontWeight: 600 }}>
+                {rankings.length === 0 ? 'Re-connecting to Global Baseline...' : 'No organizations match the current filter.'}
+              </p>
             </div>
           ) : (
             displayed.map((r, idx) => {
@@ -313,15 +317,15 @@ const GlobalIndexPage = () => {
                   <motion.div
                     onClick={() => { setExpandedId(isOpen ? null : idx); setFocusDot(r); }}
                     whileHover={{ background: '#f8fafc' }}
-                    style={{ display: 'grid', gridTemplateColumns: '80px 1fr 180px 130px 180px', padding: '0.9rem 1.5rem',
+                    style={{ display: 'grid', gridTemplateColumns: '80px 2fr 120px 100px 140px', padding: '0.9rem 1.5rem',
                       borderBottom: '1px solid #f1f5f9', alignItems: 'center', cursor: 'pointer', transition: 'background 0.12s',
                       background: isOpen ? '#f8fafc' : 'white' }}>
 
                     <span style={{ fontWeight: 800, color: '#cbd5e1', fontFamily: 'Georgia,serif', fontSize: '1.05rem' }}>#{r.rank}</span>
 
-                    <span>
-                      <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.9rem' }}>{r.organization}</div>
-                      <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginTop: '0.15rem' }}>
+                    <span style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.organization}</div>
+                      <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginTop: '0.15rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {r.industry || 'Global Baseline'} · {r.region}
                       </div>
                     </span>

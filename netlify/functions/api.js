@@ -48,10 +48,12 @@ app.get('/api/health', async (req, res) => {
         }
     };
 
+    health.tables.company_research = await checkTableSchema('company_research', ['company_name', 'adaptiveness_score', 'region']);
     health.tables.diagnostic_results = await checkTableSchema('diagnostic_results', [
         'id',
         'organization_name', 
         'region',
+        'industry',
         'overall_score', 
         'signal_detection_score',
         'emotional_framing_score',
@@ -60,7 +62,6 @@ app.get('/api/health', async (req, res) => {
         'execution_responsiveness_score',
         'metadata'
     ]);
-    health.tables.company_research = await checkTableSchema('company_research', ['company_name', 'adaptiveness_score', 'region']);
     health.tables.research_queue = await checkTableSchema('research_queue', ['company_name', 'status']);
     health.tables.scraper_logs = await checkTableSchema('scraper_logs', ['status', 'summary']);
 
@@ -138,12 +139,27 @@ app.post('/api/diagnostic', async (req, res) => {
 // Global Analytics — Production Logic (v1.2.0-FINAL)
 app.get('/api/analytics/global', async (req, res) => {
   try {
-    const { data: diagData, error } = await supabaseClient
+    let result = await supabaseClient
       .from('diagnostic_results')
-      .select('organization_name, region, industry, overall_score, session_date, duration_seconds')
+      .select('organization_name, region, industry, overall_score, session_date, duration_seconds, metadata')
       .order('overall_score', { ascending: false });
 
-    if (error) throw error;
+    // v1.2.0-FINAL Safe Select: If industry column is missing, retry without it
+    if (result.error && result.error.message?.includes('column "industry" does not exist')) {
+        console.warn('⚠️ Industry column missing - performing fallback safe select');
+        result = await supabaseClient
+          .from('diagnostic_results')
+          .select('organization_name, region, overall_score, session_date, duration_seconds, metadata')
+          .order('overall_score', { ascending: false });
+    }
+
+    if (result.error) {
+        console.error('❌ Postgres Query Error (Global Analytics):', result.error.message, result.error.details);
+        throw result.error;
+    }
+
+    const blacklist = ['Karen and Friends!', 'Powerpuff Girls', 'Test'];
+    const diagData = (result.data || []).filter(row => !blacklist.includes(row.organization_name));
 
     // Deduplicate by organization name (keep highest score per org)
     const seen = new Map();
@@ -156,7 +172,7 @@ app.get('/api/analytics/global', async (req, res) => {
         seen.set(key, {
           organization: row.organization_name,
           region:       row.region || 'Global',
-          industry:     row.industry || 'Global Baseline',
+          industry:     row.industry || row.metadata?.industry || 'General Business',
           score:        score,
           is_published: true, // v1.2.0-FINAL: Force to Published for Global Index visibility
           session_date: row.session_date || null,

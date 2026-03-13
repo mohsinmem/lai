@@ -84,3 +84,7 @@ BEGIN
     CREATE POLICY "Allow public read" ON research_resources FOR SELECT TO anon USING (true);
 END
 $$;
+-- 4. Emergency Patch (v1.2.0-FINAL)
+ALTER TABLE diagnostic_results ADD COLUMN IF NOT EXISTS industry TEXT DEFAULT 'General Business';
+-- Backfill existing records
+UPDATE diagnostic_results SET industry = 'General Business' WHERE industry IS NULL;
