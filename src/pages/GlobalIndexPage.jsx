@@ -104,6 +104,20 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
         <span><ScoreBar score={r.cognitive || r.score} /></span>
         <span style={{ fontWeight: 700, fontSize: '0.85rem', color: r.cognitiveShift?.startsWith('+') ? '#10b981' : '#ef4444' }}>{r.cognitiveShift}</span>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '1rem' }}>
+          {r.is_research_only && (
+            <span style={{ 
+              padding: '0.25rem 0.6rem', 
+              borderRadius: 6, 
+              fontSize: '0.6rem', 
+              fontWeight: 800, 
+              background: '#fef2f2', 
+              color: '#ef4444', 
+              border: '1px solid #fee2e2',
+              textTransform: 'uppercase'
+            }}>
+              Research Only
+            </span>
+          )}
           <span className={ev.pill} style={{ padding: '0.25rem 0.75rem', borderRadius: 9999, fontSize: '0.65rem', fontWeight: 800, border: '1px solid' }}>{ev.label}</span>
           {isOpen ? <ChevronUp size={14} color="#94a3b8" /> : <ChevronDown size={14} color="#cbd5e1" />}
         </div>

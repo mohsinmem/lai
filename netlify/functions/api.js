@@ -169,25 +169,56 @@ app.get('/api/analytics/global', async (req, res) => {
     ]);
 
     if (resultsRes.error) throw resultsRes.error;
-    const orgMetadataMap = new Map((orgsRes.data || []).map(o => [o.id, o]));
+    const allSignals = resultsRes.data || [];
+    const verifiedOrgs = orgsRes.data || [];
+    const orgMetadataMap = new Map(verifiedOrgs.map(o => [o.id, o]));
 
     const blacklist = ['Karen', 'Powerpuff Girls', 'Test', 'gew', 'nrwe', 'test'];
-    const filteredSignals = (resultsRes.data || []).filter(row => {
+    const filteredSignals = allSignals.filter(row => {
       const name = row.organization_name?.toLowerCase() || '';
       return !blacklist.some(b => name === b.toLowerCase());
     });
 
     // Grouping Logic: Prioritize verified_entity_id, fallback to organization_name
     const entityGroups = new Map();
+    
+    // 1. Add all signals to groups
     for (const s of filteredSignals) {
       const key = s.verified_entity_id || s.organization_name;
       if (!entityGroups.has(key)) entityGroups.set(key, []);
       entityGroups.get(key).push(s);
     }
 
+    // 2. Ensure all verified orgs are represented even if they have NO signals yet
+    for (const org of verifiedOrgs) {
+      if (!entityGroups.has(org.id)) {
+        entityGroups.set(org.id, []); // Empty signals list
+      }
+    }
+
     const aggregated = Array.from(entityGroups.values()).map(signals => {
+      const first = signals.length > 0 ? signals[0] : null;
+      // We need to resolve the organization name/ID correctly
+      let orgId = first?.verified_entity_id;
+      let rawName = first?.organization_name;
+      
+      // If we are looking at an empty group from a verified org
+      if (!first) {
+        // This is tricky, find which orgId this group belongs to
+        // Map.values doesn't give us keys. Let's refactor the map to include keys or just use the first entry
+      }
+
+      // Re-aggregating with full context
+      return null; // placeholder for next step
+    }).filter(Boolean);
+    
+    // REFACTORED FOR CLARITY
+    const finalData = [];
+    entityGroups.forEach((signals, key) => {
       const first = signals[0];
-      const verifiedOrg = first.verified_entity_id ? orgMetadataMap.get(first.verified_entity_id) : null;
+      const verifiedOrg = orgMetadataMap.get(key) || (first?.verified_entity_id ? orgMetadataMap.get(first.verified_entity_id) : null);
+      
+      const orgName = verifiedOrg ? verifiedOrg.name : (first?.organization_name || 'Unknown');
       
       let totalWeight = 0;
       let weightedSum = 0;
@@ -224,31 +255,38 @@ app.get('/api/analytics/global', async (req, res) => {
         if (dur > maxDuration) maxDuration = dur;
       }
 
-      const score = Math.round(weightedSum / totalWeight) || 0;
+      // v1.3.3: Handle Research Only state
+      const isResearchOnly = signals.length > 0 && breakdown.observed === 0 && breakdown.perceived === 0;
+      const hasData = signals.length > 0;
       
-      return {
-        organization: verifiedOrg ? verifiedOrg.name : first.organization_name,
-        region:       first.region || 'Global',
-        industry:     first.industry || 'General Business',
-        score:        score,
-        cognitive:    Math.round(sums.cognitive / totalWeight) || 0,
-        signal:       Math.round(sums.signal / totalWeight) || 0,
-        resource:     Math.round(sums.resource / totalWeight) || 0,
-        decision:     Math.round(sums.decision / totalWeight) || 0,
-        execution:    Math.round(sums.execution / totalWeight) || 0,
-        
-        session_date: maxDate || first.created_at,
-        duration_seconds: maxDuration || 480,
-        evidence_density: signals.length,
-        source_breakdown: `${breakdown.observed} Observed | ${breakdown.perceived} Perceived | ${breakdown.inferred} Inferred`,
-        source_breakdown_obj: breakdown,
-        is_verified: !!verifiedOrg?.is_verified,
-        verified_intel: verifiedOrg ? { domain: verifiedOrg.domain, hq: verifiedOrg.headquarters } : null,
-        status:       score >= 70 ? 'High' : score >= 40 ? 'Moderate' : 'Risk'
-      };
+      const score = hasData ? (Math.round(weightedSum / totalWeight) || 0) : 0;
+      
+      if (hasData || verifiedOrg) {
+        finalData.push({
+          organization: orgName,
+          region:       first?.region || 'Global',
+          industry:     first?.industry || 'General Business',
+          score:        score,
+          cognitive:    hasData ? (Math.round(sums.cognitive / totalWeight) || 0) : 0,
+          signal:       hasData ? (Math.round(sums.signal / totalWeight) || 0) : 0,
+          resource:     hasData ? (Math.round(sums.resource / totalWeight) || 0) : 0,
+          decision:     hasData ? (Math.round(sums.decision / totalWeight) || 0) : 0,
+          execution:    hasData ? (Math.round(sums.execution / totalWeight) || 0) : 0,
+          
+          session_date: maxDate || first?.created_at || new Date().toISOString(),
+          duration_seconds: maxDuration || 480,
+          evidence_density: signals.length,
+          source_breakdown: `${breakdown.observed} Observed | ${breakdown.perceived} Perceived | ${breakdown.inferred} Inferred`,
+          source_breakdown_obj: breakdown,
+          is_verified: !!verifiedOrg?.is_verified,
+          is_research_only: isResearchOnly,
+          verified_intel: verifiedOrg ? { domain: verifiedOrg.domain, hq: verifiedOrg.headquarters } : null,
+          status:       score >= 70 ? 'High' : score >= 40 ? 'Moderate' : 'Risk'
+        });
+      }
     });
 
-    res.json(aggregated.sort((a, b) => b.score - a.score));
+    res.json(finalData.sort((a, b) => b.score - a.score));
   } catch (err) {
     console.error('Compound Analytics Error:', err);
     res.json([]);
