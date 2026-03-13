@@ -9,11 +9,11 @@ const getEvolutionaryState = (score) => {
   return                { label: 'Fragile',       color: '#64748b', pill: 'bg-slate-100 text-slate-600 border-slate-200' };
 };
 
-// ── Safe date formatter ───────────────────────────────────────────────────────
+// Memoized formatting helper
 const formatDate = (val) => {
-  if (!val) return 'N/A';
+  if (!val) return '';
   const d = new Date(val);
-  if (isNaN(d.getTime())) return 'N/A';
+  if (isNaN(d.getTime())) return '';
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
@@ -53,7 +53,7 @@ function getDotPosition(org) {
 }
 
 // ── Map Dot ───────────────────────────────────────────────────────────────────
-const MapDot = ({ org, onClick, selected }) => {
+const MapDot = React.memo(({ org, onClick, selected }) => {
   const ev          = getEvolutionaryState(org.score);
   const isTop       = org.score >= 70;
   const { top, left } = getDotPosition(org);
@@ -64,7 +64,7 @@ const MapDot = ({ org, onClick, selected }) => {
       onClick={() => onClick(org)}
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: selected ? 1.7 : 1, opacity: 1 }}
-      transition={{ type: 'spring', stiffness: 260, damping: 20, delay: Math.random() * 0.3 }}
+      transition={{ type: 'spring', stiffness: 260, damping: 20, delay: Math.random() * 0.1 }}
       style={{
         position: 'absolute', top: `${top}%`, left: `${left}%`,
         width: isTop ? 14 : 11,
@@ -75,15 +75,17 @@ const MapDot = ({ org, onClick, selected }) => {
         boxShadow: selected
           ? `0 0 0 5px ${ev.color}55, 0 0 24px ${ev.color}`
           : isTop
-          ? `0 0 0 3px ${ev.color}33, 0 0 12px ${ev.color}88`
+          ? `0 0 0 3px ${ev.color}33`
           : `0 1px 6px rgba(0,0,0,0.3)`,
         cursor: 'pointer',
         zIndex: selected ? 30 : isTop ? 15 : 10,
-        animation: isTop && !selected ? 'antifragilePulse 2.4s ease-in-out infinite' : 'none',
+        animation: isTop && !selected ? 'antifragilePulse 3s ease-in-out infinite' : 'none',
+        willChange: 'transform, opacity',
       }}
     />
   );
-};
+});
+MapDot.displayName = 'MapDot';
 
 // ── Score Bar ─────────────────────────────────────────────────────────────────
 const ScoreBar = ({ score }) => {
@@ -104,6 +106,85 @@ const ScoreBar = ({ score }) => {
     </div>
   );
 };
+
+// ── Table Row ────────────────────────────────────────────────────────────────
+const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocusDot }) => {
+  const ev = getEvolutionaryState(r.score);
+  const isOpen = expandedId === idx;
+  
+  return (
+    <div key={r.organization + idx}>
+      <motion.div
+        onClick={() => { setExpandedId(isOpen ? null : idx); setFocusDot(r); }}
+        whileHover={{ background: '#f8fafc' }}
+        style={{ display: 'grid', gridTemplateColumns: '80px 2fr 120px 100px 140px', padding: '0.9rem 1.5rem',
+          borderBottom: '1px solid #f1f5f9', alignItems: 'center', cursor: 'pointer', transition: 'background 0.12s',
+          background: isOpen ? '#f8fafc' : 'white' }}>
+
+        <span style={{ fontWeight: 800, color: '#cbd5e1', fontFamily: 'Georgia,serif', fontSize: '1.05rem' }}>#{r.rank}</span>
+
+        <span style={{ minWidth: 0 }}>
+          <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.organization}</div>
+          <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginTop: '0.15rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {r.industry || 'Global Baseline'} · {r.region}
+          </div>
+        </span>
+
+        <ScoreBar score={r.score} />
+
+        <span style={{ fontWeight: 700, fontSize: '0.88rem', color: r.cognitiveShift?.startsWith('+') ? '#10b981' : '#ef4444' }}>
+          {r.cognitiveShift}
+        </span>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ padding: '0.25rem 0.75rem', borderRadius: 9999, fontSize: '0.65rem', fontWeight: 800, border: '1px solid' }}
+            className={ev.pill}>
+            {ev.label}
+          </span>
+          {isOpen ? <ChevronUp size={14} style={{ color: '#94a3b8' }} /> : <ChevronDown size={14} style={{ color: '#cbd5e1' }} />}
+        </div>
+      </motion.div>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+            style={{ overflow: 'hidden', borderBottom: '1px solid #e2e8f0' }}>
+            <div style={{ padding: '1.5rem 1.5rem 1.5rem 6rem', background: '#f8fafc', display: 'flex', gap: '3rem', flexWrap: 'wrap' }}>
+              <div>
+                <p style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', color: '#94a3b8', marginBottom: '0.75rem' }}>Temporal Footprint</p>
+                <div style={{ display: 'flex', gap: '2rem' }}>
+                  <div>
+                    <p style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#cbd5e1', marginBottom: '0.25rem' }}>Date Played</p>
+                    <p style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.875rem' }}>{formatDate(r.session_date)}</p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#cbd5e1', marginBottom: '0.25rem' }}>Session Duration</p>
+                    <p style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.875rem' }}>
+                      {r.duration_seconds
+                        ? `${Math.floor(r.duration_seconds / 60)}m ${r.duration_seconds % 60}s`
+                        : r.duration
+                        ? `${Math.floor(r.duration / 60)}m ${r.duration % 60}s`
+                        : 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', color: '#94a3b8', marginBottom: '0.75rem' }}>Evolutionary Profile</p>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {['AFERR_SYNTHESIS_ACTIVE', 'LAI_SIGNAL_VALIDATED', `STATE_${ev.label.toUpperCase()}`].map(tag => (
+                    <span key={tag} style={{ padding: '0.2rem 0.6rem', background: 'white', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: '0.6rem', fontFamily: 'monospace', color: '#64748b', fontWeight: 600 }}>{tag}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+});
+LeaderboardRow.displayName = 'LeaderboardRow';
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 const GlobalIndexPage = () => {
@@ -158,9 +239,9 @@ const GlobalIndexPage = () => {
       {/* ── Global keyframes ─────────────────────────────────────────────── */}
       <style>{`
         @keyframes antifragilePulse {
-          0%   { box-shadow: 0 0 0 0 rgba(59,130,246,0.55), 0 0 8px rgba(59,130,246,0.5); }
-          50%  { box-shadow: 0 0 0 6px rgba(59,130,246,0),  0 0 18px rgba(59,130,246,0.7); }
-          100% { box-shadow: 0 0 0 0 rgba(59,130,246,0),    0 0 8px rgba(59,130,246,0.3); }
+          0%   { opacity: 1;   transform: scale(1); }
+          50%  { opacity: 0.6; transform: scale(1.1); }
+          100% { opacity: 1;   transform: scale(1); }
         }
       `}</style>
 
@@ -309,81 +390,16 @@ const GlobalIndexPage = () => {
               </p>
             </div>
           ) : (
-            displayed.map((r, idx) => {
-              const ev = getEvolutionaryState(r.score);
-              const isOpen = expandedId === idx;
-              return (
-                <div key={r.organization + idx}>
-                  <motion.div
-                    onClick={() => { setExpandedId(isOpen ? null : idx); setFocusDot(r); }}
-                    whileHover={{ background: '#f8fafc' }}
-                    style={{ display: 'grid', gridTemplateColumns: '80px 2fr 120px 100px 140px', padding: '0.9rem 1.5rem',
-                      borderBottom: '1px solid #f1f5f9', alignItems: 'center', cursor: 'pointer', transition: 'background 0.12s',
-                      background: isOpen ? '#f8fafc' : 'white' }}>
-
-                    <span style={{ fontWeight: 800, color: '#cbd5e1', fontFamily: 'Georgia,serif', fontSize: '1.05rem' }}>#{r.rank}</span>
-
-                    <span style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.organization}</div>
-                      <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginTop: '0.15rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {r.industry || 'Global Baseline'} · {r.region}
-                      </div>
-                    </span>
-
-                    <ScoreBar score={r.score} />
-
-                    <span style={{ fontWeight: 700, fontSize: '0.88rem', color: r.cognitiveShift?.startsWith('+') ? '#10b981' : '#ef4444' }}>
-                      {r.cognitiveShift}
-                    </span>
-
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ padding: '0.25rem 0.75rem', borderRadius: 9999, fontSize: '0.65rem', fontWeight: 800, border: '1px solid' }}
-                        className={ev.pill}>
-                        {ev.label}
-                      </span>
-                      {isOpen ? <ChevronUp size={14} style={{ color: '#94a3b8' }} /> : <ChevronDown size={14} style={{ color: '#cbd5e1' }} />}
-                    </div>
-                  </motion.div>
-
-                  <AnimatePresence>
-                    {isOpen && (
-                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                        style={{ overflow: 'hidden', borderBottom: '1px solid #e2e8f0' }}>
-                        <div style={{ padding: '1.5rem 1.5rem 1.5rem 6rem', background: '#f8fafc', display: 'flex', gap: '3rem', flexWrap: 'wrap' }}>
-                          <div>
-                            <p style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', color: '#94a3b8', marginBottom: '0.75rem' }}>Temporal Footprint</p>
-                            <div style={{ display: 'flex', gap: '2rem' }}>
-                              <div>
-                                <p style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#cbd5e1', marginBottom: '0.25rem' }}>Date Played</p>
-                                <p style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.875rem' }}>{formatDate(r.session_date)}</p>
-                              </div>
-                              <div>
-                                <p style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#cbd5e1', marginBottom: '0.25rem' }}>Session Duration</p>
-                                <p style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.875rem' }}>
-                                  {r.duration_seconds
-                                    ? `${Math.floor(r.duration_seconds / 60)}m ${r.duration_seconds % 60}s`
-                                    : r.duration
-                                    ? `${Math.floor(r.duration / 60)}m ${r.duration % 60}s`
-                                    : 'N/A'}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <p style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', color: '#94a3b8', marginBottom: '0.75rem' }}>Evolutionary Profile</p>
-                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                              {['AFERR_SYNTHESIS_ACTIVE', 'LAI_SIGNAL_VALIDATED', `STATE_${ev.label.toUpperCase()}`].map(tag => (
-                                <span key={tag} style={{ padding: '0.2rem 0.6rem', background: 'white', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: '0.6rem', fontFamily: 'monospace', color: '#64748b', fontWeight: 600 }}>{tag}</span>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              );
-            })
+            displayed.map((r, idx) => (
+              <LeaderboardRow 
+                key={r.organization} 
+                r={r} 
+                idx={idx} 
+                expandedId={expandedId} 
+                setExpandedId={setExpandedId} 
+                setFocusDot={setFocusDot} 
+              />
+            ))
           )}
         </div>
 

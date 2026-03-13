@@ -158,7 +158,7 @@ app.get('/api/analytics/global', async (req, res) => {
         throw result.error;
     }
 
-    const blacklist = ['Karen and Friends!', 'Powerpuff Girls', 'Test'];
+    const blacklist = ['Karen', 'Karen and Friends!', 'Powerpuff Girls', 'Test'];
     const diagData = (result.data || []).filter(row => !blacklist.includes(row.organization_name));
 
     // Deduplicate by organization name (keep highest score per org)
