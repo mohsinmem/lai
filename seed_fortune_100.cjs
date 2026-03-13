@@ -64,7 +64,7 @@ async function seed() {
   
   const { data, error } = await supabase
     .from('organizations')
-    .upsert(fullList, { onConflict: 'name' });
+    .insert(fullList);
 
   if (error) {
     console.error('❌ Seed Error:', error.message);
