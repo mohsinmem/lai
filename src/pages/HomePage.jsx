@@ -162,11 +162,7 @@ const HomePage = () => {
                   <div className="legend-tier tier-0">Tier 0</div>
                   <div>
                     <strong>Sovereign</strong>
-<<<<<<< HEAD
-                    <p>Proprietary Research & Expert Overrides (1.5x)</p>
-=======
                     <p>Proprietary Research & Expert Overrides (1.2x)</p>
->>>>>>> e4da136a541935dba949a893d5c1a363975726a9
                   </div>
                 </div>
                 <div className="legend-item">
