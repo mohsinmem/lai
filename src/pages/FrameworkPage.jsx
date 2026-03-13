@@ -10,8 +10,8 @@ const dimensions = [
   },
   {
     icon: <Heart size={40} />,
-    title: '2. Emotional Framing',
-    desc: 'Recognizing change is not enough. Leaders must also interpret uncertainty in a productive way. When uncertainty appears, leadership teams often respond with either a Threat Orientation or an Opportunity Orientation. Emotional Framing measures how leadership teams psychologically interpret change and uncertainty, influencing whether they approach disruption as a danger or an opportunity.'
+    title: '2. Cognitive Framing',
+    desc: 'Recognizing change is not enough. Leaders must also interpret uncertainty in a productive way. When uncertainty appears, leadership teams often respond with either a Threat Orientation or an Opportunity Orientation. Cognitive Framing measures how leadership teams psychologically interpret change and uncertainty, influencing whether they approach disruption as a danger or an opportunity.'
   },
   {
     icon: <Layers size={40} />,

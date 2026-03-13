@@ -101,8 +101,18 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
           </div>
           <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase' }}>{r.industry || 'Global Baseline'} · {r.region}</div>
         </span>
-        <span><ScoreBar score={r.cognitive || r.score} /></span>
-        <span style={{ fontWeight: 700, fontSize: '0.85rem', color: r.cognitiveShift?.startsWith('+') ? '#10b981' : '#ef4444' }}>{r.cognitiveShift}</span>
+        <span>
+          {r.is_verified && r.evidence_density === 0 ? (
+            <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Data Pending
+            </div>
+          ) : (
+            <ScoreBar score={r.cognitive || r.score} />
+          )}
+        </span>
+        <span style={{ fontWeight: 700, fontSize: '0.85rem', color: r.cognitiveShift?.startsWith('+') ? '#10b981' : '#ef4444', opacity: (r.is_verified && r.evidence_density === 0) ? 0.3 : 1 }}>
+          {r.score === 0 ? '--' : r.cognitiveShift}
+        </span>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '1rem' }}>
           {r.is_research_only && (
             <span style={{ 

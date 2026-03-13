@@ -212,11 +212,17 @@ app.get('/api/analytics/global', async (req, res) => {
       return null; // placeholder for next step
     }).filter(Boolean);
     
-    // REFACTORED FOR CLARITY
     const finalData = [];
+    const orgByNameMap = new Map(verifiedOrgs.map(o => [o.name.toLowerCase(), o]));
+
     entityGroups.forEach((signals, key) => {
       const first = signals[0];
-      const verifiedOrg = orgMetadataMap.get(key) || (first?.verified_entity_id ? orgMetadataMap.get(first.verified_entity_id) : null);
+      let verifiedOrg = orgMetadataMap.get(key) || (first?.verified_entity_id ? orgMetadataMap.get(first.verified_entity_id) : null);
+      
+      // Fallback: If no ID found, try searching by name (v1.3.3 Robustness)
+      if (!verifiedOrg && first?.organization_name) {
+        verifiedOrg = orgByNameMap.get(first.organization_name.toLowerCase());
+      }
       
       const orgName = verifiedOrg ? verifiedOrg.name : (first?.organization_name || 'Unknown');
       
@@ -242,13 +248,13 @@ app.get('/api/analytics/global', async (req, res) => {
 
         breakdown[typeKey]++;
         totalWeight += weight;
-        weightedSum += (s.overall_score || 0) * weight;
+        weightedSum += (s.overall_lai_score || s.overall_score || 0) * weight;
         
-        sums.cognitive += (s.cognitive_score || s.overall_score || 0) * weight;
-        sums.signal += (s.signal_detection_score || s.signal_score || s.overall_score || 0) * weight;
-        sums.resource += (s.resource_reallocation_score || s.resource_score || s.overall_score || 0) * weight;
-        sums.decision += (s.decision_alignment_score || s.decision_score || s.overall_score || 0) * weight;
-        sums.execution += (s.execution_responsiveness_score || s.execution_score || s.overall_score || 0) * weight;
+        sums.cognitive += (s.cognitive_score || s.overall_lai_score || 0) * weight;
+        sums.signal += (s.signal_detection_score || s.signal_score || s.overall_lai_score || 0) * weight;
+        sums.resource += (s.resource_reallocation_score || s.resource_score || s.overall_lai_score || 0) * weight;
+        sums.decision += (s.decision_alignment_score || s.decision_score || s.overall_lai_score || 0) * weight;
+        sums.execution += (s.execution_responsiveness_score || s.execution_score || s.overall_lai_score || 0) * weight;
 
         if (s.session_date && (!maxDate || s.session_date > maxDate)) maxDate = s.session_date;
         const dur = s.duration_seconds || s.duration || 0;
@@ -286,7 +292,14 @@ app.get('/api/analytics/global', async (req, res) => {
       }
     });
 
-    res.json(finalData.sort((a, b) => b.score - a.score));
+    // v1.3.3-FINAL-FIX: The "Final 72" Purge
+    // Any record that is NOT mapped to a verified entity and has exactly 72 must be hidden.
+    const purgedData = finalData.filter(org => {
+      const isLegacy72 = !org.is_verified && org.score === 72;
+      return !isLegacy72;
+    });
+
+    res.json(purgedData.sort((a, b) => b.score - a.score));
   } catch (err) {
     console.error('Compound Analytics Error:', err);
     res.json([]);
