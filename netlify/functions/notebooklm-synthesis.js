@@ -142,16 +142,17 @@ exports.handler = async (event) => {
       organization_name: `${sector} Research Benchmark`,
       industry: sector,
       region: 'Global',
-      source_type: 'RESEARCH',
+      source_type: 'RESEARCH', // Maps to Tier 3: Inferred Intelligence
       overall_score: avgScore,
       signal_score: avgScore + 2,
-      cognitive_score: avgScore + 5, // Research-validated Cognitive framing is high-authority
+      cognitive_score: avgScore + 5, 
       resource_score: avgScore + 1,
       decision_score: avgScore,
       execution_score: avgScore - 2,
       confidence_score: 0.85,
       metadata: {
         source: 'Research',
+        tier: 'Inferred Intelligence',
         sector: sector,
         generated_at: new Date().toISOString(),
         is_published: true,
@@ -171,6 +172,7 @@ exports.handler = async (event) => {
         confidence_score: 0.75,
         metadata: {
           source: 'Research',
+          tier: 'Inferred Intelligence',
           type: 'Case Study Validation',
           sector: sector,
           generated_at: new Date().toISOString()

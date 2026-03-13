@@ -155,8 +155,14 @@ app.get('/api/analytics/global', async (req, res) => {
 
     if (error) throw error;
 
-    const blacklist = ['Karen', 'Karen and Friends!', 'Powerpuff Girls', 'Test'];
-    const filteredSignals = (allSignals || []).filter(row => !blacklist.includes(row.organization_name));
+    const blacklist = [
+      'Karen', 'Karen and Friends!', 'Powerpuff Girls', 'Test', 
+      'gew', 'nrwe', 'Independent Tribe', 'test', 'Test Org'
+    ];
+    const filteredSignals = (allSignals || []).filter(row => {
+      const name = row.organization_name?.toLowerCase() || '';
+      return !blacklist.some(b => name === b.toLowerCase());
+    });
 
     // Group by organization
     const orgGroups = new Map();
@@ -171,56 +177,66 @@ app.get('/api/analytics/global', async (req, res) => {
     const aggregated = Array.from(orgGroups.values()).map(signals => {
       const first = signals[0];
       
-      // Weighting logic (v1.3.0)
-      // BEHAVIORAL: 1.0, DIAGNOSTIC: 0.6, RESEARCH: 0.4
+      // v1.3.2 Intelligence Sovereignty: 3-Tier Weighted Logic
+      // Tier 1 (Observed): 1.0 | Tier 2 (Perceived): 0.6 | Tier 3 (Inferred): 0.4
       let totalWeight = 0;
       let weightedSum = 0;
       let sums = { cognitive: 0, signal: 0, resource: 0, decision: 0, execution: 0 };
       let maxDate = null;
       let maxDuration = 0;
       
-      const breakdown = { behavioral: 0, diagnostic: 0, research: 0 };
+      const breakdown = { observed: 0, perceived: 0, inferred: 0 };
 
       for (const s of signals) {
-        const source = (s.source_type || s.metadata?.source || 'BEHAVIORAL').toUpperCase();
+        const rawType = (s.source_type || s.metadata?.source || 'BEHAVIORAL').toUpperCase();
         let weight = 1.0;
+        let typeKey = 'observed';
         
-        if (source === 'BEHAVIORAL') { weight = 1.0; breakdown.behavioral++; }
-        else if (source === 'DIAGNOSTIC' || source === 'SELF-REPORTED') { weight = 0.6; breakdown.diagnostic++; }
-        else if (source === 'RESEARCH') { weight = 0.4; breakdown.research++; }
+        if (rawType === 'BEHAVIORAL') {
+          weight = 1.0;
+          typeKey = 'observed';
+        } else if (rawType === 'DIAGNOSTIC' || rawType === 'SELF-REPORTED') {
+          weight = 0.6;
+          typeKey = 'perceived';
+        } else if (rawType === 'RESEARCH' || rawType === 'INFERRED') {
+          weight = 0.4;
+          typeKey = 'inferred';
+        }
 
+        breakdown[typeKey]++;
         totalWeight += weight;
-        weightedSum += s.overall_score * weight;
+        weightedSum += (s.overall_score || 0) * weight;
         
-        sums.cognitive += (s.cognitive_score || s.overall_score) * weight;
-        sums.signal += (s.signal_score || s.overall_score) * weight;
-        sums.resource += (s.resource_score || s.overall_score) * weight;
-        sums.decision += (s.decision_score || s.overall_score) * weight;
-        sums.execution += (s.execution_score || s.overall_score) * weight;
+        // Pillar weighted sums with dynamic fallbacks
+        sums.cognitive += (s.cognitive_score || s.overall_score || 0) * weight;
+        sums.signal += (s.signal_detection_score || s.signal_score || s.overall_score || 0) * weight;
+        sums.resource += (s.resource_reallocation_score || s.resource_score || s.overall_score || 0) * weight;
+        sums.decision += (s.decision_alignment_score || s.decision_score || s.overall_score || 0) * weight;
+        sums.execution += (s.execution_responsiveness_score || s.execution_score || s.overall_score || 0) * weight;
 
-        // Keep track of most recent temporal data for frontend filters
-        if (!maxDate || s.session_date > maxDate) maxDate = s.session_date;
+        if (s.session_date && (!maxDate || s.session_date > maxDate)) maxDate = s.session_date;
         const dur = s.duration_seconds || s.duration || 0;
         if (dur > maxDuration) maxDuration = dur;
       }
 
-      const weightedScore = Math.round(weightedSum / totalWeight);
+      const weightedScore = Math.round(weightedSum / totalWeight) || 0;
       
       return {
         organization: first.organization_name,
         region:       first.region || 'Global',
         industry:     first.industry || first.metadata?.industry || 'General Business',
         score:        weightedScore,
-        cognitive:    Math.round(sums.cognitive / totalWeight),
-        signal:       Math.round(sums.signal / totalWeight),
-        resource:     Math.round(sums.resource / totalWeight),
-        decision:     Math.round(sums.decision / totalWeight),
-        execution:    Math.round(sums.execution / totalWeight),
+        cognitive:    Math.round(sums.cognitive / totalWeight) || 0,
+        signal:       Math.round(sums.signal / totalWeight) || 0,
+        resource:     Math.round(sums.resource / totalWeight) || 0,
+        decision:     Math.round(sums.decision / totalWeight) || 0,
+        execution:    Math.round(sums.execution / totalWeight) || 0,
         
-        session_date: maxDate || new Date().toISOString(),
-        duration_seconds: maxDuration || 480, // Fallback for visibility
+        session_date: maxDate || first.created_at || new Date().toISOString(),
+        duration_seconds: maxDuration || 480,
         evidence_density: signals.length,
-        source_breakdown: `${breakdown.behavioral} Behavioral | ${breakdown.diagnostic} Diagnostic | ${breakdown.research} Research`,
+        source_breakdown: `${breakdown.observed} Observed | ${breakdown.perceived} Perceived | ${breakdown.inferred} Inferred`,
+        source_breakdown_obj: breakdown,
         is_published: true,
         status:       weightedScore >= 70 ? 'High' : weightedScore >= 40 ? 'Moderate' : 'Risk'
       };
