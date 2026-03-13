@@ -4,74 +4,36 @@ import { FileText, Download, Globe, Activity, ShieldCheck, ArrowRight, Target, B
 
 const ResearchPage = () => {
   const [signals, setSignals] = useState([]);
+  const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('All');
 
-  const resources = [
-    {
-      id: 1,
-      title: "The AFERR Model: Behavioral Foundations",
-      type: "Google Slides",
-      category: "Framework",
-      description: "A comprehensive deck outlining the behavioral science behind the Activation-Forecasting-Reflection loop.",
-      link: "#",
-      icon: <Target className="w-5 h-5 text-amber-500" />
-    },
-    {
-      id: 2,
-      title: "Global Leadership Resilience Report 2025",
-      type: "PDF Report",
-      category: "Report",
-      description: "Statistical analysis of 100,000+ simulation data points across 40 countries.",
-      link: "#",
-      icon: <FileChartPie className="w-5 h-5 text-red-500" />
-    },
-    {
-      id: 3,
-      title: "Adaptive Strategy Whitepaper",
-      type: "Google Doc",
-      category: "Article",
-      description: "Directives for CHROs on closing the Adaptiveness Gap in executive leadership.",
-      link: "#",
-      icon: <FileText className="w-5 h-5 text-blue-500" />
-    },
-    {
-      id: 4,
-      title: "Case Study: Geopolitical Pivot 2024",
-      type: "PDF Case Study",
-      category: "Case Study",
-      description: "Anonymized analysis of a Fortune 500 company's response to supply chain volatility.",
-      link: "#",
-      icon: <Building2 className="w-5 h-5 text-teal-500" />
-    },
-    {
-        id: 5,
-        title: "Leadership Benchmarking Framework",
-        type: "Google Slides",
-        category: "Framework",
-        description: "Standardized methodology for measuring executive coherence velocity.",
-        link: "#",
-        icon: <BarChart3 className="w-5 h-5 text-amber-500" />
-    }
-  ];
-
   const filteredResources = activeFilter === 'All' 
     ? resources 
-    : resources.filter(r => r.category === activeFilter || r.type.includes(activeFilter));
+    : resources.filter(r => r.category === activeFilter || r.type === activeFilter || r.icon_type === activeFilter);
+
+
 
   useEffect(() => {
-    const fetchSignals = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch('/api/research/live');
-        const data = await response.json();
-        setSignals(data);
+        const [signalRes, resourceRes] = await Promise.all([
+          fetch('/api/research/live'),
+          fetch('/api/resources')
+        ]);
+        
+        const signalData = await signalRes.json();
+        const resourceData = await resourceRes.json();
+        
+        setSignals(signalData);
+        setResources(resourceData);
         setLoading(false);
       } catch (err) {
-        console.error('Failed to fetch signals:', err);
+        console.error('Failed to fetch research data:', err);
         setLoading(false);
       }
     };
-    fetchSignals();
+    fetchData();
   }, []);
 
   return (
@@ -216,45 +178,63 @@ const ResearchPage = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredResources.map((resource) => (
-              <motion.div
-                layout
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                key={resource.id}
-                className="p-8 bg-white rounded-3xl shadow-sm border border-slate-100 hover:border-teal-300 hover:shadow-xl hover:shadow-teal-900/5 transition-all group flex flex-col h-full"
-              >
-                <div className="flex justify-between items-start mb-6">
-                  <div className="p-3 bg-slate-50 rounded-2xl group-hover:bg-teal-50 transition-colors">
-                    {resource.icon}
+            {filteredResources.length > 0 ? (
+              filteredResources.map((resource) => (
+                <motion.div
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  key={resource.id}
+                  className="p-8 bg-white rounded-3xl shadow-sm border border-slate-100 hover:border-teal-300 hover:shadow-xl hover:shadow-teal-900/5 transition-all group flex flex-col h-full"
+                >
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="p-3 bg-slate-50 rounded-2xl group-hover:bg-teal-50 transition-colors">
+                      {(() => {
+                          switch(resource.icon_type) {
+                              case 'target': return <Target className="w-5 h-5 text-amber-500" />;
+                              case 'pie': return <FileChartPie className="w-5 h-5 text-red-500" />;
+                              case 'building': return <Building2 className="w-5 h-5 text-teal-500" />;
+                              case 'chart': return <BarChart3 className="w-5 h-5 text-amber-500" />;
+                              default: return <FileText className="w-5 h-5 text-blue-500" />;
+                          }
+                      })()}
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full border border-slate-100 italic">
+                      {resource.type}
+                    </span>
                   </div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full border border-slate-100 italic">
-                    {resource.type}
-                  </span>
+                  
+                  <h3 className="text-xl font-serif text-slate-900 mb-3 group-hover:text-teal-700 transition-colors">
+                    {resource.title}
+                  </h3>
+                  <p className="text-sm text-slate-500 leading-relaxed mb-8 flex-grow font-light">
+                    {resource.description}
+                  </p>
+                  
+                  <div className="flex items-center justify-between pt-6 border-t border-slate-50">
+                    <span className="text-[10px] font-bold text-teal-600 uppercase tracking-widest">
+                      {resource.category}
+                    </span>
+                    <a 
+                      href={resource.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-slate-900 font-bold text-sm group-hover:translate-x-1 transition-transform"
+                    >
+                      View Resource <ArrowRight className="w-4 h-4" />
+                    </a>
+                  </div>
+                </motion.div>
+              ))
+            ) : (
+                <div className="col-span-full py-20 flex flex-col items-center justify-center bg-white rounded-3xl border border-dashed border-slate-200">
+                    <BookOpen className="w-12 h-12 text-slate-200 mb-4" />
+                    <h3 className="text-xl font-bold text-slate-400">Library Hydration Active</h3>
+                    <p className="text-slate-500 max-w-xs text-center mx-auto mt-2">
+                        NotebookLM is synthesizing diagnostic signals. The first research briefs will appear shortly.
+                    </p>
                 </div>
-                
-                <h3 className="text-xl font-serif text-slate-900 mb-3 group-hover:text-teal-700 transition-colors">
-                  {resource.title}
-                </h3>
-                <p className="text-sm text-slate-500 leading-relaxed mb-8 flex-grow font-light">
-                  {resource.description}
-                </p>
-                
-                <div className="flex items-center justify-between pt-6 border-t border-slate-50">
-                  <span className="text-[10px] font-bold text-teal-600 uppercase tracking-widest">
-                    {resource.category}
-                  </span>
-                  <a 
-                    href={resource.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-slate-900 font-bold text-sm group-hover:translate-x-1 transition-transform"
-                  >
-                    View Resource <ArrowRight className="w-4 h-4" />
-                  </a>
-                </div>
-              </motion.div>
-            ))}
+            )}
           </div>
         </div>
       </section>

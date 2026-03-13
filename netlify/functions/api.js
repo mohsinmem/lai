@@ -15,7 +15,7 @@ app.get('/api/health', async (req, res) => {
   try {
     const health = {
       status: 'ok',
-      version: '1.1.22',
+      version: '1.2.0',
       timestamp: new Date().toISOString(),
       env: {
         has_url: !!process.env.SUPABASE_URL,
@@ -135,44 +135,32 @@ app.post('/api/diagnostic', async (req, res) => {
   }
 });
 
-// Global Analytics (Unified Diagnostic + Research)
+// Global Analytics (Hydrated Diagnostic Data)
 app.get('/api/analytics/global', async (req, res) => {
   try {
-    // Graceful fetch - don't crash if one table is missing
-    const results = await Promise.allSettled([
-      supabaseClient.from('diagnostic_results').select('region, overall_score'),
-      supabaseClient.from('company_research').select('region, adaptiveness_score')
-    ]);
+    const { data: diagData, error } = await supabaseClient
+      .from('diagnostic_results')
+      .select('organization_name, region, industry, overall_score, session_date, duration_seconds')
+      .order('overall_score', { ascending: false })
+      .limit(50);
 
-    const diagData = results[0].status === 'fulfilled' ? results[0].value.data : [];
-    const researchData = results[1].status === 'fulfilled' ? results[1].value.data : [];
+    if (error) throw error;
 
-    // Aggregate by region
-    const regions = {};
-    
-    const processEntry = (row, scoreKey) => {
-      if (!row || !row.region) return;
-      if (!regions[row.region]) {
-        regions[row.region] = { region: row.region, count: 0, total_score: 0 };
-      }
-      const r = regions[row.region];
-      r.count++;
-      r.total_score += row[scoreKey] || 0;
-    };
-
-    if (Array.isArray(diagData)) diagData.forEach(row => processEntry(row, 'overall_score'));
-    if (Array.isArray(researchData)) researchData.forEach(row => processEntry(row, 'adaptiveness_score'));
-
-    const analytics = Object.values(regions).map(r => ({
-      region: r.region,
-      participants: r.count,
-      avg_score: Math.round(r.total_score / r.count) || 0
+    // Map and normalize records
+    const analytics = (diagData || []).map(row => ({
+      organization: row.organization_name,
+      region: row.region || 'Global',
+      industry: row.industry || 'Global Baseline',
+      score: row.overall_score,
+      session_date: row.session_date,
+      duration: row.duration_seconds,
+      status: row.overall_score >= 80 ? 'High' : row.overall_score >= 60 ? 'Moderate' : 'Risk'
     }));
 
     res.json(analytics);
   } catch (err) {
     console.error('Analytics Error:', err);
-    res.json([]); // Fallback to empty instead of 500
+    res.json([]);
   }
 });
 
@@ -193,20 +181,18 @@ app.post('/api/demo-request', async (req, res) => {
   }
 });
 
-// Live Research Signals
-app.get('/api/research/live', async (req, res) => {
+// Research Resources (NotebookLM Generated)
+app.get('/api/resources', async (req, res) => {
   try {
     const { data, error } = await supabaseClient
-      .from('company_research')
+      .from('research_resources')
       .select('*')
-      .order('last_researched', { ascending: false })
-      .limit(10);
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
     res.json(data);
   } catch (err) {
-    console.error('Supabase Error (Research Feed):', err);
-    // Return empty array instead of 500 so UI doesn't break if table isn't seeded yet
+    console.error('Resources Error:', err);
     res.json([]);
   }
 });

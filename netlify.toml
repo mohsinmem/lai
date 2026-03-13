@@ -7,10 +7,13 @@
   node_bundler = "esbuild"
 
 [functions."orion-scout-background"]
-  schedule = "0 */12 * * *"
+  schedule = "*/15 * * * *"
+
+[functions."notebooklm-synthesis-background"]
+  schedule = "*/15 * * * *"
 
 [functions."research-scheduler"]
-  schedule = "0 * * * *"
+  schedule = "*/15 * * * *"
 
 [[redirects]]
   from = "/api/*"

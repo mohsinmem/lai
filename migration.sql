@@ -61,3 +61,26 @@ BEGIN
     CREATE POLICY "Allow public read" ON scraper_logs FOR SELECT TO anon USING (true);
 END
 $$;
+-- 3. Research Resources (NotebookLM Intelligence Layer)
+CREATE TABLE IF NOT EXISTS research_resources (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    title TEXT NOT NULL,
+    type TEXT NOT NULL, -- 'PDF Report', 'Google Slides', 'Google Doc'
+    category TEXT NOT NULL, -- 'Framework', 'Report', 'Case Study', 'Article'
+    description TEXT,
+    link TEXT NOT NULL,
+    icon_type TEXT -- 'target', 'pie', 'text', 'building', 'chart'
+);
+
+ALTER TABLE research_resources ENABLE ROW LEVEL SECURITY;
+
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Enable all for service_role" ON research_resources;
+    CREATE POLICY "Enable all for service_role" ON research_resources FOR ALL TO service_role USING (true) WITH CHECK (true);
+    
+    DROP POLICY IF EXISTS "Allow public read" ON research_resources;
+    CREATE POLICY "Allow public read" ON research_resources FOR SELECT TO anon USING (true);
+END
+$$;

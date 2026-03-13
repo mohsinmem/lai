@@ -6,23 +6,22 @@ const API_BASE_URL = '/api';
 
 const GlobalIndexPage = () => {
   const [rankings, setRankings] = useState([]);
+  const [expandedId, setExpandedId] = useState(null);
 
   useEffect(() => {
     fetch('/api/analytics/global')
       .then(res => res.json())
       .then(data => {
-        // Map analytics data to ranking structure
-        const mapped = data.sort((a, b) => b.avg_score - a.avg_score).map((r, i) => ({
+        const sorted = data.sort((a, b) => b.score - a.score).map((r, i) => ({
+          ...r,
           rank: i + 1,
-          country: r.region,
-          score: r.avg_score,
-          trend: '+2.4%', // Mock trend as we don't store historical aggregates yet
-          status: r.avg_score >= 80 ? 'High' : r.avg_score >= 60 ? 'Moderate' : 'Risk'
+          trend: '+2.4%' // Mock trend
         }));
-        setRankings(mapped);
+        setRankings(sorted);
       })
       .catch(err => console.error('Failed to fetch analytics:', err));
   }, []);
+
   return (
     <div className="glai-page">
       <header className="page-header">
@@ -42,18 +41,17 @@ const GlobalIndexPage = () => {
           <div className="map-controls">
             <div className="search-bar">
               <Search size={18} />
-              <input type="text" placeholder="Search country or region..." />
+              <input type="text" placeholder="Search organization..." />
             </div>
             <div className="filter-group">
-              <button className="btn-filter active">Global</button>
-              <button className="btn-filter">By Industry</button>
-              <button className="btn-filter">By Region</button>
+              <button className="btn-filter active">All Sectors</button>
+              <button className="btn-filter">High Performers</button>
+              <button className="btn-filter">Regional Leaders</button>
             </div>
           </div>
 
           <div className="interactive-map-mock">
             <div className="map-graphic">
-              {/* Representing a world map with abstract data points */}
               <div className="map-point high" style={{ top: '25%', left: '15%' }}></div>
               <div className="map-point high" style={{ top: '30%', left: '48%' }}></div>
               <div className="map-point mod" style={{ top: '65%', left: '75%' }}></div>
@@ -73,40 +71,74 @@ const GlobalIndexPage = () => {
       <section className="index-rankings">
         <div className="container">
           <div className="section-header">
-            <h2>2024 Global Rankings</h2>
-            <p>Aggregate scores based on organizational participation and behavioral simulations.</p>
+            <h2>Live Global Rankings</h2>
+            <p>Direct signal extraction from {rankings.length} verified organizational simulations.</p>
           </div>
 
           <div className="ranking-table">
             <div className="table-row head">
               <span>Rank</span>
-              <span>Country/Region</span>
+              <span>Organization / Sector</span>
               <span>LAI Score</span>
               <span>Trend</span>
               <span>Status</span>
             </div>
             {rankings.length > 0 ? (
-              rankings.map((r) => (
-                <motion.div 
-                  key={r.country}
-                  className="table-row"
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
-                >
-                  <span className="rank-num">#{r.rank}</span>
-                  <span className="country-name">{r.country}</span>
-                  <span className="iai-score">{r.score}</span>
-                  <span className={`trend ${r.trend.startsWith('+') ? 'up' : 'down'}`}>{r.trend}</span>
-                  <span className={`status-pill ${r.status.toLowerCase()}`}>{r.status}</span>
-                </motion.div>
+              rankings.map((r, idx) => (
+                <div key={idx}>
+                  <motion.div 
+                    className={`table-row ${expandedId === idx ? 'expanded' : ''}`}
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    onClick={() => setExpandedId(expandedId === idx ? null : idx)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <span className="rank-num">#{r.rank}</span>
+                    <span className="country-name">
+                        <div className="font-bold text-slate-900">{r.organization}</div>
+                        <div className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">{r.industry} • {r.region}</div>
+                    </span>
+                    <span className="iai-score">{r.score}</span>
+                    <span className={`trend ${r.trend.startsWith('+') ? 'up' : 'down'}`}>{r.trend}</span>
+                    <span className={`status-pill ${r.status.toLowerCase()}`}>{r.status}</span>
+                  </motion.div>
+                  {expandedId === idx && (
+                    <motion.div 
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        className="p-8 bg-slate-50 border-x border-slate-100 flex gap-12"
+                    >
+                        <div>
+                            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-2">Temporal Footprint</p>
+                            <div className="flex gap-8">
+                                <div>
+                                    <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Date Played</p>
+                                    <p className="text-sm text-slate-700">{r.session_date ? new Date(r.session_date).toLocaleDateString() : 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Session Length</p>
+                                    <p className="text-sm text-slate-700">{r.duration ? `${Math.floor(r.duration / 60)}m ${r.duration % 60}s` : 'N/A'}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex-grow">
+                             <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-2">Behavioral Profile</p>
+                             <div className="flex gap-4">
+                                <div className="px-3 py-1 bg-white border border-slate-200 rounded text-[10px] font-mono text-slate-600">AFERR_SYNTHESIS_ACTIVE</div>
+                                <div className="px-3 py-1 bg-white border border-slate-200 rounded text-[10px] font-mono text-slate-600">GLAZ_SIGNAL_VALIDATED</div>
+                             </div>
+                        </div>
+                    </motion.div>
+                  )}
+                </div>
               ))
             ) : (
               <div className="empty-ranking py-20 text-center">
                 <Globe className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-slate-400">No Regional Data Detected</h3>
+                <h3 className="text-xl font-bold text-slate-400">Scanning Research Data...</h3>
                 <p className="text-slate-500 max-w-sm mx-auto mt-2">
-                  Participate in the diagnostic measurement or wait for the Orion Scout agent to populate global scores.
+                  The Global Index is hydrating with {rankings.length === 0 ? '600+' : rankings.length} harvest records.
                 </p>
               </div>
             )}
