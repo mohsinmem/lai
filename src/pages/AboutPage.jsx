@@ -22,7 +22,7 @@ const AdvisorySection = ({ title, subtitle, items, icon: Icon }) => (
         <Icon size={24} />
       </div>
       <div>
-        <h3 className="text-xl font-bold text-navy">{title}</h3>
+        <h3 className="text-xl font-bold text-[#0a192f]">{title}</h3>
         <p className="text-sm font-medium text-teal-600">{subtitle}</p>
       </div>
     </div>
@@ -42,12 +42,12 @@ const AboutPage = () => {
     <div className="min-h-screen bg-slate-50/50">
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 overflow-hidden">
-        <div className="absolute inset-0 bg-navy text-white">
-          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-teal-400 via-navy to-navy"></div>
+        <div className="absolute inset-0 bg-[#0a192f] text-white">
+          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-teal-400 via-[#0a192f] to-[#0a192f]"></div>
         </div>
-        
+
         <div className="container relative z-10">
-          <motion.div 
+          <motion.div
             initial="hidden"
             animate="visible"
             variants={staggerContainer}
@@ -66,7 +66,7 @@ const AboutPage = () => {
       {/* Mission & Pillars Section */}
       <section className="py-24 bg-white">
         <div className="container">
-          <motion.div 
+          <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
@@ -74,7 +74,7 @@ const AboutPage = () => {
             className="grid lg:grid-cols-2 gap-16 items-center"
           >
             <div>
-              <motion.h2 variants={fadeIn} className="text-4xl font-serif text-navy mb-6">Our Mission</motion.h2>
+              <motion.h2 variants={fadeIn} className="text-4xl font-serif text-[#0a192f] mb-6">Our Mission</motion.h2>
               <motion.div variants={fadeIn} className="prose prose-lg text-slate-600">
                 <p className="mb-4">
                   Our primary intent is to help organizations close the <strong>"Adaptiveness Gap"</strong>—the critical distance between a leadership team's intellectual recognition of a changing reality and the organization's actual shift in execution and resource allocation.
@@ -105,7 +105,7 @@ const AboutPage = () => {
       {/* Pedigree Section */}
       <section className="py-24 bg-slate-50 border-y border-slate-100">
         <div className="container">
-          <motion.div 
+          <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
@@ -113,24 +113,24 @@ const AboutPage = () => {
             className="max-w-4xl mx-auto"
           >
             <div className="text-center mb-16">
-              <motion.h2 variants={fadeIn} className="text-4xl font-serif text-navy mb-6">Our Pedigree and Scientific Foundation</motion.h2>
+              <motion.h2 variants={fadeIn} className="text-4xl font-serif text-[#0a192f] mb-6">Our Pedigree and Scientific Foundation</motion.h2>
               <motion.div variants={fadeIn} className="w-24 h-1 bg-teal-500 mx-auto rounded-full"></motion.div>
             </div>
-            
+
             <div className="grid md:grid-cols-2 gap-12">
               <motion.div variants={fadeIn} className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-teal-50 rounded-bl-full -z-0 opacity-50"></div>
                 <Activity className="text-teal-600 w-12 h-12 mb-6 relative z-10" />
-                <h3 className="text-2xl font-serif text-navy mb-4 relative z-10">Measurable Behavior</h3>
+                <h3 className="text-2xl font-serif text-[#0a192f] mb-4 relative z-10">Measurable Behavior</h3>
                 <p className="text-slate-600 leading-relaxed relative z-10">
                   Adaptiveness is not a stated belief; it is a measurable behavior. The Institute's framework is grounded in over a decade of behavioral science research utilizing the AFERR model (Activation, Forecasting, Experimentation, Realization, Reflection).
                 </p>
               </motion.div>
 
               <motion.div variants={fadeIn} className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-navy/5 rounded-bl-full -z-0"></div>
-                <Database className="text-navy w-12 h-12 mb-6 relative z-10" />
-                <h3 className="text-2xl font-serif text-navy mb-4 relative z-10">Empirical Baseline</h3>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#0a192f]/5 rounded-bl-full -z-0"></div>
+                <Database className="text-[#0a192f] w-12 h-12 mb-6 relative z-10" />
+                <h3 className="text-2xl font-serif text-[#0a192f] mb-4 relative z-10">Empirical Baseline</h3>
                 <p className="text-slate-600 leading-relaxed relative z-10">
                   Developed from an empirical baseline of over 20,000 high-fidelity leadership simulations involving more than 100,000 global participants. Rather than relying on perception-based surveys, we use the Evivve simulation engine to capture real-time decisions under pressure.
                 </p>
@@ -143,21 +143,21 @@ const AboutPage = () => {
       {/* Network & Advisors */}
       <section className="py-24 bg-white">
         <div className="container">
-          <motion.div 
+          <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={staggerContainer}
             className="mb-16 text-center max-w-3xl mx-auto"
           >
-            <motion.h2 variants={fadeIn} className="text-4xl font-serif text-navy mb-6">A Global Effort: Our Network of Experts</motion.h2>
+            <motion.h2 variants={fadeIn} className="text-4xl font-serif text-[#0a192f] mb-6">A Global Effort: Our Network of Experts</motion.h2>
             <motion.p variants={fadeIn} className="text-lg text-slate-600">
               Institutionalizing leadership adaptiveness requires a coordinated, global collaborative effort. The Institute is supported by a distinguished coalition of researchers, corporate dignitaries, and institutional partners.
             </motion.p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-            <AdvisorySection 
+            <AdvisorySection
               title="The Global Advisory Board"
               subtitle="[ XX ] Global Industry Dignitaries & Executive Leaders"
               icon={Building}
@@ -169,7 +169,7 @@ const AboutPage = () => {
               ]}
             />
 
-            <AdvisorySection 
+            <AdvisorySection
               title="Research & Behavioral Science Council"
               subtitle="[ XX ] Lead Behavioral Scientists & Psychometricians"
               icon={Microscope}
@@ -181,7 +181,7 @@ const AboutPage = () => {
               ]}
             />
 
-            <AdvisorySection 
+            <AdvisorySection
               title="Institutional & Academic Partners"
               subtitle="[ XX ] Global University & Think-Tank Partnerships"
               icon={GraduationCap}
@@ -193,7 +193,7 @@ const AboutPage = () => {
               ]}
             />
 
-            <AdvisorySection 
+            <AdvisorySection
               title="Technology & Simulation Contributors"
               subtitle="[ XX ] Platform Architects & Data Infrastructure Advisors"
               icon={Server}
@@ -210,12 +210,12 @@ const AboutPage = () => {
 
       {/* Join the Effort CTA */}
       <section className="py-24 relative overflow-hidden">
-        <div className="absolute inset-0 bg-navy text-white">
-          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-teal-400 via-navy to-navy"></div>
+        <div className="absolute inset-0 bg-[#0a192f] text-white">
+          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-teal-400 via-[#0a192f] to-[#0a192f]"></div>
         </div>
-        
+
         <div className="container relative z-10 text-center max-w-3xl mx-auto">
-          <motion.div 
+          <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
