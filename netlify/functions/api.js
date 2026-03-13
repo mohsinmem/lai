@@ -233,28 +233,29 @@ app.get('/api/analytics/global', async (req, res) => {
       let maxDuration = 0;
       const breakdown = { observed: 0, perceived: 0, inferred: 0 };
 
+      const TIER_WEIGHTS = { 'OBSERVED': 1.0, 'PERCEIVED': 0.6, 'INFERRED': 0.4 };
+      const SENIORITY_MULTIPLIERS = { 'c_suite': 1.5, 'svp_vp_director': 1.2, 'middle_management': 1.0, 'individual_contributor': 0.8, 'default': 1.0 };
+
       for (const s of signals) {
         const rawType = (s.source_type || s.metadata?.source || 'BEHAVIORAL').toUpperCase();
-        let weight = 1.0;
-        let typeKey = 'observed';
+        const tier = (rawType === 'DIAGNOSTIC' || rawType === 'SELF-REPORTED') ? 'PERCEIVED' : (rawType === 'RESEARCH' || rawType === 'INFERRED') ? 'INFERRED' : 'OBSERVED';
+        const typeKey = tier.toLowerCase();
         
-        if (rawType === 'DIAGNOSTIC' || rawType === 'SELF-REPORTED') {
-          weight = 0.6;
-          typeKey = 'perceived';
-        } else if (rawType === 'RESEARCH' || rawType === 'INFERRED') {
-          weight = 0.4;
-          typeKey = 'inferred';
-        }
+        const tierWeight = TIER_WEIGHTS[tier] || 1.0;
+        const seniority = s.seniority_level || 'middle_management';
+        const seniorityMultiplier = SENIORITY_MULTIPLIERS[seniority] || SENIORITY_MULTIPLIERS['default'];
+        
+        const finalWeight = tierWeight * seniorityMultiplier;
 
         breakdown[typeKey]++;
-        totalWeight += weight;
-        weightedSum += (s.overall_lai_score || s.overall_score || 0) * weight;
+        totalWeight += finalWeight;
+        weightedSum += (s.overall_lai_score || s.overall_score || 0) * finalWeight;
         
-        sums.cognitive += (s.cognitive_score || s.overall_lai_score || 0) * weight;
-        sums.signal += (s.signal_detection_score || s.signal_score || s.overall_lai_score || 0) * weight;
-        sums.resource += (s.resource_reallocation_score || s.resource_score || s.overall_lai_score || 0) * weight;
-        sums.decision += (s.decision_alignment_score || s.decision_score || s.overall_lai_score || 0) * weight;
-        sums.execution += (s.execution_responsiveness_score || s.execution_score || s.overall_lai_score || 0) * weight;
+        sums.cognitive += (s.cognitive_framing_score || s.cognitive_score || s.overall_lai_score || 0) * finalWeight;
+        sums.signal += (s.strategic_calibration_score || s.signal_detection_score || s.signal_score || s.overall_lai_score || 0) * finalWeight;
+        sums.resource += (s.challenge_networks_score || s.resource_reallocation_score || s.resource_score || s.overall_lai_score || 0) * finalWeight;
+        sums.decision += (s.learning_agility_score || s.decision_alignment_score || s.decision_score || s.overall_lai_score || 0) * finalWeight;
+        sums.execution += (s.psychological_stamina_score || s.execution_responsiveness_score || s.execution_score || s.overall_lai_score || 0) * finalWeight;
 
         if (s.session_date && (!maxDate || s.session_date > maxDate)) maxDate = s.session_date;
         const dur = s.duration_seconds || s.duration || 0;
@@ -274,10 +275,10 @@ app.get('/api/analytics/global', async (req, res) => {
           industry:     first?.industry || 'General Business',
           score:        score,
           cognitive:    hasData ? (Math.round(sums.cognitive / totalWeight) || 0) : 0,
-          signal:       hasData ? (Math.round(sums.signal / totalWeight) || 0) : 0,
-          resource:     hasData ? (Math.round(sums.resource / totalWeight) || 0) : 0,
-          decision:     hasData ? (Math.round(sums.decision / totalWeight) || 0) : 0,
-          execution:    hasData ? (Math.round(sums.execution / totalWeight) || 0) : 0,
+          strategic:    hasData ? (Math.round(sums.signal / totalWeight) || 0) : 0,
+          challenge:    hasData ? (Math.round(sums.resource / totalWeight) || 0) : 0,
+          learning:     hasData ? (Math.round(sums.decision / totalWeight) || 0) : 0,
+          stamina:      hasData ? (Math.round(sums.execution / totalWeight) || 0) : 0,
           
           session_date: maxDate || first?.created_at || new Date().toISOString(),
           duration_seconds: maxDuration || 480,

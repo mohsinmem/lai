@@ -141,12 +141,12 @@ exports.handler = async (event) => {
       const { error } = await supabase.from('diagnostic_results').insert([{
         organization_name:              company.name,
         region:                         company.region || 'Global',
-        overall_score:                  aferr.overallScore,
-        signal_detection_score:         parseFloat(aferr.activationScore.toFixed(2)),
+        overall_lai_score:              aferr.overallScore,
         cognitive_framing_score:        parseFloat(aferr.forecastingScore.toFixed(2)),
-        resource_reallocation_score:    parseFloat(aferr.experimentScore.toFixed(2)),
-        decision_alignment_score:       parseFloat(aferr.realizationScore.toFixed(2)),
-        execution_responsiveness_score: parseFloat(aferr.reflectionScore.toFixed(2)),
+        strategic_calibration_score:    parseFloat(aferr.activationScore.toFixed(2)),
+        challenge_networks_score:       parseFloat(aferr.experimentScore.toFixed(2)),
+        learning_agility_score:         parseFloat(aferr.realizationScore.toFixed(2)),
+        psychological_stamina_score:    parseFloat(aferr.reflectionScore.toFixed(2)),
         metadata: {
           source:          'orion-scout-v3',
           sector_rotation: activeSectors,
@@ -195,4 +195,9 @@ exports.handler = async (event) => {
   } finally {
     if (browser) await browser.close();
   }
+};
+
+// Netlify 60-minute Cron Activation
+exports.config = {
+  schedule: "@hourly"
 };

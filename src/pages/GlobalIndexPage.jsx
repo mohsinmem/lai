@@ -23,8 +23,7 @@ const REGION_COORDINATES = {
   'Africa': [60, 52], 'Nigeria': [55, 48], 'South Africa': [82, 58],
   'South Asia': [48, 72], 'India': [52, 74],
   'East Asia': [38, 85], 'China': [40, 82], 'Japan': [35, 88],
-  'Southeast Asia': [58, 85], 'APAC': [55, 88], 'Singapore': [62, 84],
-  'Oceania': [75, 88], 'Australia': [78, 88],
+  'APAC': [55, 88], 'LATAM': [65, 30],
   'Global': [50, 50],
 };
 
@@ -176,10 +175,10 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem 2rem' }}>
                   {[
                     { label: 'Cognitive Framing', key: 'cognitive' },
-                    { label: 'Signal Detection', key: 'signal' },
-                    { label: 'Resource Reallocation', key: 'resource' },
-                    { label: 'Decision Alignment', key: 'decision' },
-                    { label: 'Execution Responsiveness', key: 'execution' }
+                    { label: 'Strategic Calibration', key: 'strategic' },
+                    { label: 'Challenge Networks', key: 'challenge' },
+                    { label: 'Learning Agility', key: 'learning' },
+                    { label: 'Psychological Stamina', key: 'stamina' }
                   ].map(dim => (
                     <div key={dim.key}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
