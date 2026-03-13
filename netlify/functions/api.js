@@ -171,24 +171,40 @@ app.get('/api/analytics/global', async (req, res) => {
     if (resultsRes.error) throw resultsRes.error;
     const allSignals = resultsRes.data || [];
     const verifiedOrgs = orgsRes.data || [];
-    const orgMetadataMap = new Map(verifiedOrgs.map(o => [o.id, o]));
-
+    const normalizedVerifiedOrgs = [];
+    const nameToCanonicalId = new Map();
+    const idToCanonicalIdMap = new Map();
+    
     const blacklist = ['Karen', 'Powerpuff Girls', 'Test', 'gew', 'nrwe', 'test'];
     const filteredSignals = allSignals.filter(row => {
       const name = row.organization_name?.toLowerCase() || '';
       return !blacklist.some(b => name === b.toLowerCase());
     });
-    const orgByNameMap = new Map(verifiedOrgs.map(o => [o.name.trim().toLowerCase(), o]));
+    
+    // Deduplicate verified orgs by name (Robustness Fix v1.5.1)
+    for (const org of verifiedOrgs) {
+      if (!org.name) continue;
+      const normName = org.name.trim().toLowerCase();
+      if (!nameToCanonicalId.has(normName)) {
+        nameToCanonicalId.set(normName, org.id);
+        normalizedVerifiedOrgs.push(org);
+        idToCanonicalIdMap.set(org.id, org.id);
+      } else {
+        // Alias this duplicate ID to the first one found
+        idToCanonicalIdMap.set(org.id, nameToCanonicalId.get(normName));
+      }
+    }
+
+    const orgMetadataMap = new Map(normalizedVerifiedOrgs.map(o => [o.id, o]));
+    const orgByNameMap = new Map(normalizedVerifiedOrgs.map(o => [o.name.trim().toLowerCase(), o]));
     const entityGroups = new Map();
     
-    // 1. Add all signals to groups. Map by verified_entity_id or normalized name.
-    // If a name matches a verified organization, use the verified ID as the grouping key.
+    // 1. Add all signals to groups. Map by canonical verified_entity_id or normalized name.
     for (const s of filteredSignals) {
-      let key = s.verified_entity_id;
+      let key = s.verified_entity_id ? idToCanonicalIdMap.get(s.verified_entity_id) : null;
       if (!key && s.organization_name) {
         const normName = s.organization_name.trim().toLowerCase();
-        const matchedOrg = orgByNameMap.get(normName);
-        key = matchedOrg ? matchedOrg.id : normName;
+        key = nameToCanonicalId.get(normName) || normName;
       }
       if (!key) key = 'unknown';
 
@@ -196,10 +212,10 @@ app.get('/api/analytics/global', async (req, res) => {
       entityGroups.get(key).push(s);
     }
 
-    // 2. Ensure all verified orgs are represented even if they have NO signals yet
-    for (const org of verifiedOrgs) {
+    // 2. Ensure all canonical verified orgs are represented
+    for (const org of normalizedVerifiedOrgs) {
       if (!entityGroups.has(org.id)) {
-        entityGroups.set(org.id, []); // Empty signals list
+        entityGroups.set(org.id, []); 
       }
     }
 
