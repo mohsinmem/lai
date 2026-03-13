@@ -184,7 +184,12 @@ app.get('/api/analytics/global', async (req, res) => {
     
     // 1. Add all signals to groups
     for (const s of filteredSignals) {
-      const key = s.verified_entity_id || s.organization_name;
+      let key = s.verified_entity_id;
+      if (!key && s.organization_name) {
+        key = s.organization_name.trim().toLowerCase();
+      }
+      if (!key) key = 'unknown';
+
       if (!entityGroups.has(key)) entityGroups.set(key, []);
       entityGroups.get(key).push(s);
     }
@@ -221,10 +226,10 @@ app.get('/api/analytics/global', async (req, res) => {
       
       // Fallback: If no ID found, try searching by name (v1.3.3 Robustness)
       if (!verifiedOrg && first?.organization_name) {
-        verifiedOrg = orgByNameMap.get(first.organization_name.toLowerCase());
+        verifiedOrg = orgByNameMap.get(first.organization_name.trim().toLowerCase());
       }
       
-      const orgName = verifiedOrg ? verifiedOrg.name : (first?.organization_name || 'Unknown');
+      const orgName = verifiedOrg ? verifiedOrg.name : (first?.organization_name?.trim() || 'Unknown');
             let totalWeight = 0;
       let weightedSum = 0;
       let sums = { cognitive: 0, strategic: 0, challenge: 0, learning: 0, stamina: 0 };
