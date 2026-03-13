@@ -132,7 +132,10 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
               Data Pending
             </div>
           ) : (
-            <ScoreBar score={r.signal_interpretation || r.score} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <ScoreBar score={r.score} />
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', minWidth: '2.5ch' }}>{r.score}</span>
+            </div>
           )}
         </span>
         <span style={{ fontWeight: 700, fontSize: '0.85rem', color: r.cognitiveShift?.startsWith('+') ? '#10b981' : '#ef4444', opacity: (r.is_verified && r.evidence_density === 0) ? 0.3 : 1 }}>

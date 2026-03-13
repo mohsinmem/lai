@@ -178,15 +178,17 @@ app.get('/api/analytics/global', async (req, res) => {
       const name = row.organization_name?.toLowerCase() || '';
       return !blacklist.some(b => name === b.toLowerCase());
     });
-
-    // Grouping Logic: Prioritize verified_entity_id, fallback to organization_name
+    const orgByNameMap = new Map(verifiedOrgs.map(o => [o.name.trim().toLowerCase(), o]));
     const entityGroups = new Map();
     
-    // 1. Add all signals to groups
+    // 1. Add all signals to groups. Map by verified_entity_id or normalized name.
+    // If a name matches a verified organization, use the verified ID as the grouping key.
     for (const s of filteredSignals) {
       let key = s.verified_entity_id;
       if (!key && s.organization_name) {
-        key = s.organization_name.trim().toLowerCase();
+        const normName = s.organization_name.trim().toLowerCase();
+        const matchedOrg = orgByNameMap.get(normName);
+        key = matchedOrg ? matchedOrg.id : normName;
       }
       if (!key) key = 'unknown';
 
@@ -201,25 +203,7 @@ app.get('/api/analytics/global', async (req, res) => {
       }
     }
 
-    const aggregated = Array.from(entityGroups.values()).map(signals => {
-      const first = signals.length > 0 ? signals[0] : null;
-      // We need to resolve the organization name/ID correctly
-      let orgId = first?.verified_entity_id;
-      let rawName = first?.organization_name;
-      
-      // If we are looking at an empty group from a verified org
-      if (!first) {
-        // This is tricky, find which orgId this group belongs to
-        // Map.values doesn't give us keys. Let's refactor the map to include keys or just use the first entry
-      }
-
-      // Re-aggregating with full context
-      return null; // placeholder for next step
-    }).filter(Boolean);
-    
     const finalData = [];
-    const orgByNameMap = new Map(verifiedOrgs.map(o => [o.name.toLowerCase(), o]));
-
     entityGroups.forEach((signals, key) => {
       const first = signals[0];
       let verifiedOrg = orgMetadataMap.get(key) || (first?.verified_entity_id ? orgMetadataMap.get(first.verified_entity_id) : null);
