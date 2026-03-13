@@ -135,29 +135,36 @@ app.post('/api/diagnostic', async (req, res) => {
   }
 });
 
-// Global Analytics (Hydrated Diagnostic Data)
+// Global Analytics — Force-Hydrated (all records, no cap)
 app.get('/api/analytics/global', async (req, res) => {
   try {
     const { data: diagData, error } = await supabaseClient
       .from('diagnostic_results')
       .select('organization_name, region, industry, overall_score, session_date, duration_seconds')
-      .order('overall_score', { ascending: false })
-      .limit(50);
+      .not('overall_score', 'is', null)
+      .order('overall_score', { ascending: false });
 
     if (error) throw error;
 
-    // Map and normalize records
-    const analytics = (diagData || []).map(row => ({
-      organization: row.organization_name,
-      region: row.region || 'Global',
-      industry: row.industry || 'Global Baseline',
-      score: row.overall_score,
-      session_date: row.session_date,
-      duration: row.duration_seconds,
-      status: row.overall_score >= 80 ? 'High' : row.overall_score >= 60 ? 'Moderate' : 'Risk'
-    }));
+    // Deduplicate by organization name (keep highest score per org)
+    const seen = new Map();
+    for (const row of (diagData || [])) {
+      const key = row.organization_name;
+      if (!seen.has(key) || row.overall_score > seen.get(key).score) {
+        seen.set(key, {
+          organization: row.organization_name,
+          region:       row.region || 'Global',
+          industry:     row.industry || 'Global Baseline',
+          score:        row.overall_score,
+          session_date: row.session_date || null,
+          duration_seconds: row.duration_seconds || null,
+          duration:     row.duration_seconds || null,
+          status:       row.overall_score >= 80 ? 'High' : row.overall_score >= 60 ? 'Moderate' : 'Risk'
+        });
+      }
+    }
 
-    res.json(analytics);
+    res.json(Array.from(seen.values()));
   } catch (err) {
     console.error('Analytics Error:', err);
     res.json([]);

@@ -7,7 +7,7 @@ const { supabase } = require('./lib/supabase.cjs');
  * Asset Types:
  *   1. Framework    — Sector-specific adaptiveness models
  *   2. Report       — Research Briefs from 600+ game datasets
- *   3. Case Study   — High vs Low performer tribe comparisons
+ *   3. Case Study   — High vs Low performer organization comparisons
  *   4. Article      — Short-form thought leadership
  *   5. Strategic Deck — Presentation-ready executive insights
  */
@@ -24,42 +24,42 @@ function generateAssets(sector, stats) {
 
   return [
     {
-      title:       `${sector} Adaptiveness Framework 2026`,
+      title:       `${sector} Leadership Adaptiveness Framework 2026`,
       type:        'Framework',
       category:    'Framework',
-      description: `Theoretical model for bridging the ${sector} Adaptiveness Gap. Derived from ${totalSessions}+ high-fidelity leadership simulations. Sector state: ${evolutionaryState}.`,
+      description: `A capital-allocation and decision-velocity model for ${sector} executives. Built from ${totalSessions}+ behavioral simulations, this framework quantifies the direct ROI of adaptiveness investment at each of the 5 AFERR dimensions. Sector state: ${evolutionaryState}. Average Adaptiveness Velocity: ${avgScore}.`,
       link:        '#',
       icon_type:   'target'
     },
     {
-      title:       `${sector} Research Brief: AFERR Behavioral Signals`,
+      title:       `${sector} Intelligence Brief: Behavioral Performance Signals`,
       type:        'Report',
       category:    'Report',
-      description: `Narrative deep-dive into ${totalSessions}+ ${sector} game datasets. Average AFERR Velocity: ${avgScore}. Key cognitive patterns identified across regional cohorts.`,
+      description: `Executive-grade analysis of ${totalSessions}+ ${sector} leadership simulation datasets. Isolates the behavioral patterns driving competitive separation — signal lag, resource reallocation velocity, and execution coherence. Benchmark: ${avgScore} average Adaptiveness Velocity. Distribution: ${evolutionaryState} cohort leads.`,
       link:        '#',
       icon_type:   'pie'
     },
     {
-      title:       `Case Study: Cognitive Divergence in ${sector}`,
+      title:       `${sector} Case Study: Performance Divergence at the Leadership Layer`,
       type:        'Case Study',
       category:    'Case Study',
-      description: `Tribe-level comparison. Top performer: ${topTribe} (${evolutionaryState}). Bottom benchmark: ${bottomTribe}. Divergence mapped across all 5 AFERR dimensions.`,
+      description: `High-stakes comparison of ${sector} organizations at opposite ends of the Adaptiveness spectrum. Top-performing entity: ${topTribe}. Reference baseline: ${bottomTribe}. Divergence is mapped across signal detection speed, capital reallocation decisions, and execution responsiveness — with direct implications for board-level leadership investment.`,
       link:        '#',
       icon_type:   'building'
     },
     {
-      title:       `Closing the ${sector} Adaptiveness Gap`,
+      title:       `The ${sector} Adaptiveness Imperative`,
       type:        'Article',
       category:    'Article',
-      description: `Short-form thought leadership for senior leaders. Examines activation latency, cognitive framing, and execution velocity within the ${sector} sector.`,
+      description: `A concise executive read on the measurable cost of cognitive rigidity in ${sector} leadership. Covers how activation latency and execution misalignment translate into revenue loss, talent attrition, and competitive displacement. Backed by LAI simulation data from ${totalSessions}+ sessions.`,
       link:        '#',
       icon_type:   'text'
     },
     {
-      title:       `${sector} Executive Strategy Deck 2026`,
+      title:       `${sector} Executive Intelligence Deck 2026`,
       type:        'Strategic Deck',
-      category:    'Framework',
-      description: `Board-ready presentation integrating live AFERR Intelligence. Covers sector rotation signals, volatility mapping, and evolution pathways for ${sector} leaders.`,
+      category:    'Strategic Deck',
+      description: `Board-ready deck synthesizing live LAI Intelligence for ${sector} stakeholders. Covers sector volatility rotation, Adaptiveness Velocity benchmarks vs. global peers, and a prioritized roadmap for closing the ${sector} adaptiveness gap. Built for C-Suite and Board presentations.`,
       link:        '#',
       icon_type:   'chart'
     }
@@ -116,7 +116,7 @@ exports.handler = async (event) => {
     const avgScore      = Math.round(sessionScores.reduce((a, b) => a + b, 0) / (sessionScores.length || 1));
     const sortedOrgs    = [...scores].sort((a, b) => b.overall_score - a.overall_score);
     const topTribe      = sortedOrgs[0]?.organization_name || 'Unknown Leader';
-    const bottomTribe   = sortedOrgs[sortedOrgs.length - 1]?.organization_name || 'Baseline Tribe';
+    const bottomTribe   = sortedOrgs[sortedOrgs.length - 1]?.organization_name || 'Baseline Entity';
 
     const stats = { avgScore, topTribe, bottomTribe, totalSessions: scores.length };
 

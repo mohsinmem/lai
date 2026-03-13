@@ -6,21 +6,20 @@ import {
   FileChartPie, Building2, BarChart3, Layers, Presentation, Newspaper
 } from 'lucide-react';
 
-// ── Type Badge config ─────────────────────────────────────────────────────────
-const TYPE_CONFIG = {
-  Framework:      { color: '#f59e0b', bg: '#fef3c7', border: '#fde68a', label: 'Framework',      Icon: Layers },
-  Report:         { color: '#ef4444', bg: '#fee2e2', border: '#fca5a5', label: 'PDF Report',     Icon: FileChartPie },
-  'Case Study':   { color: '#0d9488', bg: '#ccfbf1', border: '#99f6e4', label: 'Case Study',     Icon: Building2 },
-  Article:        { color: '#3b82f6', bg: '#dbeafe', border: '#bfdbfe', label: 'Article',        Icon: Newspaper },
-  'Strategic Deck': { color: '#8b5cf6', bg: '#ede9fe', border: '#ddd6fe', label: 'Strategy Deck', Icon: Presentation },
+// ── Safe date formatter ────────────────────────────────────────────────────────
+const formatDate = (val) => {
+  if (!val) return null;
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
-const ICON_MAP = {
-  target:   <Target   className="w-5 h-5" />,
-  pie:      <FileChartPie className="w-5 h-5" />,
-  building: <Building2 className="w-5 h-5" />,
-  chart:    <BarChart3  className="w-5 h-5" />,
-  text:     <FileText   className="w-5 h-5" />,
+// ── Type Badge config ─────────────────────────────────────────────────────────
+const TYPE_CONFIG = {
+  Framework:        { color: '#f59e0b', bg: '#fef3c7', border: '#fde68a', label: 'Framework',      Icon: Layers },
+  Report:           { color: '#ef4444', bg: '#fee2e2', border: '#fca5a5', label: 'Research Brief',  Icon: FileChartPie },
+  'Case Study':     { color: '#0d9488', bg: '#ccfbf1', border: '#99f6e4', label: 'Case Study',     Icon: Building2 },
+  Article:          { color: '#3b82f6', bg: '#dbeafe', border: '#bfdbfe', label: 'Article',         Icon: Newspaper },
+  'Strategic Deck': { color: '#8b5cf6', bg: '#ede9fe', border: '#ddd6fe', label: 'Strategy Deck',  Icon: Presentation },
 };
 
 const getTypeConfig = (resource) =>
@@ -90,6 +89,7 @@ const ResourceCard = ({ resource, index }) => {
 const SignalCard = ({ signal, index }) => {
   const isVolatile = signal.summary?.includes('GLAM Signal') || signal.summary?.includes('Volatile');
   const score = signal.overall_score || signal.adaptiveness_score;
+  const dateStr = formatDate(signal.session_date);
 
   return (
     <motion.div
@@ -126,14 +126,12 @@ const SignalCard = ({ signal, index }) => {
           </div>
 
           {/* Temporal */}
-          {(signal.session_date || signal.duration_seconds) && (
+          {(dateStr || signal.duration_seconds) && (
             <div style={{ display: 'flex', gap: '2rem', marginTop: '0.5rem' }}>
-              {signal.session_date && (
+              {dateStr && (
                 <div>
                   <p style={{ fontSize: '0.6rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '0.15rem' }}>Date Played</p>
-                  <p style={{ fontSize: '0.82rem', color: '#cbd5e1' }}>
-                    {new Date(signal.session_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </p>
+                  <p style={{ fontSize: '0.82rem', color: '#cbd5e1' }}>{dateStr}</p>
                 </div>
               )}
               {signal.duration_seconds && (
@@ -158,7 +156,7 @@ const SignalCard = ({ signal, index }) => {
         {score && (
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
             <div style={{ fontSize: '2rem', fontWeight: 800, color: '#2dd4bf', fontFamily: 'Georgia,serif' }}>{score}</div>
-            <p style={{ fontSize: '0.6rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px' }}>AFERR Velocity</p>
+            <p style={{ fontSize: '0.6rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px' }}>Adaptiveness Velocity</p>
           </div>
         )}
       </div>
@@ -205,18 +203,39 @@ const ResearchPage = () => {
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', fontFamily: 'Inter, sans-serif', paddingBottom: '6rem' }}>
 
+      {/* ── Scrollbar styles ──────────────────────────────────────────────── */}
+      <style>{`
+        .glam-signal-list {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(45,212,191,0.25) transparent;
+        }
+        .glam-signal-list::-webkit-scrollbar {
+          width: 4px;
+        }
+        .glam-signal-list::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .glam-signal-list::-webkit-scrollbar-thumb {
+          background: rgba(45,212,191,0.3);
+          border-radius: 99px;
+        }
+        .glam-signal-list::-webkit-scrollbar-thumb:hover {
+          background: rgba(45,212,191,0.55);
+        }
+      `}</style>
+
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <section style={{ paddingTop: '8rem', paddingBottom: '4rem' }}>
         <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 1.5rem' }}>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <span style={{ display: 'inline-block', padding: '0.35rem 1.2rem', background: '#f0fdfa', color: '#0d9488', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '3px', textTransform: 'uppercase', borderRadius: 9999, marginBottom: '1.5rem' }}>
-              Research & Insights
+              Research &amp; Insights
             </span>
             <h1 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', fontFamily: 'Georgia,serif', color: '#0f172a', marginBottom: '1.25rem', lineHeight: 1.15 }}>
               Advancing the global understanding and measurement of leadership adaptiveness.
             </h1>
             <p style={{ fontSize: '1.1rem', color: '#64748b', lineHeight: 1.7, fontWeight: 300, maxWidth: 760 }}>
-              Grounded in a decade of behavioral science and 600+ high-fidelity leadership simulations, the LAI Research Engine is a self-publishing intelligence platform that synthesizes AFERR data into actionable knowledge.
+              Grounded in a decade of behavioral science and 600+ high-fidelity leadership simulations, the LAI Research Engine is a self-publishing intelligence platform that synthesizes AFERR data into actionable business intelligence.
             </p>
           </motion.div>
         </div>
@@ -226,11 +245,11 @@ const ResearchPage = () => {
       <section style={{ background: 'white', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', padding: '5rem 0' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '2rem' }}>
           {[
-            { Icon: Target,      name: 'Signal Detection',        desc: 'Differentiating actionable signals from background noise.' },
-            { Icon: Brain,       name: 'Emotional Framing',       desc: 'Interpreting uncertainty with curiosity rather than threat.' },
-            { Icon: ArrowDownUp, name: 'Resource Reallocation',   desc: 'Velocity of budget and talent shifts toward emerging priorities.' },
-            { Icon: Minimize,    name: 'Decision Alignment',      desc: 'Maintaining systemic coherence among leadership decisions.' },
-            { Icon: FastForward, name: 'Execution Responsiveness',desc: 'Translating new strategy into rapid operational change.' },
+            { Icon: Target,      name: 'Signal Detection',        desc: 'Differentiating actionable market signals from background noise — measured against global industry baselines.' },
+            { Icon: Brain,       name: 'Emotional Framing',       desc: 'Interpreting uncertainty with executive composure and strategic curiosity rather than defensive posture.' },
+            { Icon: ArrowDownUp, name: 'Resource Reallocation',   desc: 'Measurable velocity of capital, talent, and attention shifts toward emerging revenue opportunities.' },
+            { Icon: Minimize,    name: 'Decision Alignment',      desc: 'Maintaining organizational coherence as leadership decisions cascade across business units.' },
+            { Icon: FastForward, name: 'Execution Responsiveness',desc: 'Speed of translating updated strategy into measurable operational and financial outcomes.' },
           ].map(({ Icon, name, desc }) => (
             <div key={name} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
               <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#f0fdfa', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -290,7 +309,7 @@ const ResearchPage = () => {
               <BookOpen style={{ width: 48, height: 48, color: '#e2e8f0', margin: '0 auto 1rem' }} />
               <h3 style={{ fontWeight: 700, color: '#94a3b8', fontSize: '1.1rem', marginBottom: '0.5rem' }}>Library Hydration Active</h3>
               <p style={{ color: '#cbd5e1', fontSize: '0.875rem', maxWidth: 300, margin: '0 auto' }}>
-                NotebookLM Intelligence Engine is synthesizing AFERR signals into research assets. First briefs appear within minutes.
+                NotebookLM Intelligence Engine is synthesizing AFERR signals into executive research assets. First briefs appear within minutes.
               </p>
             </div>
           )}
@@ -323,8 +342,8 @@ const ResearchPage = () => {
                 </div>
               </div>
 
-              {/* Signal list */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: 600, overflowY: 'auto', paddingRight: '0.5rem' }}>
+              {/* Signal list — glassmorphism scrollbar */}
+              <div className="glam-signal-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: 600, overflowY: 'auto', paddingRight: '0.5rem' }}>
                 {loading ? (
                   [1, 2, 3].map(i => (
                     <div key={i} style={{ height: 120, background: 'rgba(30,41,59,0.4)', borderRadius: 20, animation: 'pulse 1.5s infinite' }} />
@@ -348,10 +367,10 @@ const ResearchPage = () => {
       <section style={{ padding: '5rem 0', textAlign: 'center' }}>
         <div style={{ maxWidth: 600, margin: '0 auto', padding: '0 1.5rem' }}>
           <h2 style={{ fontSize: 'clamp(1.75rem,3vw,2.75rem)', fontFamily: 'Georgia,serif', color: '#0f172a', marginBottom: '1rem' }}>Contribute to the Map</h2>
-          <p style={{ color: '#64748b', fontWeight: 300, marginBottom: '2rem', lineHeight: 1.7 }}>Benchmark your leadership tribe against 600+ global simulations and join the AFERR Intelligence Index.</p>
+          <p style={{ color: '#64748b', fontWeight: 300, marginBottom: '2rem', lineHeight: 1.7 }}>Benchmark your leadership cohort against 600+ global simulations and join the LAI Intelligence Index.</p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button style={{ padding: '0.875rem 2.5rem', background: '#0d9488', color: 'white', border: 'none', borderRadius: 9999, fontWeight: 700, cursor: 'pointer', fontSize: '0.875rem', letterSpacing: '0.5px' }}>
-              Explore Resource Library
+              Explore Research Library
             </button>
             <button onClick={() => window.location.href = '/diagnostic'}
               style={{ padding: '0.875rem 2.5rem', background: 'white', color: '#0f172a', border: '1px solid #e2e8f0', borderRadius: 9999, fontWeight: 700, cursor: 'pointer', fontSize: '0.875rem' }}>

@@ -9,17 +9,23 @@ const getEvolutionaryState = (score) => {
   return                { label: 'Fragile',       color: '#64748b', pill: 'bg-slate-100 text-slate-600 border-slate-200' };
 };
 
-// ── Map Dot (positioned dynamically by hashing org name) ─────────────────────
+// ── Safe date formatter ───────────────────────────────────────────────────────
+const formatDate = (val) => {
+  if (!val) return 'N/A';
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? 'N/A' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+// ── Map Dot (positioned deterministically from org name hash) ─────────────────
 const MapDot = ({ org, onClick, selected }) => {
-  // Deterministic pseudo-position from name hash so dots are stable across renders
   const hash = org.organization.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  const top  = 15 + (hash % 65);        // 15–80 %
-  const left = 5  + ((hash * 7) % 88);  // 5–93 %
+  const top  = 15 + (hash % 65);
+  const left = 5  + ((hash * 7) % 88);
   const ev   = getEvolutionaryState(org.score);
 
   return (
     <motion.button
-      title={`${org.organization} — AFERR Velocity: ${org.score}`}
+      title={`${org.organization} — Adaptiveness Velocity: ${org.score}`}
       onClick={() => onClick(org)}
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: selected ? 1.6 : 1, opacity: 1 }}
@@ -107,10 +113,10 @@ const GlobalIndexPage = () => {
       <header style={{ paddingTop: '8rem', paddingBottom: '4rem', background: '#0a192f', textAlign: 'center', color: 'white' }}>
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} style={{ maxWidth: 700, margin: '0 auto', padding: '0 1.5rem' }}>
           <span style={{ display: 'inline-block', padding: '0.35rem 1.2rem', background: 'rgba(13,148,136,0.2)', color: '#2dd4bf', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', borderRadius: 9999, border: '1px solid rgba(45,212,191,0.3)', marginBottom: '1.5rem' }}>
-            AFERR Intelligence Index · v1.2.0
+            AFERR Methodology · v1.2.0
           </span>
           <h1 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', fontFamily: 'Georgia,serif', marginBottom: '1rem', lineHeight: 1.15 }}>
-            Global Leadership Adaptiveness Index
+            Leadership Adaptiveness Index
           </h1>
           <p style={{ color: '#94a3b8', fontSize: '1.1rem', fontWeight: 300 }}>
             Direct signal extraction from <strong style={{ color: '#2dd4bf' }}>{loading ? '600+' : rankings.length}</strong> verified organizational simulations.
@@ -153,8 +159,8 @@ const GlobalIndexPage = () => {
             <img src="https://images.unsplash.com/photo-1521295121783-8a321d551ad2?auto=format&fit=crop&q=60&w=1400"
               alt="World Map" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.07, filter: 'grayscale(1)' }} />
 
-            {/* Dynamic dots */}
-            {!loading && displayed.slice(0, 80).map((org, i) => (
+            {/* Dynamic dots — live from Supabase via /api/analytics/global */}
+            {!loading && displayed.slice(0, 120).map((org, i) => (
               <MapDot key={org.organization + i} org={org}
                 selected={focusDot?.organization === org.organization}
                 onClick={(o) => {
@@ -174,7 +180,7 @@ const GlobalIndexPage = () => {
                   <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 2, color: '#64748b', marginBottom: '0.25rem' }}>{focusDot.industry || 'Global Baseline'} · {focusDot.region}</div>
                   <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '0.25rem' }}>{focusDot.organization}</div>
                   <div style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'Georgia,serif', color: getEvolutionaryState(focusDot.score).color }}>{focusDot.score}</div>
-                  <div style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 700, marginTop: '0.2rem' }}>AFERR Velocity</div>
+                  <div style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 700, marginTop: '0.2rem' }}>Adaptiveness Velocity</div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -196,7 +202,7 @@ const GlobalIndexPage = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'white', border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.6rem 1rem', flex: '1', minWidth: 220, maxWidth: 380 }}>
             <Search size={16} style={{ color: '#94a3b8' }} />
             <input value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Search tribes or regions…"
+              placeholder="Search organizations or regions…"
               style={{ border: 'none', outline: 'none', width: '100%', fontSize: '0.875rem', background: 'transparent', color: '#0f172a' }} />
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -217,23 +223,23 @@ const GlobalIndexPage = () => {
         <div style={{ background: 'white', borderRadius: 20, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.04)' }}>
 
           {/* Header */}
-          <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr 180px 120px 160px', padding: '1rem 1.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#94a3b8' }}>
-            <span>Rank</span>
-            <span>Tribe Profile (Region)</span>
-            <span>AFERR Velocity</span>
-            <span>Cognitive Shift</span>
+          <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 180px 130px 180px', padding: '1rem 1.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#94a3b8' }}>
+            <span>Adaptiveness Rank</span>
+            <span>Organization Profile (Region)</span>
+            <span>Adaptiveness Velocity</span>
+            <span>Cognitive Trend</span>
             <span>Evolutionary State</span>
           </div>
 
           {loading ? (
             <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>
               <Globe size={40} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
-              <p style={{ fontWeight: 600 }}>Hydrating AFERR Intelligence…</p>
+              <p style={{ fontWeight: 600 }}>Hydrating LAI Intelligence…</p>
             </div>
           ) : displayed.length === 0 ? (
             <div style={{ padding: '4rem', textAlign: 'center', color: '#94a3b8' }}>
               <Globe size={40} style={{ margin: '0 auto 1rem', opacity: 0.3 }} />
-              <p style={{ fontWeight: 600 }}>No tribes match the current filter.</p>
+              <p style={{ fontWeight: 600 }}>No organizations match the current filter.</p>
             </div>
           ) : (
             displayed.map((r, idx) => {
@@ -244,7 +250,7 @@ const GlobalIndexPage = () => {
                   <motion.div
                     onClick={() => { setExpandedId(isOpen ? null : idx); setFocusDot(r); }}
                     whileHover={{ background: '#f8fafc' }}
-                    style={{ display: 'grid', gridTemplateColumns: '60px 1fr 180px 120px 160px', padding: '1rem 1.5rem',
+                    style={{ display: 'grid', gridTemplateColumns: '80px 1fr 180px 130px 180px', padding: '1rem 1.5rem',
                       borderBottom: '1px solid #f1f5f9', alignItems: 'center', cursor: 'pointer', transition: 'background 0.15s',
                       background: isOpen ? '#f8fafc' : 'white' }}>
 
@@ -285,23 +291,27 @@ const GlobalIndexPage = () => {
                               <div>
                                 <p style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#cbd5e1', marginBottom: '0.25rem' }}>Date Played</p>
                                 <p style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.875rem' }}>
-                                  {r.session_date ? new Date(r.session_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+                                  {formatDate(r.session_date)}
                                 </p>
                               </div>
                               <div>
                                 <p style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', color: '#cbd5e1', marginBottom: '0.25rem' }}>Session Duration</p>
                                 <p style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.875rem' }}>
-                                  {r.duration_seconds ? `${Math.floor(r.duration_seconds / 60)}m ${r.duration_seconds % 60}s` : r.duration ? `${Math.floor(r.duration / 60)}m ${r.duration % 60}s` : 'N/A'}
+                                  {r.duration_seconds
+                                    ? `${Math.floor(r.duration_seconds / 60)}m ${r.duration_seconds % 60}s`
+                                    : r.duration
+                                    ? `${Math.floor(r.duration / 60)}m ${r.duration % 60}s`
+                                    : 'N/A'}
                                 </p>
                               </div>
                             </div>
                           </div>
 
-                          {/* AFERR Profile */}
+                          {/* LAI Evolutionary Profile */}
                           <div style={{ flex: 1 }}>
                             <p style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', color: '#94a3b8', marginBottom: '0.75rem' }}>Evolutionary Profile</p>
                             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                              {['AFERR_SYNTHESIS_ACTIVE', 'GLAZ_SIGNAL_VALIDATED', `STATE_${ev.label.toUpperCase()}`].map(tag => (
+                              {['AFERR_SYNTHESIS_ACTIVE', 'LAI_SIGNAL_VALIDATED', `STATE_${ev.label.toUpperCase()}`].map(tag => (
                                 <span key={tag} style={{ padding: '0.2rem 0.6rem', background: 'white', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: '0.6rem', fontFamily: 'monospace', color: '#64748b', fontWeight: 600 }}>{tag}</span>
                               ))}
                             </div>
@@ -318,8 +328,8 @@ const GlobalIndexPage = () => {
 
         {/* CTA */}
         <div style={{ marginTop: '3rem', padding: '3rem', background: '#0a192f', borderRadius: 20, textAlign: 'center', color: 'white' }}>
-          <h3 style={{ fontSize: '1.75rem', fontFamily: 'Georgia,serif', color: 'white', marginBottom: '0.75rem' }}>Add Your Organization to the AFERR Index</h3>
-          <p style={{ color: '#94a3b8', marginBottom: '1.5rem', fontWeight: 300 }}>Benchmark your leadership tribe against 600+ global simulations.</p>
+          <h3 style={{ fontSize: '1.75rem', fontFamily: 'Georgia,serif', color: 'white', marginBottom: '0.75rem' }}>Add Your Organization to the LAI Index</h3>
+          <p style={{ color: '#94a3b8', marginBottom: '1.5rem', fontWeight: 300 }}>Benchmark your leadership cohort against 600+ global simulations.</p>
           <button onClick={() => window.location.href = '/diagnostic'}
             style={{ background: '#0d9488', color: 'white', border: 'none', padding: '0.875rem 2.5rem', borderRadius: 9999, fontWeight: 700, cursor: 'pointer', fontSize: '0.875rem', letterSpacing: '0.5px' }}>
             Register for Measurement
