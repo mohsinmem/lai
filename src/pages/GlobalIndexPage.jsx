@@ -140,28 +140,22 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
         <span style={{ minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.15rem' }}>
             <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.organization}</div>
-            {r.metadata?.source && (
-              <span style={{ 
-                fontSize: '0.55rem', padding: '1px 5px', borderRadius: '4px', textTransform: 'uppercase', 
-                fontWeight: 800, letterSpacing: '0.5px',
-                background: r.metadata.source === 'Behavioral' ? 'rgba(0, 122, 255, 0.1)' : 
-                            r.metadata.source === 'Research' ? 'rgba(139, 92, 246, 0.1)' : 
-                            'rgba(16, 185, 129, 0.1)',
-                color: r.metadata.source === 'Behavioral' ? '#007aff' : 
-                       r.metadata.source === 'Research' ? '#8b5cf6' : 
-                       '#10b981'
-              }}>
-                {r.metadata.source}
-              </span>
-            )}
+            <span style={{ 
+              fontSize: '0.55rem', padding: '1px 5px', borderRadius: '4px', textTransform: 'uppercase', 
+              fontWeight: 800, letterSpacing: '0.5px', background: 'rgba(15, 23, 42, 0.05)', color: '#64748b'
+            }}>
+              {r.evidence_density || 1} {r.evidence_density === 1 ? 'Source' : 'Sources'}
+            </span>
           </div>
           <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {r.industry || 'Global Baseline'} · {r.region}
           </div>
         </span>
 
-
-        <ScoreBar score={r.score} />
+        <span style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div style={{ fontSize: '0.6rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase' }}>Cognitive Lead</div>
+          <ScoreBar score={r.cognitive || r.score} />
+        </span>
 
         <span style={{ fontWeight: 700, fontSize: '0.88rem', color: r.cognitiveShift?.startsWith('+') ? '#10b981' : '#ef4444' }}>
           {r.cognitiveShift}
@@ -175,6 +169,7 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
           {isOpen ? <ChevronUp size={14} style={{ color: '#94a3b8' }} /> : <ChevronDown size={14} style={{ color: '#cbd5e1' }} />}
         </div>
       </motion.div>
+
 
       <AnimatePresence>
         {isOpen && (
@@ -200,16 +195,44 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
                   </div>
                 </div>
               </div>
-              <div style={{ flex: 1 }}>
+               <div style={{ minWidth: '200px' }}>
+                <p style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', color: '#94a3b8', marginBottom: '0.75rem' }}>Signal Architecture</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.875rem' }}>{r.evidence_density || 1} Total Signals</div>
+                  <div style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 600 }}>{r.source_breakdown}</div>
+                </div>
+              </div>
+              <div style={{ flex: 2 }}>
+                <p style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', color: '#94a3b8', marginBottom: '0.75rem' }}>5-Parameter Adaptiveness Breakdown</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem 2rem' }}>
+                  {[
+                    { label: 'Cognitive Framing', key: 'cognitive' },
+                    { label: 'Signal Detection', key: 'signal' },
+                    { label: 'Resource Reallocation', key: 'resource' },
+                    { label: 'Decision Alignment', key: 'decision' },
+                    { label: 'Execution Responsiveness', key: 'execution' }
+                  ].map(dim => (
+                    <div key={dim.key}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
+                        <span style={{ fontSize: '0.62rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{dim.label}</span>
+                        <span style={{ fontSize: '0.62rem', fontWeight: 800, color: '#0f172a' }}>{r[dim.key] || 0}</span>
+                      </div>
+                      <ScoreBar score={r[dim.key] || 0} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{ flex: 1, minWidth: '150px' }}>
                 <p style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', color: '#94a3b8', marginBottom: '0.75rem' }}>Evolutionary Profile</p>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  {['AFERR_SYNTHESIS_ACTIVE', 'LAI_SIGNAL_VALIDATED', `STATE_${ev.label.toUpperCase()}`].map(tag => (
+                  {['COMPOUND_INTEL_ACTIVE', `WEIGHTED_SCORE_${r.score}`, `STATE_${ev.label.toUpperCase()}`].map(tag => (
                     <span key={tag} style={{ padding: '0.2rem 0.6rem', background: 'white', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: '0.6rem', fontFamily: 'monospace', color: '#64748b', fontWeight: 600 }}>{tag}</span>
                   ))}
                 </div>
               </div>
             </div>
           </motion.div>
+
         )}
       </AnimatePresence>
     </div>

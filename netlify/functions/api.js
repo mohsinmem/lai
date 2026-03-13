@@ -145,59 +145,86 @@ app.post('/api/diagnostic', async (req, res) => {
   }
 });
 
-// Global Analytics — Production Logic (v1.2.0-FINAL)
+// Global Analytics — Compound Intelligence Engine (v1.3.0)
 app.get('/api/analytics/global', async (req, res) => {
   try {
-    let result = await supabaseClient
+    const { data: allSignals, error } = await supabaseClient
       .from('diagnostic_results')
-      .select('organization_name, region, industry, overall_score, session_date, duration_seconds, metadata')
-      .order('overall_score', { ascending: false });
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    // v1.2.0-FINAL Safe Select: If industry column is missing, retry without it
-    if (result.error && result.error.message?.includes('column "industry" does not exist')) {
-        console.warn('⚠️ Industry column missing - performing fallback safe select');
-        result = await supabaseClient
-          .from('diagnostic_results')
-          .select('organization_name, region, overall_score, session_date, duration_seconds, metadata')
-          .order('overall_score', { ascending: false });
-    }
-
-    if (result.error) {
-        console.error('❌ Postgres Query Error (Global Analytics):', result.error.message, result.error.details);
-        throw result.error;
-    }
+    if (error) throw error;
 
     const blacklist = ['Karen', 'Karen and Friends!', 'Powerpuff Girls', 'Test'];
-    const diagData = (result.data || []).filter(row => !blacklist.includes(row.organization_name));
+    const filteredSignals = (allSignals || []).filter(row => !blacklist.includes(row.organization_name));
 
-    // Deduplicate by organization name (keep highest score per org)
-    const seen = new Map();
-    for (const row of (diagData || [])) {
-      const key = row.organization_name;
-      // v1.2.0-FINAL: Default missing scores to 75 to ensure Antifragile pulse is active for harvested records
-      const score = row.overall_score || (Math.floor(Math.random() * 10) + 72);
-      
-      if (!seen.has(key) || score > seen.get(key).score) {
-        seen.set(key, {
-          organization: row.organization_name,
-          region:       row.region || 'Global',
-          industry:     row.industry || row.metadata?.industry || 'General Business',
-          score:        score,
-          is_published: true, // v1.2.0-FINAL: Force to Published for Global Index visibility
-          session_date: row.session_date || null,
-          duration_seconds: row.duration_seconds || null,
-          duration:     row.duration_seconds || null,
-          status:       score >= 80 ? 'High' : score >= 60 ? 'Moderate' : 'Risk'
-        });
+    // Group by organization
+    const orgGroups = new Map();
+    for (const signal of filteredSignals) {
+      const name = signal.organization_name;
+      if (!orgGroups.has(name)) {
+        orgGroups.set(name, []);
       }
+      orgGroups.get(name).push(signal);
     }
 
-    res.json(Array.from(seen.values()));
+    const aggregated = Array.from(orgGroups.values()).map(signals => {
+      const first = signals[0];
+      
+      // Weighting logic (v1.3.0)
+      // BEHAVIORAL: 1.0, DIAGNOSTIC: 0.6, RESEARCH: 0.4
+      let totalWeight = 0;
+      let weightedSum = 0;
+      let sums = { cognitive: 0, signal: 0, resource: 0, decision: 0, execution: 0 };
+      
+      const breakdown = { behavioral: 0, diagnostic: 0, research: 0 };
+
+      for (const s of signals) {
+        const source = (s.source_type || s.metadata?.source || 'BEHAVIORAL').toUpperCase();
+        let weight = 1.0;
+        
+        if (source === 'BEHAVIORAL') { weight = 1.0; breakdown.behavioral++; }
+        else if (source === 'DIAGNOSTIC' || source === 'SELF-REPORTED') { weight = 0.6; breakdown.diagnostic++; }
+        else if (source === 'RESEARCH') { weight = 0.4; breakdown.research++; }
+
+        totalWeight += weight;
+        weightedSum += s.overall_score * weight;
+        
+        sums.cognitive += (s.cognitive_score || s.overall_score) * weight;
+        sums.signal += (s.signal_score || s.overall_score) * weight;
+        sums.resource += (s.resource_score || s.overall_score) * weight;
+        sums.decision += (s.decision_score || s.overall_score) * weight;
+        sums.execution += (s.execution_score || s.overall_score) * weight;
+      }
+
+      const weightedScore = Math.round(weightedSum / totalWeight);
+      
+      return {
+        organization: first.organization_name,
+        region:       first.region || 'Global',
+        industry:     first.industry || first.metadata?.industry || 'General Business',
+        score:        weightedScore,
+        // Lead Metric: Cognitive score (v1.3.0)
+        cognitive:    Math.round(sums.cognitive / totalWeight),
+        signal:       Math.round(sums.signal / totalWeight),
+        resource:     Math.round(sums.resource / totalWeight),
+        decision:     Math.round(sums.decision / totalWeight),
+        execution:    Math.round(sums.execution / totalWeight),
+        
+        evidence_density: signals.length,
+        source_breakdown: `${breakdown.behavioral} Behavioral | ${breakdown.diagnostic} Diagnostic | ${breakdown.research} Research`,
+        is_published: true,
+        status:       weightedScore >= 70 ? 'High' : weightedScore >= 40 ? 'Moderate' : 'Risk'
+      };
+    });
+
+    res.json(aggregated.sort((a, b) => b.score - a.score));
   } catch (err) {
-    console.error('Analytics Error:', err);
+    console.error('Compound Analytics Error:', err);
     res.json([]);
   }
 });
+
 
 // Demo Request
 app.post('/api/demo-request', async (req, res) => {

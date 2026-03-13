@@ -143,7 +143,7 @@ exports.handler = async (event) => {
         region:                         company.region || 'Global',
         overall_score:                  aferr.overallScore,
         signal_detection_score:         parseFloat(aferr.activationScore.toFixed(2)),
-        emotional_framing_score:        parseFloat(aferr.forecastingScore.toFixed(2)),
+        cognitive_framing_score:        parseFloat(aferr.forecastingScore.toFixed(2)),
         resource_reallocation_score:    parseFloat(aferr.experimentScore.toFixed(2)),
         decision_alignment_score:       parseFloat(aferr.realizationScore.toFixed(2)),
         execution_responsiveness_score: parseFloat(aferr.reflectionScore.toFixed(2)),
