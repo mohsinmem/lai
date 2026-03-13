@@ -15,7 +15,7 @@ app.get('/api/health', async (req, res) => {
   try {
     const health = {
       status: 'ok',
-      version: '1.1.20',
+      version: '1.1.21',
       timestamp: new Date().toISOString(),
       env: {
         has_url: !!process.env.SUPABASE_URL,
@@ -329,7 +329,7 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
 
     res.json({ status: 'ok', organization_name, aferr_overall: overallScore });
   } catch (err) {
-    console.error('AFERR Ingestion Error:', err.message);
+    console.error('AFERR Ingestion Error:', err.message, err.details || '');
     
     await supabaseClient.from('scraper_logs').insert([{
       status: 'error',
@@ -337,7 +337,13 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
       summary: `Evivve AFERR Ingestion Failed: ${err.message}`
     }]);
 
-    res.status(500).json({ status: 'error', message: err.message });
+    res.status(500).json({ 
+        status: 'error', 
+        message: err.message, 
+        details: err.details,
+        hint: err.hint,
+        row: req.body // Include offending row for debug
+    });
   }
 });
 
