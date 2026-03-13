@@ -225,7 +225,13 @@ const GlobalIndexPage = () => {
   const displayed = useMemo(() => {
     let list = rankings;
     if (filter !== 'All') list = list.filter(r => getEvolutionaryState(r.score).label === filter);
-    if (search.trim()) list = list.filter(r => r.organization?.toLowerCase().includes(search.toLowerCase()) || r.region?.toLowerCase().includes(search.toLowerCase()));
+    if (search.trim()) {
+      const s = search.toLowerCase();
+      list = list.filter(r => 
+        r.organization?.toLowerCase().includes(s) || 
+        r.region?.toLowerCase().includes(s)
+      );
+    }
     return list.filter(r => r.session_date && (r.duration_seconds || r.duration));
   }, [rankings, filter, search]);
 

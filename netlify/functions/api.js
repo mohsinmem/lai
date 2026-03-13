@@ -269,8 +269,8 @@ app.get('/api/analytics/global', async (req, res) => {
       
       if (hasData || verifiedOrg) {
         finalData.push({
-          organization: orgName,
-          region:       first?.region || 'Global',
+        organization: orgName,
+          region:       verifiedOrg ? verifiedOrg.region : (first?.region || 'Global'),
           industry:     first?.industry || 'General Business',
           score:        score,
           cognitive:    hasData ? (Math.round(sums.cognitive / totalWeight) || 0) : 0,
