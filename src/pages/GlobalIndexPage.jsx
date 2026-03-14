@@ -18,24 +18,31 @@ const PILLAR_DEFINITIONS = {
 
 // ── Evolutionary State Logic ──────────────────────────────────────────────────
 const getEvolutionaryState = (score) => {
-  if (score >= 70) return { label: 'Antifragile', color: '#10b981', pill: 'bg-emerald-100 text-emerald-700 border-emerald-200' };
-  if (score >= 40) return { label: 'Emergent',    color: '#f59e0b', pill: 'bg-amber-100 text-amber-700 border-amber-200' };
-  return                { label: 'Fragile',       color: '#ef4444', pill: 'bg-rose-100 text-rose-700 border-rose-200' };
+  if (score >= 80) return { label: 'Antifragile', color: '#065f46', pill: 'bg-emerald-900/10 text-emerald-800 border-emerald-200' };
+  if (score >= 65) return { label: 'Adaptive',    color: '#1e40af', pill: 'bg-blue-900/10 text-blue-800 border-blue-200' };
+  if (score >= 50) return { label: 'Emergent',    color: '#b45309', pill: 'bg-amber-900/10 text-amber-800 border-amber-200' };
+  return                { label: 'Fragile',     color: '#b91c1c', pill: 'bg-rose-900/10 text-rose-800 border-rose-200' };
 };
 
 const getScoreColor = (score) => {
-  // Simple interpolation: 0=red(#ef4444), 50=orange(#f59e0b), 100=green(#10b981)
-  if (score <= 50) {
+  // 4-Point Interpolation: 0=Red(#b91c1c), 50=Amber(#b45309), 70=Blue(#1e40af), 100=Green(#065f46)
+  if (score < 50) {
     const p = score / 50;
-    const r = Math.round(239 + (245 - 239) * p);
-    const g = Math.round(68 + (158 - 68) * p);
-    const b = Math.round(68 + (11 - 68) * p);
+    const r = Math.round(185 + (180 - 185) * p);
+    const g = Math.round(28 + (83 - 28) * p);
+    const b = Math.round(28 + (9 - 28) * p);
+    return `rgb(${r},${g},${b})`;
+  } else if (score < 70) {
+    const p = (score - 50) / 20;
+    const r = Math.round(180 + (30 - 180) * p);
+    const g = Math.round(83 + (64 - 83) * p);
+    const b = Math.round(9 + (175 - 9) * p);
     return `rgb(${r},${g},${b})`;
   } else {
-    const p = (score - 50) / 50;
-    const r = Math.round(245 + (16 - 245) * p);
-    const g = Math.round(158 + (185 - 158) * p);
-    const b = Math.round(11 + (129 - 11) * p);
+    const p = (score - 70) / 30;
+    const r = Math.round(30 + (6 - 30) * p);
+    const g = Math.round(64 + (95 - 64) * p);
+    const b = Math.round(175 + (70 - 175) * p);
     return `rgb(${r},${g},${b})`;
   }
 };
@@ -106,13 +113,13 @@ const ScoreBar = ({ score }) => {
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
       <div style={{ flex: 1, height: 8, background: '#f1f5f9', borderRadius: 9999, overflow: 'hidden', position: 'relative' }}>
         {/* Background track - subtle version of the master gradient */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, #ef4444, #f59e0b, #10b981)', opacity: 0.1 }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, #b91c1c, #b45309, #1e40af, #065f46)', opacity: 0.1 }} />
         
         {/* Filled portion - reveals its slice of the gradient */}
         <motion.div initial={{ width: 0 }} animate={{ width: `${score}%` }}
           style={{ 
             height: '100%', 
-            background: 'linear-gradient(to right, #ef4444, #f59e0b, #10b981)', 
+            background: 'linear-gradient(to right, #b91c1c, #b45309, #1e40af, #065f46)', 
             backgroundSize: bgSize, 
             borderRadius: 9999, 
             position: 'relative' 
@@ -186,7 +193,23 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
         <span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <ScoreBar score={r.score} />
-            <span style={{ fontSize: '1.1rem', fontWeight: 900, color: getScoreColor(r.score), minWidth: '3ch', textAlign: 'right', fontFamily: 'Georgia, serif' }}>{r.score}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: '150px' }}>
+              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: getScoreColor(r.score), fontFamily: 'Georgia, serif' }}>{r.score}</span>
+              <span style={{ 
+                fontSize: '0.6rem', 
+                fontWeight: 900, 
+                textTransform: 'uppercase', 
+                letterSpacing: '1px', 
+                padding: '0.2rem 0.6rem', 
+                borderRadius: '4px',
+                background: `${getEvolutionaryState(r.score).color}11`, 
+                color: getEvolutionaryState(r.score).color,
+                border: `1px solid ${getEvolutionaryState(r.score).color}33`,
+                opacity: 0.9
+              }}>
+                {getEvolutionaryState(r.score).label}
+              </span>
+            </div>
           </div>
         </span>
         <span style={{ fontWeight: 800, fontSize: '0.9rem', color: r.cognitiveShift?.startsWith('+') ? '#10b981' : '#ef4444', opacity: (r.is_verified && r.evidence_density === 0) ? 0.3 : 1 }}>
@@ -231,13 +254,26 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
                 <p style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 2, color: '#94a3b8', marginBottom: '1rem' }}>Evolutionary Path</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {[
-                    { label: 'Intelligence Active', val: 'V1.3.2_SOVEREIGN', color: '#3b82f6' },
-                    { label: 'Weighted Authority', val: `CONFIDENCE_${Math.round((r.evidence_density || 1) * 8 + 40)}%`, color: ev.color },
-                    { label: 'Market Position', val: ev.label.toUpperCase(), color: ev.color }
+                    { label: 'Intelligence Active', val: 'V1.3.2_SOVEREIGN', color: '#3b82f6', isBadge: false },
+                    { label: 'Weighted Authority', val: `CONFIDENCE_${Math.round((r.evidence_density || 1) * 8 + 40)}%`, color: ev.color, isBadge: false },
+                    { label: 'Market Position', val: ev.label.toUpperCase(), color: ev.color, isBadge: true }
                   ].map(tag => (
                     <div key={tag.label} style={{ background: 'white', padding: '0.75rem 1rem', borderRadius: 12, border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{tag.label}</span>
-                      <span style={{ fontSize: '0.65rem', fontFamily: 'monospace', fontWeight: 800, color: tag.color }}>{tag.val}</span>
+                      {tag.isBadge ? (
+                        <span style={{ 
+                          fontSize: '0.65rem', 
+                          fontWeight: 900, 
+                          color: tag.color, 
+                          background: `${tag.color}11`, 
+                          padding: '0.2rem 0.6rem', 
+                          borderRadius: '4px',
+                          border: `1px solid ${tag.color}33`,
+                          letterSpacing: '1px'
+                        }}>{tag.val}</span>
+                      ) : (
+                        <span style={{ fontSize: '0.65rem', fontFamily: 'monospace', fontWeight: 800, color: tag.color }}>{tag.val}</span>
+                      )}
                     </div>
                   ))}
                 </div>
