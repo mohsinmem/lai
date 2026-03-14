@@ -57,10 +57,9 @@ app.get('/api/health', async (req, res) => {
         'overall_score', 
         'signal_detection_score',
         'cognitive_framing_score',
-        'resource_reallocation_score',
-
         'decision_alignment_score',
-        'execution_responsiveness_score',
+        'resource_calibration_score',
+        'integrated_responsiveness_score',
         'metadata'
     ]);
     health.tables.research_queue = await checkTableSchema('research_queue', ['company_name', 'status']);
@@ -232,7 +231,13 @@ app.get('/api/analytics/global', async (req, res) => {
       const orgName = verifiedOrg ? verifiedOrg.name : (first?.organization_name?.trim() || 'Unknown');
             let totalWeight = 0;
       let weightedSum = 0;
-      let sums = { signal_interpretation: 0, cognitive_framing: 0, resource_reallocation: 0, decision_alignment: 0, execution_responsiveness: 0 };
+      let sums = { 
+        signal_detection: 0, 
+        cognitive_framing: 0, 
+        decision_alignment: 0, 
+        resource_calibration: 0, 
+        integrated_responsiveness: 0 
+      };
       let maxDate = null;
       let maxDuration = 0;
       const breakdown = { sovereign: 0, behavioral: 0, perceptual: 0, environmental: 0 };
@@ -278,11 +283,11 @@ app.get('/api/analytics/global', async (req, res) => {
           tierSums.count_per += finalWeight;
         }
         
-        sums.signal_interpretation += (s.signal_interpretation_score || s.cognitive_score || currentScore) * finalWeight;
-        sums.cognitive_framing += (s.cognitive_framing_score || s.signal_detection_score || s.signal_score || currentScore) * finalWeight;
-        sums.resource_reallocation += (s.resource_reallocation_score || s.resource_score || currentScore) * finalWeight;
+        sums.signal_detection += (s.signal_detection_score || s.signal_score || currentScore) * finalWeight;
+        sums.cognitive_framing += (s.cognitive_framing_score || s.cognitive_score || currentScore) * finalWeight;
         sums.decision_alignment += (s.decision_alignment_score || s.decision_score || currentScore) * finalWeight;
-        sums.execution_responsiveness += (s.execution_responsiveness_score || s.execution_score || currentScore) * finalWeight;
+        sums.resource_calibration += (s.resource_calibration_score || s.resource_score || currentScore) * finalWeight;
+        sums.integrated_responsiveness += (s.integrated_responsiveness_score || s.execution_score || currentScore) * finalWeight;
 
         weightContribution[tierKey] += finalWeight;
 
@@ -316,11 +321,11 @@ app.get('/api/analytics/global', async (req, res) => {
           score:        score,
           strategic_dissonance,
           is_triangulated,
-          signal_interpretation:    hasData ? (Math.round(sums.signal_interpretation / totalWeight) || 0) : 0,
+          signal_detection:    hasData ? (Math.round(sums.signal_detection / totalWeight) || 0) : 0,
           cognitive_framing:    hasData ? (Math.round(sums.cognitive_framing / totalWeight) || 0) : 0,
-          resource_reallocation:    hasData ? (Math.round(sums.resource_reallocation / totalWeight) || 0) : 0,
           decision_alignment:    hasData ? (Math.round(sums.decision_alignment / totalWeight) || 0) : 0,
-          execution_responsiveness:    hasData ? (Math.round(sums.execution_responsiveness / totalWeight) || 0) : 0,
+          resource_calibration:    hasData ? (Math.round(sums.resource_calibration / totalWeight) || 0) : 0,
+          integrated_responsiveness:    hasData ? (Math.round(sums.integrated_responsiveness / totalWeight) || 0) : 0,
           
           session_date: maxDate || first?.created_at || new Date().toISOString(),
           duration_seconds: maxDuration || 480,
@@ -609,10 +614,9 @@ app.post('/api/ingest-multiplayer', async (req, res) => {
         overall_score: Math.round(overallScore) || 0,
         signal_detection_score: Math.round(activationScore) || 0,
         cognitive_framing_score: Math.round(forecastingScore) || 0,
-        resource_reallocation_score: Math.round(experimentationScore) || 0,
-
-        decision_alignment_score: Math.round(realizationScore) || 0,
-        execution_responsiveness_score: Math.round(reflectionScore) || 0,
+        decision_alignment_score: Math.round(experimentationScore) || 0,
+        resource_calibration_score: Math.round(realizationScore) || 0,
+        integrated_responsiveness_score: Math.round(reflectionScore) || 0,
         session_date: session_date || new Date().toISOString(),
         duration_seconds: parseInt(duration_seconds) || 0,
         metadata: {

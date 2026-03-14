@@ -27,7 +27,7 @@ function generateAssets(sector, stats) {
       title:       `The $4M Cost of Rigid Decision Cycles: ${sector} ROI Model 2026`,
       type:        'Framework',
       category:    'Framework',
-      description: `A capital-allocation and decision-velocity model for ${sector} executives. Quantifies the direct ROI of adaptiveness investment across ${totalSessions}+ behavioral simulations. Sector state: ${evolutionaryState}.`,
+      description: `Institutional model for bridging the ${sector} Adaptiveness Gap. Quantifies the direct ROI of adaptiveness investment across ${totalSessions}+ behavioral simulations. Data fidelity: ${evolutionaryState}.`,
       link:        '#',
       icon_type:   'target'
     },
@@ -35,15 +35,15 @@ function generateAssets(sector, stats) {
       title:       `Benchmarking Volatility Response: ${totalSessions} ${sector} Game Datasets Analyzed`,
       type:        'Report',
       category:    'Report',
-      description: `Executive-grade analysis of ${totalSessions} leadership simulation datasets in the ${sector} sector. Isolates behavioral patterns driving competitive separation: signal lag and resource reallocation velocity.`,
+      description: `Executive-grade analysis of ${totalSessions} leadership datasets in ${sector}. Average LAI Score: ${avgScore}. Isolates behavioral patterns: Signal Detection and Integrated Responsiveness.`,
       link:        '#',
       icon_type:   'pie'
     },
     {
-      title:       `${topTribe} vs ${bottomTribe}: A Study in Divergent Signal Detection`,
+      title:       `Strategic Dissonance in ${sector}: A Clinical Investigation`,
       type:        'Case Study',
       category:    'Case Study',
-      description: `High-stakes comparison of ${sector} organizations at opposite ends of the Adaptiveness spectrum. Maps signal detection speed against real-world outcome divergence. Benchmark: ${avgScore} avg score.`,
+      description: `Comparative analysis of leadership belief vs behavioral reality. Examines the 15% Dissonance Gap within ${sector} cohorts using triangulated LAI signals. Benchmark: ${avgScore} avg score.`,
       link:        '#',
       icon_type:   'building'
     },
@@ -51,7 +51,7 @@ function generateAssets(sector, stats) {
       title:       `The Antifragile Advantage: Why ${sector} Leaders Outperform in Volatile Sectors`,
       type:        'Article',
       category:    'Article',
-      description: `A concise executive read on the cost of cognitive rigidity in ${sector}. Covers how activation latency and execution misalignment translate into revenue loss and competitive displacement.`,
+      description: `The Institutional Core approach to closing the Adaptiveness Gap in ${sector}. Analyzes Signal Detection, Cognitive Framing, and Resource Calibration.`,
       link:        '#',
       icon_type:   'text'
     },
@@ -59,7 +59,7 @@ function generateAssets(sector, stats) {
       title:       `2026 Board Intelligence: Bridging the ${sector} Leadership Adaptiveness Gap`,
       type:        'Strategic Deck',
       category:    'Strategic Deck',
-      description: `Board-ready deck synthesizing live LAI Intelligence for ${sector} stakeholders. Covers sector volatility rotation and prioritized roadmaps for closing the adaptiveness gap.`,
+      description: `Board-ready deck synthesizing weighted LAI Score rotation and evolution pathways for ${sector} leaders. Grounded in simulation truth.`,
       link:        '#',
       icon_type:   'chart'
     }
@@ -142,17 +142,16 @@ exports.handler = async (event) => {
       organization_name: `${sector} Research Benchmark`,
       industry: sector,
       region: 'Global',
-      source_type: 'RESEARCH', // Maps to Tier 3: Inferred Intelligence
+      source_type: 'RESEARCH', // Maps to Tier 3: Environmental
       overall_score: avgScore,
-      signal_score: avgScore + 2,
-      cognitive_score: avgScore + 5, 
-      resource_score: avgScore + 1,
-      decision_score: avgScore,
-      execution_score: avgScore - 2,
-      confidence_score: 0.85,
+      signal_detection_score: avgScore + 2,
+      cognitive_framing_score: avgScore + 5, 
+      decision_alignment_score: avgScore + 1,
+      resource_calibration_score: avgScore,
+      integrated_responsiveness_score: avgScore - 2,
       metadata: {
-        source: 'Research',
-        tier: 'Inferred Intelligence',
+        source: 'Environmental',
+        tier: 'Tier 3',
         sector: sector,
         generated_at: new Date().toISOString(),
         is_published: true,
@@ -167,15 +166,14 @@ exports.handler = async (event) => {
         industry: sector,
         region: 'Global',
         source_type: 'RESEARCH',
-        signal_interpretation_score: Math.min(100, avgScore + 10), // Example value, adjust as needed
-        cognitive_framing_score: Math.min(100, avgScore + 15),    // Example value, adjust as needed
-        resource_reallocation_score: Math.min(100, avgScore + 5), // Example value, adjust as needed
-        decision_alignment_score: Math.min(100, avgScore + 12),   // Example value, adjust as needed
-        execution_responsiveness_score: Math.min(100, avgScore + 8), // Example value, adjust as needed
-        confidence_score: 0.75,
+        signal_detection_score: Math.min(100, avgScore + 10),
+        cognitive_framing_score: Math.min(100, avgScore + 15),
+        decision_alignment_score: Math.min(100, avgScore + 5),
+        resource_calibration_score: Math.min(100, avgScore + 12),
+        integrated_responsiveness_score: Math.min(100, avgScore + 8),
         metadata: {
-          source: 'Research',
-          tier: 'Inferred Intelligence',
+          source: 'Environmental',
+          tier: 'Tier 3',
           type: 'Case Study Validation',
           sector: sector,
           generated_at: new Date().toISOString()
@@ -189,7 +187,7 @@ exports.handler = async (event) => {
     await supabase.from('scraper_logs').insert([{
       status:      'success',
       duration_ms: duration,
-      summary:     `NotebookLM v2: ${published}/5 assets published for "${sector}" | Research Marker Injected | Avg AFERR: ${avgScore}`
+      summary:     `NotebookLM v2: ${published}/5 assets published for "${sector}" | Research Marker Injected | Avg LAI Score: ${avgScore}`
     }]);
 
 

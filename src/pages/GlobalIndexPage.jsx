@@ -4,11 +4,11 @@ import { Globe, Search, ChevronDown, ChevronUp, Zap, Shield, ShieldCheck, Trendi
 import { supabase } from '../supabase';
 
 const PILLAR_DEFINITIONS = {
-  signal_interpretation: "The ability to reframe threats as opportunities and pivot mental models under pressure.",
-  cognitive_framing: "Precision in detecting environmental signals and translating them into strategy.",
-  resource_reallocation: "The presence of psychological safety and dissent channels to stress-test decisions.",
-  decision_alignment: "The speed of skill acquisition and knowledge transfer across the leadership team.",
-  execution_responsiveness: "The capacity to maintain high-performance decision-making during extended disruption."
+  signal_detection: "The precision in detecting environmental signals and translating them into strategy.",
+  cognitive_framing: "The ability to reframe threats as opportunities and pivot mental models under pressure.",
+  decision_alignment: "The presence of psychological safety and dissent channels to stress-test decisions.",
+  resource_calibration: "The speed and precision of skill acquisition and capital reallocation.",
+  integrated_responsiveness: "The capacity to maintain high-performance decision-making during extended disruption."
 };
 
 // ── Evolutionary State Logic ──────────────────────────────────────────────────
@@ -88,7 +88,27 @@ const ScoreBar = ({ score }) => {
 const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocusDot }) => {
   const ev = getEvolutionaryState(r.score);
   const isOpen = expandedId === idx;
-  const breakdown = r.source_breakdown_obj || { observed: 0, perceived: 0, inferred: 0 };
+  const is_triangulated = r.is_triangulated;
+  const is_dissonant = r.strategic_dissonance;
+  const is_inferred = !is_triangulated && (r.source_breakdown_obj?.contributions?.environmental > 80);
+
+  const FidelityBadge = () => {
+    return (
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        {is_triangulated && (
+          <span className="bg-blue-100 text-blue-700 border-blue-200 px-3 py-1 rounded-full text-[0.6rem] font-bold border">TRIANGULATED</span>
+        )}
+        {is_dissonant && (
+          <span className="bg-amber-100 text-amber-700 border-amber-200 px-3 py-1 rounded-full text-[0.6rem] font-bold border flex items-center gap-1">
+            <AlertTriangle size={10}/> INSIGHT ALERT
+          </span>
+        )}
+        {!is_triangulated && !is_dissonant && (
+          <span className="bg-slate-100 text-slate-600 border-slate-200 px-3 py-1 rounded-full text-[0.6rem] font-bold border">INFERRED</span>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div key={r.organization + idx}>
@@ -142,7 +162,7 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
           {r.score === 0 ? '--' : r.cognitiveShift}
         </span>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '1rem' }}>
-          <span className={ev.pill} style={{ padding: '0.25rem 0.75rem', borderRadius: 9999, fontSize: '0.65rem', fontWeight: 800, border: '1px solid' }}>{ev.label}</span>
+          <FidelityBadge />
           {isOpen ? <ChevronUp size={14} color="#94a3b8" /> : <ChevronDown size={14} color="#cbd5e1" />}
         </div>
       </motion.div>
@@ -192,14 +212,14 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
                 </div>
               </div>
               <div>
-                <p style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 2, color: '#94a3b8', marginBottom: '1rem' }}>5-Parameter Adaptiveness Breakdown</p>
+                <p style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 2, color: '#94a3b8', marginBottom: '1rem' }}>Canonical 5-Behavioral Dimension Breakdown</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem 2rem' }}>
                   {[
-                    { label: 'Signal Interpretation', key: 'signal_interpretation' },
+                    { label: 'Signal Detection', key: 'signal_detection' },
                     { label: 'Cognitive Framing', key: 'cognitive_framing' },
-                    { label: 'Resource Reallocation', key: 'resource_reallocation' },
                     { label: 'Decision Alignment', key: 'decision_alignment' },
-                    { label: 'Execution Responsiveness', key: 'execution_responsiveness' }
+                    { label: 'Resource Calibration', key: 'resource_calibration' },
+                    { label: 'Integrated Responsiveness', key: 'integrated_responsiveness' }
                   ].map(dim => (
                     <div key={dim.key} title={PILLAR_DEFINITIONS[dim.key]}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem', cursor: 'help' }}>
@@ -295,8 +315,8 @@ const GlobalIndexPage = () => {
           <span style={{ display: 'inline-block', padding: '0.35rem 1.2rem', background: 'rgba(13,148,136,0.2)', color: '#2dd4bf', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', borderRadius: 9999, border: '1px solid rgba(45,212,191,0.3)', marginBottom: '1.5rem' }}>
             AFERR Methodology · v1.3.2_SOVEREIGN
           </span>
-          <h1 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', fontFamily: 'Georgia,serif', marginBottom: '1rem', lineHeight: 1.15 }}>Leadership Adaptiveness Index</h1>
-          <p style={{ color: '#94a3b8', fontSize: '1.1rem', fontWeight: 300 }}>Direct signal extraction from <strong style={{ color: '#2dd4bf' }}>{loading ? '600+' : rankings.length}</strong> verified organizational simulations.</p>
+          <h1 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', fontFamily: 'Georgia,serif', marginBottom: '1rem', lineHeight: 1.15 }}>Global Leadership Adaptiveness Index</h1>
+          <p style={{ color: '#94a3b8', fontSize: '1.1rem', fontWeight: 300 }}>Weighted Truth Hierarchy: Aggregating simulation behavioral data with sovereign research. Total Verified Signals: <strong style={{ color: '#2dd4bf' }}>{loading ? '600+' : rankings.length}</strong></p>
         </motion.div>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '3rem', marginTop: '2.5rem' }}>
           {[{ label: 'Antifragile', color: '#3b82f6', value: stats.antifragile }, { label: 'Emergent', color: '#0d9488', value: stats.emergent }, { label: 'Fragile', color: '#94a3b8', value: stats.fragile }].map(s => (
@@ -336,9 +356,9 @@ const GlobalIndexPage = () => {
           <div style={{ display: 'grid', gridTemplateColumns: '70px 2.5fr 150px 100px 180px', padding: '1.25rem 1.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.5, color: '#94a3b8' }}>
             <span>Rank</span>
             <span>Organization Profile</span>
-            <span>Signal Interpretation Lead</span>
+            <span>LAI Score</span>
             <span>Trend</span>
-            <span style={{ textAlign: 'right' }}>Evolutionary State</span>
+            <span style={{ textAlign: 'right' }}>Data Fidelity</span>
           </div>
           {loading ? (
             <div style={{ padding: '5rem', textAlign: 'center', color: '#cbd5e1' }}><Brain size={48} style={{ margin: '0 auto 1rem', opacity: 0.2 }} /><p>Synthesizing Global Signals...</p></div>

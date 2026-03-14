@@ -98,11 +98,11 @@ const HomePage = () => {
           
           <div className="framework-grid">
             {[
-              { icon: <Signal />, title: 'Signal Detection', desc: 'Recognizing early indicators that circumstances are changing.' },
-              { icon: <Heart />, title: 'Emotional Framing', desc: 'Interpreting uncertainty with curiosity rather than threat.' },
-              { icon: <Layers />, title: 'Resource Reallocation', desc: 'Shifting investment and effort toward emerging priorities.' },
-              { icon: <Target />, title: 'Decision Alignment', desc: 'Maintaining coherence among leadership decisions.' },
-              { icon: <Zap />, title: 'Execution Responsiveness', desc: 'Translating understanding into operational change.' }
+              { icon: <Signal />, title: 'Signal Detection', desc: 'The precision in detecting environmental signals and translating them into strategy.' },
+              { icon: <Heart />, title: 'Cognitive Framing', desc: 'The ability to reframe threats as opportunities and pivot mental models under pressure.' },
+              { icon: <Target />, title: 'Decision Alignment', desc: 'The presence of psychological safety and dissent channels to stress-test decisions.' },
+              { icon: <Layers />, title: 'Resource Calibration', desc: 'The speed and precision of skill acquisition and capital reallocation.' },
+              { icon: <Zap />, title: 'Integrated Responsiveness', desc: 'The capacity to maintain high-performance decision-making during extended disruption.' }
             ].map((dim, i) => (
               <motion.div 
                 key={dim.title} 
