@@ -15,6 +15,7 @@ import AdminIntel from './pages/AdminIntel';
 import DevStatus from './pages/DevStatus';
 import ScrollToTop from './components/ScrollToTop';
 import AFERRPage from './pages/AFERRPage';
+import LAIMeasurementPage from './pages/LAIMeasurementPage';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
             <Route path="/manifesto" element={<ManifestoPage />} />
             <Route path="/framework" element={<FrameworkPage />} />
             <Route path="/aferr" element={<AFERRPage />} />
+            <Route path="/measurement" element={<LAIMeasurementPage />} />
             <Route path="/global-index" element={<GlobalIndexPage />} />
             <Route path="/diagnostic" element={<DiagnosticPage />} />
             <Route path="/about" element={<AboutPage />} />

@@ -204,7 +204,7 @@ const AFERRPage = () => {
              <div className="cta-accent">
                 <h3>See How the LAI Score Is Calculated</h3>
                 <p className="text-slate-500 mb-4">Learn how behavioral signals are converted into a measurable index.</p>
-                <Link to="/global-index" className="btn-outline">Explore the LAI Scoring Model</Link>
+                <Link to="/measurement" className="btn-outline">Explore the LAI Scoring Model</Link>
              </div>
           </div>
         </div>
@@ -291,8 +291,8 @@ const AFERRPage = () => {
         .ode-text { font-size: 1.15rem; line-height: 1.8; color: #475569; margin-bottom: 2.5rem; max-width: 900px; }
         .ml-2 { margin-left: 0.5rem; }
 
-        .logo-watermark-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none; opacity: 0.04; z-index: 1; padding: 2rem; }
-        .logo-watermark-img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; filter: grayscale(1); }
+        .logo-watermark-container { position: absolute; bottom: -5%; right: -2%; width: 35%; height: 50%; display: flex; align-items: flex-end; justify-content: flex-end; pointer-events: none; opacity: 0.14; z-index: 1; padding: 1rem; }
+        .logo-watermark-img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; filter: grayscale(1) contrast(1.3); }
 
         @media (max-width: 992px) {
           .grid-2, .cycle-grid, .cta-split-modern { grid-template-columns: 1fr; }
