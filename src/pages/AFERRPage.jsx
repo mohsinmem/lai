@@ -7,7 +7,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import InstitutionalLogos from '../assets/institutional_logos.png';
+import InstitutionalLogos from '../assets/institutional_logos_v2.png';
 
 const AFERR_STAGES = [
   { stage: 'Activation', desc: 'The moment when a signal becomes psychologically meaningful.', question: 'Is this signal important? Does it require action?' },
@@ -291,8 +291,8 @@ const AFERRPage = () => {
         .ode-text { font-size: 1.15rem; line-height: 1.8; color: #475569; margin-bottom: 2.5rem; max-width: 900px; }
         .ml-2 { margin-left: 0.5rem; }
 
-        .logo-watermark-container { position: absolute; bottom: -5%; right: -2%; width: 35%; height: 50%; display: flex; align-items: flex-end; justify-content: flex-end; pointer-events: none; opacity: 0.14; z-index: 1; padding: 1rem; }
-        .logo-watermark-img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; filter: grayscale(1) contrast(1.3); }
+        .logo-watermark-container { position: absolute; top: 0rem; right: -2rem; width: 45%; height: 50%; display: flex; align-items: flex-start; justify-content: flex-end; pointer-events: none; opacity: 0.2; z-index: 1; padding: 1rem; }
+        .logo-watermark-img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; filter: grayscale(1) contrast(1.4); }
 
         @media (max-width: 992px) {
           .grid-2, .cycle-grid, .cta-split-modern { grid-template-columns: 1fr; }

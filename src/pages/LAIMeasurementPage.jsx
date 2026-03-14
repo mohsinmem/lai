@@ -307,12 +307,17 @@ const LAIMeasurementPage = () => {
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; }
         .bg-light { background: #f8fafc; }
         .bg-navy { background: #0a192f; }
-        .text-white { color: white !important; }
         .text-teal-400 { color: #2dd4bf !important; }
+        .text-slate-300 { color: #cbd5e1 !important; }
+        .text-slate-400 { color: #94a3b8 !important; }
+        .text-slate-500 { color: #64748b !important; }
+        .text-slate-600 { color: #475569 !important; }
         .text-center { text-align: center; }
         .mb-5 { margin-bottom: 4rem; }
         .mt-5 { margin-top: 4rem; }
         .mx-auto { margin-left: auto; margin-right: auto; }
+        .hero-body { color: white !important; }
+        .hero-body p { color: white !important; margin-bottom: 1.5rem; line-height: 1.8; font-size: 1.1rem; }
 
         /* Hero */
         .hero-sec { padding: 12rem 0 8rem; }
