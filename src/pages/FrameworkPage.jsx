@@ -68,7 +68,7 @@ const FrameworkPage = () => {
               <p>Grounded in behavioral research from AFERR and validated through leadership simulation environments, the framework allows the Leadership Adaptiveness Institute to measure adaptiveness rather than speculate about it.</p>
             </div>
             <div className="hero-ctas">
-              <a href="https://drive.google.com/file/d/1bTBH2z7KaEoTTXpE9M5IrEPdUO5gYj7N/view" target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ textDecoration: 'none' }}>
+              <a href="https://drive.google.com/file/d/1bTBH2z7KaEoTTXpE9M5IrEPdUO5gYj7N/view" target="_blank" rel="noopener noreferrer" className="btn-primary">
                 <Download size={18} /> Download Framework Briefing
               </a>
             </div>
@@ -241,7 +241,7 @@ const FrameworkPage = () => {
              <div className="cta-main">
                 <h2>Download the Framework Briefing</h2>
                 <p>Explore the full visual framework and measurement model.</p>
-                <a href="https://drive.google.com/file/d/1bTBH2z7KaEoTTXpE9M5IrEPdUO5gYj7N/view" target="_blank" rel="noopener noreferrer" className="btn-primary mt-4" style={{ textDecoration: 'none', display: 'inline-flex' }}>Download PDF</a>
+                <a href="https://drive.google.com/file/d/1bTBH2z7KaEoTTXpE9M5IrEPdUO5gYj7N/view" target="_blank" rel="noopener noreferrer" className="btn-primary mt-4">Download PDF</a>
              </div>
              <div className="cta-divider"></div>
              <div className="cta-secondary">
@@ -288,9 +288,9 @@ const FrameworkPage = () => {
         .badge { display: inline-block; padding: 0.5rem 1rem; background: #0a192f; color: white; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; border-radius: 4px; }
         .hero-body p { font-size: 1.125rem; line-height: 1.7; color: #475569; margin-bottom: 1.5rem; max-width: 800px; }
 
-        .btn-primary { background: #0d9488; color: white; padding: 1rem 2rem; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s; }
+        .btn-primary { background: #0d9488; color: white !important; padding: 1rem 2rem; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; text-decoration: none; }
         .btn-primary:hover { background: #0f766e; transform: translateY(-2px); }
-        .btn-outline { background: transparent; border: 2px solid #0d9488; color: #0d9488; padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
+        .btn-outline { background: transparent; border: 2px solid #0d9488; color: #0d9488; padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; text-decoration: none; }
 
         /* Paradigm Contrast */
         .contrast-card { padding: 2.5rem; border-radius: 24px; border: 1px solid #e2e8f0; }
