@@ -23,6 +23,23 @@ const getEvolutionaryState = (score) => {
   return                { label: 'Fragile',       color: '#ef4444', pill: 'bg-rose-100 text-rose-700 border-rose-200' };
 };
 
+const getScoreColor = (score) => {
+  // Simple interpolation: 0=red(#ef4444), 50=orange(#f59e0b), 100=green(#10b981)
+  if (score <= 50) {
+    const p = score / 50;
+    const r = Math.round(239 + (245 - 239) * p);
+    const g = Math.round(68 + (158 - 68) * p);
+    const b = Math.round(68 + (11 - 68) * p);
+    return `rgb(${r},${g},${b})`;
+  } else {
+    const p = (score - 50) / 50;
+    const r = Math.round(245 + (16 - 245) * p);
+    const g = Math.round(158 + (185 - 158) * p);
+    const b = Math.round(11 + (129 - 11) * p);
+    return `rgb(${r},${g},${b})`;
+  }
+};
+
 const formatDate = (val) => {
   if (!val) return '';
   const d = new Date(val);
@@ -78,28 +95,19 @@ const MapDot = React.memo(({ org, onClick, selected }) => {
   );
 });
 
-const ScoreRangeVisual = () => (
-  <div className="score-range-container">
-    <div className="range-track">
-      <div className="range-marker start">0</div>
-      <div className="range-marker end">100</div>
-      <div className="range-fill-gradient"></div>
-    </div>
-    <div className="range-labels-detailed">
-      <span>Fragile</span>
-      <span>Emergent</span>
-      <span>Antifragile</span>
-    </div>
-  </div>
-);
 
 const ScoreBar = ({ score }) => {
-  const ev = getEvolutionaryState(score);
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-      <div style={{ flex: 1, height: 6, background: '#f1f5f9', borderRadius: 9999, overflow: 'hidden', position: 'relative' }}>
+      <div style={{ flex: 1, height: 8, background: '#f1f5f9', borderRadius: 9999, overflow: 'hidden', position: 'relative' }}>
+        {/* Background gradient track */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, #ef4444, #f59e0b, #10b981)', opacity: 0.15 }} />
+        {/* Filled portion revealing the same gradient */}
         <motion.div initial={{ width: 0 }} animate={{ width: `${score}%` }}
-          style={{ height: '100%', background: 'linear-gradient(to right, #ef4444, #f59e0b, #10b981)', backgroundSize: '100px 100%', borderRadius: 9999 }} />
+          style={{ height: '100%', background: 'linear-gradient(to right, #ef4444, #f59e0b, #10b981)', backgroundSize: '100px 100%', borderRadius: 9999, position: 'relative' }}>
+          {/* Accessibility Texture Overlay */}
+          <div style={{ position: 'absolute', inset: 0, opacity: 0.15, background: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.4) 5px, rgba(255,255,255,0.4) 10px)' }} />
+        </motion.div>
       </div>
     </div>
   );
@@ -164,9 +172,9 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
           </div>
         </span>
         <span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <ScoreBar score={r.score} />
-            <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#0f172a', minWidth: '3ch' }}>{r.score}</span>
+            <span style={{ fontSize: '1.1rem', fontWeight: 900, color: getScoreColor(r.score), minWidth: '3ch', textAlign: 'right', fontFamily: 'Georgia, serif' }}>{r.score}</span>
           </div>
         </span>
         <span style={{ fontWeight: 800, fontSize: '0.9rem', color: r.cognitiveShift?.startsWith('+') ? '#10b981' : '#ef4444', opacity: (r.is_verified && r.evidence_density === 0) ? 0.3 : 1 }}>
@@ -322,13 +330,6 @@ const GlobalIndexPage = () => {
       <style>{`
         @keyframes antifragilePulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.1); } 100% { opacity: 1; transform: scale(1); } }
         
-        .score-range-container { max-width: 800px; margin: 0 auto; }
-        .range-track { height: 12px; background: #e2e8f0; border-radius: 10px; position: relative; margin-bottom: 2rem; }
-        .range-fill-gradient { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 10px; background: linear-gradient(to right, #ef4444, #f59e0b, #10b981); }
-        .range-marker { position: absolute; top: -25px; font-weight: 800; font-size: 0.8rem; color: #94a3b8; }
-        .range-marker.start { left: 0; }
-        .range-marker.end { right: 0; }
-        .range-labels-detailed { display: flex; justify-content: space-between; font-weight: 900; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2.5px; color: #475569; }
 
         .leaderboard-row { transition: all 0.2s ease; border-left: 4px solid transparent; }
         .leaderboard-row:hover { border-left-color: #2dd4bf; }
@@ -398,11 +399,6 @@ const GlobalIndexPage = () => {
           </div>
         </div>
 
-        <div style={{ background: 'white', borderRadius: 24, border: '1px solid #e2e8f0', padding: '4rem 2rem', textAlign: 'center', marginBottom: '3rem' }}>
-           <h2 style={{ fontSize: '2rem', fontWeight: 900, fontFamily: 'serif', marginBottom: '1rem' }}>The Leadership Adaptiveness Index</h2>
-           <p style={{ color: '#64748b', marginBottom: '3rem', maxWidth: '600px', margin: '0 auto 3rem' }}>The overall LAI score is calculated as the weighted average of behavioral signals across five critical dimensions.</p>
-           <ScoreRangeVisual />
-        </div>
 
         <div style={{ background: 'white', borderRadius: 24, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '100px 1.5fr 200px 100px 200px', padding: '1.25rem 2.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: 2, color: '#94a3b8' }}>
