@@ -4,7 +4,7 @@ import {
   Globe, Search, ChevronDown, ChevronUp, Zap, 
   Shield, ShieldCheck, TrendingUp, Brain, CheckCircle2, 
   AlertTriangle, Info, Layers, BarChart3, Waves, 
-  Scale, ExternalLink, Activity, ArrowUp, ArrowDown, CheckCircle, CheckCircle2
+  Scale, ExternalLink, Activity, ArrowUp, ArrowDown, CheckCircle
 } from 'lucide-react';
 import { supabase } from '../supabase';
 
