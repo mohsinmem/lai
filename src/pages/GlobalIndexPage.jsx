@@ -104,19 +104,19 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
     };
 
     return (
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', height: '100%' }}>
         {is_triangulated && (
-          <span style={{ ...badgeStyle, background: '#eff6ff', color: '#1d4ed8', borderColor: '#dbeafe' }}>
+          <span style={{ ...badgeStyle, background: '#eff6ff', color: '#1056ff', borderColor: '#dbeafe', display: 'flex', alignItems: 'center' }}>
             TRIANGULATED
           </span>
         )}
         {is_dissonant && (
           <span style={{ ...badgeStyle, background: '#fffbeb', color: '#b45309', borderColor: '#fef3c7', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <AlertTriangle size={10}/> INSIGHT ALERT
+            <AlertTriangle size={10} style={{ marginTop: '-1px' }}/> INSIGHT ALERT
           </span>
         )}
         {!is_triangulated && !is_dissonant && (
-          <span style={{ ...badgeStyle, background: '#f8fafc', color: '#64748b', borderColor: '#e2e8f0' }}>
+          <span style={{ ...badgeStyle, background: '#f8fafc', color: '#64748b', borderColor: '#e2e8f0', display: 'flex', alignItems: 'center' }}>
             INFERRED
           </span>
         )}
@@ -128,7 +128,7 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
     <div key={r.organization + idx}>
       <motion.div onClick={() => { setExpandedId(isOpen ? null : idx); setFocusDot(r); }}
         whileHover={{ background: '#f8fafc' }}
-        style={{ display: 'grid', gridTemplateColumns: '60px 1.2fr 1.5fr 80px 240px', padding: '1rem 1.5rem',
+        style={{ display: 'grid', gridTemplateColumns: '60px 1.2fr 150px 100px 180px', padding: '1rem 1.5rem',
           borderBottom: '1px solid #f1f5f9', alignItems: 'center', cursor: 'pointer', background: isOpen ? '#f8fafc' : 'white' }}>
         <span style={{ fontWeight: 800, color: '#cbd5e1', fontSize: '1rem' }}>#{r.rank}</span>
         <span style={{ minWidth: 0 }}>
@@ -351,7 +351,7 @@ const GlobalIndexPage = () => {
         </div>
 
         <div style={{ background: 'white', borderRadius: 24, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '60px 1.2fr 1.5fr 80px 240px', padding: '1.25rem 1.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.5, color: '#94a3b8' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '60px 1.2fr 150px 100px 180px', padding: '1.25rem 1.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.5, color: '#94a3b8' }}>
             <span>Rank</span>
             <span>Profile</span>
             <span>LAI Score (Adaptive Capacity)</span>
