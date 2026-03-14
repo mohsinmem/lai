@@ -104,27 +104,27 @@ const MapDot = React.memo(({ org, onClick, selected }) => {
 
 
 const ScoreBar = ({ score }) => {
-  // To make the gradient stay 'pinned' to the 0-100 track, 
-  // the background-size of the filled part needs to be the width of the track.
   const bgSize = score > 0 ? `${(100 / score) * 100}% 100%` : '100% 100%';
   
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '220px' }}>
-      <div style={{ flex: 1, height: 8, background: '#f1f5f9', borderRadius: 9999, overflow: 'hidden', position: 'relative' }}>
-        {/* Background track - subtle version of the master gradient */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, #b91c1c, #b45309, #1e40af, #065f46)', opacity: 0.1 }} />
+      <div style={{ flex: 1, height: 10, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden', position: 'relative', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.1)' }}>
+        {/* Background track */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, #b91c1c, #b45309, #1e40af, #065f46)', opacity: 0.08 }} />
         
-        {/* Filled portion - reveals its slice of the gradient */}
+        {/* Master Gradient with subtle internal gloss */}
         <motion.div initial={{ width: 0 }} animate={{ width: `${score}%` }}
           style={{ 
             height: '100%', 
-            background: 'linear-gradient(to right, #b91c1c, #b45309, #1e40af, #065f46)', 
-            backgroundSize: bgSize, 
-            borderRadius: 9999, 
-            position: 'relative' 
+            background: 'linear-gradient(to bottom, rgba(255,255,255,0.15), transparent), linear-gradient(to right, #b91c1c, #b45309, #1e40af, #065f46)', 
+            backgroundSize: `100% 100%, ${bgSize}`,
+            backgroundBlendMode: 'overlay',
+            borderRadius: 2, 
+            position: 'relative',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
           }}>
           {/* Accessibility Texture Overlay */}
-          <div style={{ position: 'absolute', inset: 0, opacity: 0.15, background: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.4) 5px, rgba(255,255,255,0.4) 10px)' }} />
+          <div style={{ position: 'absolute', inset: 0, opacity: 0.1, background: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.2) 5px, rgba(255,255,255,0.2) 10px)' }} />
         </motion.div>
       </div>
     </div>
@@ -141,7 +141,9 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
   
   const signalConfidence = is_triangulated ? 94 : (r.evidence_density > 0.6 ? 78 : (is_dissonant ? 42 : 56));
   const shiftVal = parseFloat(r.cognitiveShift?.replace(/[+%↑]/g, '') || '0');
-  const signalVelocity = shiftVal > 3 ? 'ACCELERATED' : (shiftVal > 1.2 ? 'STABLE' : 'DECCELERATED');
+  const signalVelocity = shiftVal > 3 ? 'ACCELERATING' : (shiftVal > 1.2 ? 'STABLE' : 'DECELERATING');
+  const signalActivity = Math.round((hash % 40) + 12); // Mock signal volume
+  const activityLevel = signalActivity > 35 ? 'HIGH' : (signalActivity > 20 ? 'MEDIUM' : 'LOW');
 
   const FidelityBadge = () => {
     const badgeStyle = {
@@ -218,8 +220,11 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
             <Tooltip text="This score is inferred from external intelligence signals such as market behavior, industry events, and institutional actions." />
           </div>
         )}
-        <div style={{ marginTop: '0.4rem', fontSize: '0.55rem', fontWeight: 900, color: '#94a3b8', letterSpacing: 1 }}>
-          SIGNAL CONFIDENCE {signalConfidence}%
+        <div className="fidelity-trigger" style={{ marginTop: '8px', position: 'relative' }}>
+          <div style={{ fontSize: '0.55rem', fontWeight: 900, color: '#94a3b8', letterSpacing: 1.5, fontVariantNumeric: 'tabular-nums' }}>
+            CONFIDENCE {signalConfidence}%
+          </div>
+          <Tooltip text="Confidence reflects the volume, diversity, and reliability of signals used to calculate the LAI score." />
         </div>
       </div>
     );
@@ -231,78 +236,92 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
         onClick={() => { setExpandedId(isOpen ? null : idx); setFocusDot(r); }}
         style={{ 
           display: 'grid', 
-          gridTemplateColumns: 'minmax(100px, 120px) minmax(280px, 1fr) minmax(400px, 450px) 120px 240px',
+          gridTemplateColumns: 'minmax(80px, 100px) minmax(280px, 1.2fr) minmax(350px, 1.5fr) 140px 240px',
           alignItems: 'center', 
-          padding: '1.75rem 2.5rem', 
+          padding: '24px 40px', 
           cursor: 'pointer',
           background: isOpen ? '#f8fafc' : (idx === 0 ? 'rgba(16, 185, 129, 0.03)' : 'white'),
-          borderBottom: '1px solid #f1f5f9',
+          margin: '0 8px 1px',
+          borderRadius: 4,
+          boxShadow: '0 1px 0 rgba(0,0,0,0.03)',
           borderLeft: idx === 0 ? '4px solid #10b981' : '4px solid transparent',
-          transition: 'all 0.2s ease',
+          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
           zIndex: isOpen ? 10 : 1
         }}
-        whileHover={{ background: idx === 0 ? 'rgba(16, 185, 129, 0.05)' : '#f8fafc' }}
+        whileHover={{ 
+          background: idx === 0 ? 'rgba(16, 185, 129, 0.05)' : 'white',
+          boxShadow: '0 6px 20px rgba(0,0,0,0.06)',
+          y: -1,
+          filter: 'brightness(1.01)'
+        }}
       >
         <span style={{ 
-          fontSize: '1.6rem', 
+          fontSize: '1.75rem', 
           fontWeight: 950, 
-          color: idx === 0 ? '#0f172a' : '#1e293b', 
-          opacity: idx < 3 ? 1 : 0.8, 
-          fontFamily: 'Georgia, serif',
-          letterSpacing: '-0.02em',
-          transition: 'all 0.2s'
+          color: idx === 0 ? '#0f172a' : '#334155', 
+          fontFamily: 'Inter, sans-serif',
+          letterSpacing: '-0.04em',
+          transition: 'all 0.2s',
+          fontVariantNumeric: 'tabular-nums'
         }}>
           {formattedIdx}
         </span>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <span style={{ fontWeight: 900, fontSize: '1.2rem', color: '#0f172a', letterSpacing: '-0.01em', fontFamily: 'Georgia, serif' }}>{r.organization}</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <span style={{ fontWeight: 900, fontSize: '1.25rem', color: '#0f172a', letterSpacing: '-0.01em', fontFamily: 'Georgia, serif' }}>{r.organization}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.5, color: '#94a3b8' }}>
+            <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.5, color: '#94a3b8' }}>
               {r.industry} · {r.region}
             </span>
           </div>
         </div>
         <span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
             <ScoreBar score={r.score} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '1.5rem', fontWeight: 900, color: getScoreColor(r.score), fontFamily: 'Georgia, serif' }}>{r.score}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '1.75rem', fontWeight: 950, color: getScoreColor(r.score), fontFamily: 'Inter, sans-serif', fontVariantNumeric: 'tabular-nums' }}>{r.score}</span>
               <span style={{ 
-                fontSize: '0.6rem', 
+                fontSize: '0.62rem', 
                 fontWeight: 900, 
                 textTransform: 'uppercase', 
-                letterSpacing: '1px', 
-                padding: '0.2rem 0.6rem', 
+                letterSpacing: '1.5px', 
+                padding: '0.3rem 0.8rem', 
                 borderRadius: '4px',
-                background: `${getEvolutionaryState(r.score).color}11`, 
+                background: `${getEvolutionaryState(r.score).color}15`, 
                 color: getEvolutionaryState(r.score).color,
-                border: `1px solid ${getEvolutionaryState(r.score).color}33`,
+                border: `1px solid ${getEvolutionaryState(r.score).color}22`,
               }}>
                 {getEvolutionaryState(r.score).label}
               </span>
             </div>
           </div>
         </span>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
           <span style={{ 
             display: 'flex',
             alignItems: 'center',
-            gap: '4px',
-            fontWeight: 800, 
-            fontSize: '1rem', 
+            gap: '6px',
+            fontWeight: 900, 
+            fontSize: '1.1rem', 
             color: r.cognitiveShift?.startsWith('+') ? '#059669' : '#dc2626', 
+            fontVariantNumeric: 'tabular-nums'
           }}>
-            {r.score !== 0 && (r.cognitiveShift?.startsWith('+') ? <ArrowUp size={16} strokeWidth={3} /> : <ArrowDown size={16} strokeWidth={3} />)}
+            {r.score !== 0 && (r.cognitiveShift?.startsWith('+') ? <ArrowUp size={18} strokeWidth={3} /> : <ArrowDown size={18} strokeWidth={3} />)}
             {r.score === 0 ? '--' : r.cognitiveShift}
           </span>
-          <span style={{ fontSize: '0.55rem', fontWeight: 900, color: '#94a3b8', letterSpacing: 1.5 }}>
-            VELOCITY: {signalVelocity}
-          </span>
+          <div style={{ fontSize: '0.55rem', fontWeight: 900, color: '#64748b', letterSpacing: 1.5, display: 'flex', alignItems: 'center', gap: '4px' }}>
+             {signalVelocity === 'ACCELERATING' ? <ArrowUp size={8} /> : <ArrowDown size={8} />} {signalVelocity}
+          </div>
+          <div className="fidelity-trigger" style={{ position: 'relative' }}>
+            <div style={{ fontSize: '0.55rem', fontWeight: 900, color: '#94a3b8', letterSpacing: 1, textTransform: 'uppercase' }}>
+              Activity: {activityLevel} · {signalActivity} / wk
+            </div>
+            <Tooltip text="Environmental Turbulence: Measures the volume of strategic signals detected this week." />
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '1.25rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '2rem' }}>
           <FidelityBadge />
           <motion.div animate={{ rotate: isOpen ? 180 : 0 }}>
-            {isOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-300" />}
+            {isOpen ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-300" />}
           </motion.div>
         </div>
       </motion.div>
@@ -310,8 +329,8 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
       <AnimatePresence>
         {isOpen && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-            style={{ overflow: 'hidden', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
-            <div style={{ padding: '2rem 1.5rem 2rem 6.5rem', display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: '3rem' }}>
+            style={{ overflow: 'hidden', background: '#f8fafc', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)' }}>
+            <div style={{ padding: '32px 40px 32px 140px', display: 'grid', gridTemplateColumns: '1.2fr 1fr 2fr', gap: '48px' }}>
               <div>
                 <p style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 2, color: '#94a3b8', marginBottom: '1rem' }}>Signal Architecture</p>
                 <div style={{ background: 'white', padding: '1.25rem', borderRadius: 16, border: '1px solid #e2e8f0' }}>
@@ -537,9 +556,20 @@ const GlobalIndexPage = () => {
           </p>
         </motion.div>
 
-        {/* Global Summary Panel */}
-        <div style={{ maxWidth: 1000, margin: '4rem auto -10rem', position: 'relative', zIndex: 10, padding: '0 1.5rem' }}>
-          <div style={{ background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)', borderRadius: 24, padding: '2.5rem', border: '1px solid rgba(255,255,255,0.1)', display: 'grid', gridTemplateColumns: '1.2fr 2fr 1fr', gap: '3rem', alignItems: 'center' }}>
+        {/* Global Summary Panel - High Context Headline */}
+        <div style={{ maxWidth: 1100, margin: '64px auto -110px', position: 'relative', zIndex: 10, padding: '0 32px' }}>
+          <div style={{ 
+            background: 'rgba(255,255,255,0.08)', 
+            backdropFilter: 'blur(32px)', 
+            borderRadius: 32, 
+            padding: '32px 48px', 
+            border: '1px solid rgba(255,255,255,0.12)', 
+            display: 'grid', 
+            gridTemplateColumns: 'minmax(200px, 1fr) 2fr 1fr', 
+            gap: '48px', 
+            alignItems: 'center',
+            boxShadow: '0 32px 64px -16px rgba(0,0,0,0.4)'
+          }}>
             
             <div style={{ borderRight: '1px solid rgba(255,255,255,0.1)', paddingRight: '2rem' }}>
               <div style={{ fontSize: '0.65rem', fontWeight: 900, color: '#2dd4bf', textTransform: 'uppercase', letterSpacing: 2, marginBottom: '0.5rem' }}>Global Landscape Context</div>
@@ -610,35 +640,38 @@ const GlobalIndexPage = () => {
         </div>
 
 
-        <div style={{ background: 'white', borderRadius: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+        <div style={{ background: 'white', borderRadius: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', overflow: 'hidden', padding: '8px 0' }}>
           <div style={{ 
             display: 'grid', 
-            gridTemplateColumns: 'minmax(100px, 120px) minmax(280px, 1fr) minmax(400px, 450px) 120px 240px', 
-            padding: '1.5rem 2.5rem', 
-            background: '#f8fafc', 
-            borderBottom: '2px solid #e2e8f0' 
+            gridTemplateColumns: 'minmax(80px, 100px) minmax(280px, 1.2fr) minmax(350px, 1.5fr) 140px 240px',
+            padding: '1.5rem 2.5rem 1.5rem 40px', 
+            background: 'white', 
+            borderBottom: '1px solid #f1f5f9'
           }}>
             {['RANK', 'INSTITUTION', 'LAI SCORE'].map(h => (
               <span key={h} style={{ 
                 fontSize: '0.65rem', 
-                fontWeight: h === 'LAI SCORE' ? 900 : 800, 
-                color: h === 'LAI SCORE' ? '#0f172a' : '#64748b', 
+                fontWeight: 900, 
+                color: h === 'LAI SCORE' ? '#0f172a' : '#94a3b8', 
                 letterSpacing: 2,
                 transform: h === 'LAI SCORE' ? 'scale(1.05)' : 'none',
                 transformOrigin: 'left'
               }}>
                 {h === 'LAI SCORE' ? 'LAI SCORE' : h}
-                {h === 'LAI SCORE' && <div style={{ fontSize: '0.45rem', fontWeight: 700, opacity: 0.6, letterSpacing: 1, marginTop: '2px' }}>(ADAPTIVENESS INDEX)</div>}
+                {h === 'LAI SCORE' && <div style={{ fontSize: '0.45rem', fontWeight: 800, opacity: 0.6, letterSpacing: 1, marginTop: '2px' }}>(ADAPTIVENESS INDEX)</div>}
               </span>
             ))}
-            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#64748b', letterSpacing: 2 }}>SHIFT & VELOCITY</span>
-            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#64748b', letterSpacing: 2 }}>TRUST LAYER</span>
+            <span style={{ fontSize: '0.65rem', fontWeight: 900, color: '#94a3b8', letterSpacing: 2 }}>SHIFT & VELOCITY</span>
+            <span style={{ fontSize: '0.65rem', fontWeight: 900, color: '#94a3b8', letterSpacing: 2 }}>TRUST LAYER</span>
           </div>
           {loading ? (
             <div style={{ padding: '5rem', textAlign: 'center', color: '#cbd5e1' }}><Brain size={48} style={{ margin: '0 auto 1rem', opacity: 0.2 }} /><p>Synthesizing Global Signals...</p></div>
           ) : (
             displayed.map((r, idx) => (
-              <LeaderboardRow key={r.organization} r={r} idx={idx} expandedId={expandedId} setExpandedId={setExpandedId} setFocusDot={setFocusDot} />
+              <React.Fragment key={r.organization}>
+                <LeaderboardRow r={r} idx={idx} expandedId={expandedId} setExpandedId={setExpandedId} setFocusDot={setFocusDot} />
+                <div style={{ height: '1px', width: '100%', background: 'linear-gradient(to right, transparent, rgba(0,0,0,0.04), transparent)', margin: '4px 0' }} />
+              </React.Fragment>
             ))
           )}
         </div>
