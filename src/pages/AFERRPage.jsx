@@ -177,8 +177,8 @@ const AFERRPage = () => {
              </div>
              <p className="ode-text">The Leadership Adaptiveness Framework is built upon the foundational cognitive-behavioral research hosted at <strong>AFERR.org</strong>. As the primary repository for the AFERR methodology, the site provides deep-dive documentation on the longitudinal studies that define how leadership systems respond to volatility.</p>
              
-             <div className="logo-grid-container">
-                <img src={InstitutionalLogos} alt="Institutional Partners" className="logo-grid-img" />
+             <div className="logo-watermark-container">
+                <img src={InstitutionalLogos} alt="" className="logo-watermark-img" />
              </div>
 
              <div className="ode-actions">
@@ -285,13 +285,14 @@ const AFERRPage = () => {
         .cta-split-modern { display: grid; grid-template-columns: 1.5fr 1fr; gap: 4rem; background: #f0fdfa; padding: 4rem; border-radius: 40px; }
 
         /* Research Ode */
-        .research-ode-box { background: #f8fafc; padding: 4rem; border-radius: 32px; border: 1px solid #e2e8f0; }
+        .research-ode-box { background: #f8fafc; padding: 6rem 4rem; border-radius: 32px; border: 1px solid #e2e8f0; position: relative; overflow: hidden; }
+        .ode-header, .ode-text, .ode-actions { position: relative; z-index: 2; }
         .ode-header { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; }
         .ode-text { font-size: 1.15rem; line-height: 1.8; color: #475569; margin-bottom: 2.5rem; max-width: 900px; }
         .ml-2 { margin-left: 0.5rem; }
 
-        .logo-grid-container { background: white; padding: 2rem; border-radius: 16px; margin-bottom: 3rem; border: 1px solid #f1f5f9; }
-        .logo-grid-img { width: 100%; height: auto; mix-blend-mode: multiply; filter: contrast(1.1); }
+        .logo-watermark-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none; opacity: 0.04; z-index: 1; padding: 2rem; }
+        .logo-watermark-img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; filter: grayscale(1); }
 
         @media (max-width: 992px) {
           .grid-2, .cycle-grid, .cta-split-modern { grid-template-columns: 1fr; }
