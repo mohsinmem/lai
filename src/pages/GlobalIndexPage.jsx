@@ -539,9 +539,11 @@ const GlobalIndexPage = () => {
         .text-slate-400 { color: #94a3b8 !important; }
       `}</style>
       
-      <header style={{ paddingTop: '8rem', paddingBottom: '6rem', background: '#0a192f', textAlign: 'center', color: 'white', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0.05 }}>
-           <Globe size={800} style={{ position: 'absolute', top: -100, right: -200 }} />
+      <header style={{ paddingTop: '8rem', paddingBottom: '2rem', background: '#0a192f', textAlign: 'center', color: 'white', position: 'relative' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0.05 }}>
+             <Globe size={800} style={{ position: 'absolute', top: -100, right: -200 }} />
+          </div>
         </div>
         
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} style={{ maxWidth: 800, margin: '0 auto', padding: '0 1.5rem', position: 'relative', zIndex: 2 }}>
@@ -553,21 +555,20 @@ const GlobalIndexPage = () => {
             The definitive benchmark for organizational response. Aggregating behavioral simulations, sovereign research, and environmental intelligence.
           </p>
         </motion.div>
-      </header>
 
-      {/* Global Summary Panel - High Context Headline */}
-      <div style={{ maxWidth: 1100, margin: '-80px auto 40px', position: 'relative', zIndex: 10, padding: '0 32px' }}>
+        {/* Global Summary Panel - High Context Headline */}
+        <div style={{ maxWidth: 1100, margin: '64px auto -80px', position: 'relative', zIndex: 50, padding: '0 32px' }}>
           <div style={{ 
             background: 'rgba(255,255,255,0.08)', 
             backdropFilter: 'blur(32px)', 
             borderRadius: 32, 
-            padding: '32px 48px', 
+            padding: '40px 48px', 
             border: '1px solid rgba(255,255,255,0.12)', 
             display: 'grid', 
             gridTemplateColumns: 'minmax(200px, 1fr) 2fr 1fr', 
             gap: '48px', 
             alignItems: 'center',
-            boxShadow: '0 32px 64px -16px rgba(0,0,0,0.4)'
+            boxShadow: '0 32px 64px -16px rgba(0,0,0,0.5)'
           }}>
             
             <div style={{ borderRight: '1px solid rgba(255,255,255,0.1)', paddingRight: '2rem' }}>
@@ -606,9 +607,9 @@ const GlobalIndexPage = () => {
               <div style={{ fontSize: '0.55rem', color: '#94a3b8', fontWeight: 600, marginTop: '4px' }}>Updated {stats.lastUpdated} minutes ago</div>
               <div style={{ fontSize: '0.5rem', color: '#2dd4bf', fontWeight: 800, marginTop: '12px', letterSpacing: 1 }}>POWERED BY ORION SCOUT</div>
             </div>
-
           </div>
         </div>
+      </header>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 1.5rem' }}>
         <div style={{ background: 'white', borderRadius: 24, border: '1px solid #e2e8f0', overflow: 'hidden', marginTop: '-2rem', boxShadow: '0 20px 60px rgba(0,0,0,0.08)', marginBottom: '2.5rem', position: 'relative', height: 400, background: '#0f172a' }}>
