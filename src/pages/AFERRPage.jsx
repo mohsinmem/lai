@@ -7,6 +7,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import InstitutionalLogos from '../assets/institutional_logos.png';
 
 const AFERR_STAGES = [
   { stage: 'Activation', desc: 'The moment when a signal becomes psychologically meaningful.', question: 'Is this signal important? Does it require action?' },
@@ -175,6 +176,11 @@ const AFERRPage = () => {
                 <h2 className="section-h2 mb-0">Institutional Origins & Primary Research</h2>
              </div>
              <p className="ode-text">The Leadership Adaptiveness Framework is built upon the foundational cognitive-behavioral research hosted at <strong>AFERR.org</strong>. As the primary repository for the AFERR methodology, the site provides deep-dive documentation on the longitudinal studies that define how leadership systems respond to volatility.</p>
+             
+             <div className="logo-grid-container">
+                <img src={InstitutionalLogos} alt="Institutional Partners" className="logo-grid-img" />
+             </div>
+
              <div className="ode-actions">
                 <a href="https://aferr.org" target="_blank" rel="noopener noreferrer" className="btn-outline">
                    Access Primary Research at AFERR.org <ExternalLink size={16} className="ml-2" />
@@ -283,6 +289,9 @@ const AFERRPage = () => {
         .ode-header { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; }
         .ode-text { font-size: 1.15rem; line-height: 1.8; color: #475569; margin-bottom: 2.5rem; max-width: 900px; }
         .ml-2 { margin-left: 0.5rem; }
+
+        .logo-grid-container { background: white; padding: 2rem; border-radius: 16px; margin-bottom: 3rem; border: 1px solid #f1f5f9; }
+        .logo-grid-img { width: 100%; height: auto; mix-blend-mode: multiply; filter: contrast(1.1); }
 
         @media (max-width: 992px) {
           .grid-2, .cycle-grid, .cta-split-modern { grid-template-columns: 1fr; }
