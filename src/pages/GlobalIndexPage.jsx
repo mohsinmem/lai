@@ -553,9 +553,10 @@ const GlobalIndexPage = () => {
             The definitive benchmark for organizational response. Aggregating behavioral simulations, sovereign research, and environmental intelligence.
           </p>
         </motion.div>
+      </header>
 
-        {/* Global Summary Panel - High Context Headline */}
-        <div style={{ maxWidth: 1100, margin: '64px auto -110px', position: 'relative', zIndex: 10, padding: '0 32px' }}>
+      {/* Global Summary Panel - High Context Headline */}
+      <div style={{ maxWidth: 1100, margin: '-80px auto 40px', position: 'relative', zIndex: 10, padding: '0 32px' }}>
           <div style={{ 
             background: 'rgba(255,255,255,0.08)', 
             backdropFilter: 'blur(32px)', 
@@ -608,7 +609,6 @@ const GlobalIndexPage = () => {
 
           </div>
         </div>
-      </header>
 
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 1.5rem' }}>
         <div style={{ background: 'white', borderRadius: 24, border: '1px solid #e2e8f0', overflow: 'hidden', marginTop: '-2rem', boxShadow: '0 20px 60px rgba(0,0,0,0.08)', marginBottom: '2.5rem', position: 'relative', height: 400, background: '#0f172a' }}>
