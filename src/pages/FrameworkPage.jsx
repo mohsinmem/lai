@@ -68,9 +68,9 @@ const FrameworkPage = () => {
               <p>Grounded in behavioral research from AFERR and validated through leadership simulation environments, the framework allows the Leadership Adaptiveness Institute to measure adaptiveness rather than speculate about it.</p>
             </div>
             <div className="hero-ctas">
-              <button className="btn-primary">
+              <a href="https://drive.google.com/file/d/1bTBH2z7KaEoTTXpE9M5IrEPdUO5gYj7N/view" target="_blank" rel="noopener noreferrer" className="btn-primary" style={{ textDecoration: 'none' }}>
                 <Download size={18} /> Download Framework Briefing
-              </button>
+              </a>
             </div>
           </motion.div>
         </div>
@@ -241,7 +241,7 @@ const FrameworkPage = () => {
              <div className="cta-main">
                 <h2>Download the Framework Briefing</h2>
                 <p>Explore the full visual framework and measurement model.</p>
-                <button className="btn-primary mt-4">Download PDF</button>
+                <a href="https://drive.google.com/file/d/1bTBH2z7KaEoTTXpE9M5IrEPdUO5gYj7N/view" target="_blank" rel="noopener noreferrer" className="btn-primary mt-4" style={{ textDecoration: 'none', display: 'inline-flex' }}>Download PDF</a>
              </div>
              <div className="cta-divider"></div>
              <div className="cta-secondary">
