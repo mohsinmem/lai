@@ -93,18 +93,32 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
   const is_inferred = !is_triangulated && (r.source_breakdown_obj?.contributions?.environmental > 80);
 
   const FidelityBadge = () => {
+    const badgeStyle = {
+      padding: '0.25rem 0.75rem',
+      borderRadius: '9999px',
+      fontSize: '0.6rem',
+      fontWeight: 800,
+      border: '1px solid',
+      textTransform: 'uppercase',
+      letterSpacing: '0.5px'
+    };
+
     return (
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
         {is_triangulated && (
-          <span className="bg-blue-100 text-blue-700 border-blue-200 px-3 py-1 rounded-full text-[0.6rem] font-bold border">TRIANGULATED</span>
+          <span style={{ ...badgeStyle, background: '#eff6ff', color: '#1d4ed8', borderColor: '#dbeafe' }}>
+            TRIANGULATED
+          </span>
         )}
         {is_dissonant && (
-          <span className="bg-amber-100 text-amber-700 border-amber-200 px-3 py-1 rounded-full text-[0.6rem] font-bold border flex items-center gap-1">
+          <span style={{ ...badgeStyle, background: '#fffbeb', color: '#b45309', borderColor: '#fef3c7', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <AlertTriangle size={10}/> INSIGHT ALERT
           </span>
         )}
         {!is_triangulated && !is_dissonant && (
-          <span className="bg-slate-100 text-slate-600 border-slate-200 px-3 py-1 rounded-full text-[0.6rem] font-bold border">INFERRED</span>
+          <span style={{ ...badgeStyle, background: '#f8fafc', color: '#64748b', borderColor: '#e2e8f0' }}>
+            INFERRED
+          </span>
         )}
       </div>
     );
@@ -123,27 +137,11 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
             {r.is_verified && (
               <CheckCircle2 size={13} color="#3b82f6" fill="rgba(59, 130, 246, 0.1)" 
                 style={{ cursor: 'help' }} 
-                title={`Undisputed Data: ${r.evidence_density} Observed Performance Signals utilized.`} />
-            )}
-            {r.is_triangulated && (
-              <span 
-                style={{ display: 'flex', alignItems: 'center', gap: '3px', padding: '2px 6px', background: '#f0f9ff', color: '#0369a1', borderRadius: '4px', fontSize: '0.6rem', fontWeight: 800, border: '1px solid #bae6fd', cursor: 'help' }}
-                title="Triangulated: Signal verified across Sovereign, Behavioral, and Perceptual sources for 360° reliability."
-              >
-                <ShieldCheck size={10} /> TRIANGULATED
-              </span>
+                title={`Verified Institutional Signal: ${r.evidence_density} data points synthesized.`} />
             )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase' }}>{r.industry || 'Global Baseline'} · {r.region}</div>
-            {r.strategic_dissonance && (
-              <div 
-                style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#dc2626', fontSize: '0.65rem', fontWeight: 800, cursor: 'help' }}
-                title="Strategic Dissonance: A significant gap exists between awareness (Perception) and action (Behavior). The organization knows what to do but isn't executing yet."
-              >
-                <AlertTriangle size={12} /> ADAPTIVENESS GAP
-              </div>
-            )}
           </div>
         </span>
         <span>
