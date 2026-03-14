@@ -192,7 +192,7 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
     };
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'center' }}>
         {is_triangulated && (
           <div className="fidelity-trigger" style={{ position: 'relative' }}>
             <span style={{ ...badgeStyle, background: '#eff6ff', color: '#1e40af', borderColor: '#dbeafe' }}>
@@ -291,7 +291,7 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
             </div>
           </div>
         </span>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
           <span style={{ 
             display: 'flex',
             alignItems: 'center',
@@ -314,7 +314,7 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
             <Tooltip text="Environmental Turbulence: Measures the volume of strategic signals detected this week." />
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem' }}>
           <FidelityBadge />
           <motion.div animate={{ rotate: isOpen ? 180 : 0 }}>
             {isOpen ? <ChevronUp size={20} className="text-slate-400" /> : <ChevronDown size={20} className="text-slate-300" />}
@@ -658,8 +658,8 @@ const GlobalIndexPage = () => {
                 {h === 'LAI SCORE' && <div style={{ fontSize: '0.45rem', fontWeight: 800, opacity: 0.6, letterSpacing: 1, marginTop: '2px' }}>(ADAPTIVENESS INDEX)</div>}
               </span>
             ))}
-            <span style={{ fontSize: '0.65rem', fontWeight: 900, color: '#94a3b8', letterSpacing: 2 }}>SHIFT & VELOCITY</span>
-            <span style={{ fontSize: '0.65rem', fontWeight: 900, color: '#94a3b8', letterSpacing: 2 }}>TRUST LAYER</span>
+            <span style={{ justifySelf: 'center', fontSize: '0.65rem', fontWeight: 900, color: '#94a3b8', letterSpacing: 2 }}>SHIFT & VELOCITY</span>
+            <span style={{ justifySelf: 'center', fontSize: '0.65rem', fontWeight: 900, color: '#94a3b8', letterSpacing: 2 }}>TRUST LAYER</span>
           </div>
           {loading ? (
             <div style={{ padding: '5rem', textAlign: 'center', color: '#cbd5e1' }}><Brain size={48} style={{ margin: '0 auto 1rem', opacity: 0.2 }} /><p>Synthesizing Global Signals...</p></div>
