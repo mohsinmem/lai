@@ -14,6 +14,7 @@ import AdminMappingPage from './pages/AdminMappingPage';
 import AdminIntel from './pages/AdminIntel';
 import DevStatus from './pages/DevStatus';
 import ScrollToTop from './components/ScrollToTop';
+import AFERRPage from './pages/AFERRPage';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/manifesto" element={<ManifestoPage />} />
             <Route path="/framework" element={<FrameworkPage />} />
+            <Route path="/aferr" element={<AFERRPage />} />
             <Route path="/global-index" element={<GlobalIndexPage />} />
             <Route path="/diagnostic" element={<DiagnosticPage />} />
             <Route path="/about" element={<AboutPage />} />

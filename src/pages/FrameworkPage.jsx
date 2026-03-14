@@ -247,7 +247,7 @@ const FrameworkPage = () => {
              <div className="cta-secondary">
                 <h3>Explore the AFERR Behavioral Engine</h3>
                 <p>Learn how AFERR translates leadership cognition into observable behavior.</p>
-                <button className="btn-outline mt-4">LAI Framework ↔ AFERR Integration</button>
+                <Link to="/aferr" className="btn-outline mt-4">LAI Framework ↔ AFERR Integration</Link>
              </div>
           </div>
         </div>
