@@ -29,26 +29,30 @@ async function seedMicrosoftGap() {
     {
       organization_name: microsoftName,
       source_type: 'PROPRIETARY',
-      overall_lai_score: 80,
+      overall_score: 80,
       signal_interpretation_score: 82,
       cognitive_framing_score: 80,
       resource_reallocation_score: 78,
       decision_alignment_score: 85,
       execution_responsiveness_score: 75,
       is_published: true,
+      session_date: new Date().toISOString(),
+      duration_seconds: 1800,
       metadata: { source: 'Sovereign Research' }
     },
     // Behavioral (Tier 1) - Weight 1.0x (THE LOW SCORE)
     {
       organization_name: microsoftName,
       source_type: 'BEHAVIORAL',
-      overall_lai_score: 55,
+      overall_score: 55,
       signal_interpretation_score: 58,
       cognitive_framing_score: 55,
       resource_reallocation_score: 50,
       decision_alignment_score: 60,
       execution_responsiveness_score: 52,
       is_published: true,
+      session_date: new Date().toISOString(),
+      duration_seconds: 1800,
       metadata: { source: 'Evivve Simulation' }
     },
     // Perceptual (Tier 2) - Weight 0.8x (THE HIGH SCORE)
@@ -56,13 +60,15 @@ async function seedMicrosoftGap() {
     {
       organization_name: microsoftName,
       source_type: 'PERCEPTION',
-      overall_lai_score: 85,
+      overall_score: 85,
       signal_interpretation_score: 88,
       cognitive_framing_score: 85,
       resource_reallocation_score: 82,
       decision_alignment_score: 90,
       execution_responsiveness_score: 80,
       is_published: true,
+      session_date: new Date().toISOString(),
+      duration_seconds: 1800,
       metadata: { source: 'Leadership Self-Assessment' }
     }
   ];

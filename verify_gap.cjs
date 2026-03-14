@@ -35,7 +35,7 @@ async function verify() {
     const seniority = s.seniority_level || 'middle_management';
     const seniorityMultiplier = SENIORITY_MULTIPLIERS[seniority] || 1.0;
     const finalWeight = tierWeight * seniorityMultiplier;
-    const currentScore = (s.overall_lai_score || 0);
+    const currentScore = (s.overall_score || s.overall_lai_score || 0);
 
     breakdown[tierKey]++;
     totalWeight += finalWeight;
