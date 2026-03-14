@@ -233,14 +233,13 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
         onClick={() => { setExpandedId(isOpen ? null : idx); setFocusDot(r); }}
         style={{ 
           display: 'grid', 
-          gridTemplateColumns: 'minmax(80px, 100px) minmax(280px, 1.2fr) minmax(350px, 1.5fr) 140px 240px',
+          gridTemplateColumns: '80px minmax(280px, 1.2fr) minmax(380px, 1.5fr) 140px 240px',
           alignItems: 'center', 
           padding: '24px 40px', 
           cursor: 'pointer',
           background: isOpen ? '#f8fafc' : (idx === 0 ? 'rgba(16, 185, 129, 0.03)' : 'white'),
-          margin: '0 8px 1px',
           borderRadius: 4,
-          boxShadow: '0 1px 0 rgba(0,0,0,0.03)',
+          boxShadow: idx === 0 ? '0 1px 4px rgba(0,0,0,0.05)' : 'none',
           borderLeft: idx === 0 ? '4px solid #10b981' : '4px solid transparent',
           transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
           zIndex: isOpen ? 10 : 1
@@ -639,22 +638,21 @@ const GlobalIndexPage = () => {
         </div>
 
 
-        <div style={{ background: 'white', borderRadius: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', overflow: 'hidden', padding: '8px 0' }}>
+        <div style={{ background: 'white', borderRadius: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', overflow: 'hidden', padding: '12px' }}>
           <div style={{ 
             display: 'grid', 
-            gridTemplateColumns: 'minmax(80px, 100px) minmax(280px, 1.2fr) minmax(350px, 1.5fr) 140px 240px',
-            padding: '1.5rem 2.5rem 1.5rem 40px', 
+            gridTemplateColumns: '80px minmax(280px, 1.2fr) minmax(380px, 1.5fr) 140px 240px',
+            padding: '24px 40px', 
             background: 'white', 
-            borderBottom: '1px solid #f1f5f9'
+            borderBottom: '1px solid #f1f5f9',
+            marginBottom: '4px'
           }}>
             {['RANK', 'INSTITUTION', 'LAI SCORE'].map(h => (
               <span key={h} style={{ 
                 fontSize: '0.65rem', 
                 fontWeight: 900, 
                 color: h === 'LAI SCORE' ? '#0f172a' : '#94a3b8', 
-                letterSpacing: 2,
-                transform: h === 'LAI SCORE' ? 'scale(1.05)' : 'none',
-                transformOrigin: 'left'
+                letterSpacing: 2
               }}>
                 {h === 'LAI SCORE' ? 'LAI SCORE' : h}
                 {h === 'LAI SCORE' && <div style={{ fontSize: '0.45rem', fontWeight: 800, opacity: 0.6, letterSpacing: 1, marginTop: '2px' }}>(ADAPTIVENESS INDEX)</div>}
