@@ -4,7 +4,7 @@ import {
   Globe, Search, ChevronDown, ChevronUp, Zap, 
   Shield, ShieldCheck, TrendingUp, Brain, CheckCircle2, 
   AlertTriangle, Info, Layers, BarChart3, Waves, 
-  Scale, ExternalLink, Activity, ArrowUp, ArrowDown, CheckCircle
+  Scale, ExternalLink, Activity, ArrowUp, ArrowDown, CheckCircle, CheckCircle2
 } from 'lucide-react';
 import { supabase } from '../supabase';
 
@@ -139,6 +139,7 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
   const is_inferred = !is_triangulated && (r.source_breakdown_obj?.contributions?.environmental > 80);
   const formattedIdx = (idx + 1).toString().padStart(2, '0');
   
+  const hash = r.organization.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
   const signalConfidence = is_triangulated ? 94 : (r.evidence_density > 0.6 ? 78 : (is_dissonant ? 42 : 56));
   const shiftVal = parseFloat(r.cognitiveShift?.replace(/[+%↑]/g, '') || '0');
   const signalVelocity = shiftVal > 3 ? 'ACCELERATING' : (shiftVal > 1.2 ? 'STABLE' : 'DECELERATING');
