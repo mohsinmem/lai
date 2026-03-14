@@ -103,7 +103,7 @@ const FrameworkPage = () => {
         <div className="container">
           <div className="paradigm-header">
             <h2 className="section-h2 text-center">The LAI Paradigm Shift</h2>
-            <p className="subtitle text-center">System Response > Individual Competency</p>
+            <p className="subtitle text-center">System Response {'>'} Individual Competency</p>
           </div>
           <div className="grid-2 mt-4 contrast-grid">
             <div className="contrast-card legacy">
@@ -260,6 +260,17 @@ const FrameworkPage = () => {
         .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
         .bg-light { background: #f8fafc; }
         .bg-navy { background: #0a192f; }
+        .text-white { color: white !important; }
+        .text-teal-400 { color: #2dd4bf; }
+        .text-slate-400 { color: #94a3b8; }
+        .text-slate-600 { color: #475569; }
+        .font-bold { font-weight: 700; }
+        .uppercase { text-transform: uppercase; }
+        .tracking-widest { letter-spacing: 0.1em; }
+        .text-sm { font-size: 0.875rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .items-center { align-items: center; }
+
         .text-center { text-align: center; }
         .mb-5 { margin-bottom: 3rem; }
         .mt-4 { margin-top: 2rem; }
@@ -269,7 +280,7 @@ const FrameworkPage = () => {
         /* Typography */
         .hero-title { font-size: 4rem; font-weight: 800; line-height: 1.1; margin: 1.5rem 0; color: #0f172a; }
         .hero-lead { font-size: 1.5rem; font-weight: 600; color: #0d9488; margin-bottom: 2rem; }
-        .section-h2 { font-size: 2.5rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -0.02em; }
+        .section-h2 { font-size: 2.5rem; font-weight: 800; margin-bottom: 1.5rem; letter-spacing: -0.02em; color: inherit; }
         .subtitle { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: #94a3b8; }
 
         /* Sections */
@@ -277,12 +288,12 @@ const FrameworkPage = () => {
         .badge { display: inline-block; padding: 0.5rem 1rem; background: #0a192f; color: white; font-weight: 800; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; border-radius: 4px; }
         .hero-body p { font-size: 1.125rem; line-height: 1.7; color: #475569; margin-bottom: 1.5rem; max-width: 800px; }
 
-        .btn-primary { background: #0d9488; color: white; padding: 1rem 2rem; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; display: flex; alignItems: center; gap: 0.5rem; transition: all 0.2s; }
+        .btn-primary { background: #0d9488; color: white; padding: 1rem 2rem; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s; }
         .btn-primary:hover { background: #0f766e; transform: translateY(-2px); }
         .btn-outline { background: transparent; border: 2px solid #0d9488; color: #0d9488; padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 700; cursor: pointer; }
 
         /* Paradigm Contrast */
-        .contrast-card { padding: 2.5rem; borderRadius: 24px; border: 1px solid #e2e8f0; }
+        .contrast-card { padding: 2.5rem; border-radius: 24px; border: 1px solid #e2e8f0; }
         .contrast-card.legacy { background: #f1f5f9; }
         .contrast-card.modern { background: white; border: 2px solid #0d9488; box-shadow: 0 20px 40px rgba(13, 148, 136, 0.1); }
         .contrast-card h3 { font-size: 1.5rem; font-weight: 800; margin-bottom: 1.5rem; }
@@ -294,14 +305,14 @@ const FrameworkPage = () => {
 
         /* Dimensions */
         .dim-row { display: flex; gap: 3rem; padding: 3rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .dim-number { font-size: 3rem; font-weight: 900; color: rgba(45, 212, 191, 0.2); font-family: 'Georgia', serif; }
+        .dim-number { font-size: 3rem; font-weight: 900; color: rgba(45, 212, 191, 0.4); font-family: 'Georgia', serif; }
         .dim-main { flex: 2; }
         .dim-header { display: flex; gap: 1.5rem; align-items: center; margin-bottom: 1.5rem; }
         .dim-icon { width: 64px; height: 64px; background: rgba(45, 212, 191, 0.1); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: #2dd4bf; }
-        .dim-header h3 { font-size: 1.75rem; font-weight: 800; }
+        .dim-header h3 { font-size: 1.75rem; font-weight: 800; color: white; margin: 0; }
         .dim-sub { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #2dd4bf; letter-spacing: 1px; }
         .dim-desc { color: #94a3b8; line-height: 1.8; }
-        .dim-metrics-box { flex: 1; background: rgba(255,255,255,0.03); padding: 1.5rem; borderRadius: 16px; }
+        .dim-metrics-box { flex: 1; background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 16px; }
         .dim-metrics-box h4 { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #2dd4bf; margin-bottom: 1rem; }
         .dim-metrics-box ul { list-style: none; padding: 0; margin: 0; }
         .dim-metrics-box li { color: white; font-size: 0.85rem; margin-bottom: 0.5rem; font-weight: 600; }
