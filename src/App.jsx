@@ -13,10 +13,12 @@ import ResearchDashboard from './pages/ResearchDashboard';
 import AdminMappingPage from './pages/AdminMappingPage';
 import AdminIntel from './pages/AdminIntel';
 import DevStatus from './pages/DevStatus';
+import ScrollToTop from './components/ScrollToTop';
 
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <div className="app-wrapper">
         <Navbar />
         <main>
