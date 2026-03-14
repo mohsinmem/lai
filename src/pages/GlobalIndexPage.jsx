@@ -97,14 +97,26 @@ const MapDot = React.memo(({ org, onClick, selected }) => {
 
 
 const ScoreBar = ({ score }) => {
+  // To make the gradient stay 'pinned' to the 0-100 track, 
+  // the background-size of the filled part needs to be the width of the track.
+  // Since the filled part width is score%, its bg-size must be (100/score)*100%
+  const bgSize = score > 0 ? `${(100 / score) * 100}% 100%` : '100% 100%';
+  
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
       <div style={{ flex: 1, height: 8, background: '#f1f5f9', borderRadius: 9999, overflow: 'hidden', position: 'relative' }}>
-        {/* Background gradient track */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, #ef4444, #f59e0b, #10b981)', opacity: 0.15 }} />
-        {/* Filled portion revealing the same gradient */}
+        {/* Background track - subtle version of the master gradient */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, #ef4444, #f59e0b, #10b981)', opacity: 0.1 }} />
+        
+        {/* Filled portion - reveals its slice of the gradient */}
         <motion.div initial={{ width: 0 }} animate={{ width: `${score}%` }}
-          style={{ height: '100%', background: 'linear-gradient(to right, #ef4444, #f59e0b, #10b981)', backgroundSize: '100px 100%', borderRadius: 9999, position: 'relative' }}>
+          style={{ 
+            height: '100%', 
+            background: 'linear-gradient(to right, #ef4444, #f59e0b, #10b981)', 
+            backgroundSize: bgSize, 
+            borderRadius: 9999, 
+            position: 'relative' 
+          }}>
           {/* Accessibility Texture Overlay */}
           <div style={{ position: 'absolute', inset: 0, opacity: 0.15, background: 'repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.4) 5px, rgba(255,255,255,0.4) 10px)' }} />
         </motion.div>
