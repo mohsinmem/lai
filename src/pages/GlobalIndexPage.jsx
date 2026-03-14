@@ -233,7 +233,7 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
         onClick={() => { setExpandedId(isOpen ? null : idx); setFocusDot(r); }}
         style={{ 
           display: 'grid', 
-          gridTemplateColumns: '80px minmax(280px, 1.2fr) minmax(380px, 1.5fr) 140px 240px',
+          gridTemplateColumns: '80px 260px minmax(400px, 1fr) 140px 240px',
           alignItems: 'center', 
           padding: '24px 40px', 
           cursor: 'pointer',
@@ -641,7 +641,7 @@ const GlobalIndexPage = () => {
         <div style={{ background: 'white', borderRadius: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', overflow: 'hidden', padding: '12px' }}>
           <div style={{ 
             display: 'grid', 
-            gridTemplateColumns: '80px minmax(280px, 1.2fr) minmax(380px, 1.5fr) 140px 240px',
+            gridTemplateColumns: '80px 260px minmax(400px, 1fr) 140px 240px',
             padding: '24px 40px', 
             background: 'white', 
             borderBottom: '1px solid #f1f5f9',
