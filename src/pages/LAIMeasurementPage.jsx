@@ -23,7 +23,7 @@ const LAIMeasurementPage = () => {
             className="hero-content"
           >
             <div className="badge">Measurement Architecture</div>
-            <h1 className="hero-title">How the LAI Score Is Calculated</h1>
+            <h1 className="hero-title text-white">How the LAI Score Is Calculated</h1>
             <p className="hero-lead text-teal-400">The Measurement Architecture Behind the Leadership Adaptiveness Index.</p>
             
             <div className="hero-body max-w-3xl">

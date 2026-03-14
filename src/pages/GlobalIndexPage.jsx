@@ -18,9 +18,9 @@ const PILLAR_DEFINITIONS = {
 
 // ── Evolutionary State Logic ──────────────────────────────────────────────────
 const getEvolutionaryState = (score) => {
-  if (score >= 70) return { label: 'Antifragile', color: '#3b82f6', pill: 'bg-blue-100 text-blue-700 border-blue-200' };
-  if (score >= 40) return { label: 'Emergent',    color: '#0d9488', pill: 'bg-teal-100 text-teal-700 border-teal-200' };
-  return                { label: 'Fragile',       color: '#64748b', pill: 'bg-slate-100 text-slate-600 border-slate-200' };
+  if (score >= 70) return { label: 'Antifragile', color: '#10b981', pill: 'bg-emerald-100 text-emerald-700 border-emerald-200' };
+  if (score >= 40) return { label: 'Emergent',    color: '#f59e0b', pill: 'bg-amber-100 text-amber-700 border-amber-200' };
+  return                { label: 'Fragile',       color: '#ef4444', pill: 'bg-rose-100 text-rose-700 border-rose-200' };
 };
 
 const formatDate = (val) => {
@@ -97,9 +97,9 @@ const ScoreBar = ({ score }) => {
   const ev = getEvolutionaryState(score);
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-      <div style={{ flex: 1, height: 5, background: '#f1f5f9', borderRadius: 9999, overflow: 'hidden' }}>
+      <div style={{ flex: 1, height: 6, background: '#f1f5f9', borderRadius: 9999, overflow: 'hidden', position: 'relative' }}>
         <motion.div initial={{ width: 0 }} animate={{ width: `${score}%` }}
-          style={{ height: '100%', background: ev.color, borderRadius: 9999 }} />
+          style={{ height: '100%', background: 'linear-gradient(to right, #ef4444, #f59e0b, #10b981)', backgroundSize: '100px 100%', borderRadius: 9999 }} />
       </div>
     </div>
   );
@@ -149,12 +149,12 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
       <motion.div onClick={() => { setExpandedId(isOpen ? null : idx); setFocusDot(r); }}
         whileHover={{ background: '#f8fafc' }}
         className={`leaderboard-row ${isOpen ? 'active' : ''}`}
-        style={{ display: 'grid', gridTemplateColumns: '80px 1.5fr 150px 100px 180px', padding: '1.25rem 2rem',
-          borderBottom: '1px solid #f1f5f9', alignItems: 'center', cursor: 'pointer', background: isOpen ? '#f1f5f9' : 'white' }}>
-        <span style={{ fontWeight: 800, color: '#cbd5e1', fontSize: '1.1rem', letterSpacing: '-0.02em' }}>{r.rank.toString().padStart(2, '0')}</span>
+        style={{ display: 'grid', gridTemplateColumns: '100px 1.5fr 200px 100px 200px', padding: '1.75rem 2.5rem',
+          borderBottom: '1px solid #f1f5f9', alignItems: 'center', cursor: 'pointer', background: isOpen ? '#f8fafc' : 'white' }}>
+        <span style={{ fontWeight: 800, color: '#94a3b8', fontSize: '1.25rem', fontFamily: 'Georgia, serif', letterSpacing: '-0.02em' }}>{r.rank.toString().padStart(2, '0')}</span>
         <span style={{ minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '1rem', letterSpacing: '-0.01em' }}>{r.organization}</div>
+            <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.1rem', fontFamily: 'Georgia, serif', letterSpacing: '-0.01em' }}>{r.organization}</div>
             {r.is_verified && (
               <CheckCircle2 size={14} className="text-teal-500" fill="rgba(20, 184, 166, 0.1)" />
             )}
@@ -405,7 +405,7 @@ const GlobalIndexPage = () => {
         </div>
 
         <div style={{ background: 'white', borderRadius: 24, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '80px 1.5fr 150px 100px 180px', padding: '1.25rem 2rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: 2, color: '#94a3b8' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '100px 1.5fr 200px 100px 200px', padding: '1.25rem 2.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: 2, color: '#94a3b8' }}>
             <span>Rank</span>
             <span>Institution</span>
             <span>LAI Score (Adaptive Capacity)</span>
