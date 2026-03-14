@@ -307,6 +307,7 @@ const LAIMeasurementPage = () => {
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; }
         .bg-light { background: #f8fafc; }
         .bg-navy { background: #0a192f; }
+        .text-white { color: white !important; }
         .text-teal-400 { color: #2dd4bf !important; }
         .text-slate-300 { color: #cbd5e1 !important; }
         .text-slate-400 { color: #94a3b8 !important; }
