@@ -141,31 +141,78 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
 
   const FidelityBadge = () => {
     const badgeStyle = {
-      padding: '0.25rem 0.75rem',
-      borderRadius: '9999px',
+      padding: '0.25rem 0.6rem',
+      borderRadius: '4px',
       fontSize: '0.6rem',
-      fontWeight: 800,
+      fontWeight: 900,
       border: '1px solid',
       textTransform: 'uppercase',
-      letterSpacing: '0.5px'
+      letterSpacing: '1px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '6px',
+      cursor: 'help',
+      position: 'relative',
+      transition: 'all 0.2s'
     };
 
+    const Tooltip = ({ text }) => (
+      <div className="badge-tooltip" style={{
+        position: 'absolute',
+        bottom: '140%',
+        right: '0',
+        width: '240px',
+        background: '#0f172a',
+        color: 'white',
+        padding: '0.8rem 1rem',
+        borderRadius: '12px',
+        fontSize: '0.65rem',
+        lineHeight: '1.5',
+        textAlign: 'left',
+        zIndex: 1000,
+        boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+        pointerEvents: 'none',
+        opacity: 0,
+        visibility: 'hidden',
+        transition: 'all 0.2s ease',
+        fontWeight: 400,
+        textTransform: 'none',
+        letterSpacing: 'normal'
+      }}>
+        {text}
+        <div style={{ position: 'absolute', top: '100%', right: '15px', border: '6px solid transparent', borderTopColor: '#0f172a' }} />
+      </div>
+    );
+
     return (
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', height: '100%' }}>
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <style>{`
+          .fidelity-trigger:hover .badge-tooltip { opacity: 1 !important; visibility: visible !important; transform: translateY(-5px); }
+          .fidelity-trigger:hover { filter: brightness(0.95); }
+        `}</style>
         {is_triangulated && (
-          <span style={{ ...badgeStyle, background: '#eff6ff', color: '#1056ff', borderColor: '#dbeafe', display: 'flex', alignItems: 'center' }}>
-            TRIANGULATED
-          </span>
+          <div className="fidelity-trigger" style={{ position: 'relative' }}>
+            <span style={{ ...badgeStyle, background: '#eff6ff', color: '#1e40af', borderColor: '#dbeafe' }}>
+              TRIANGULATED <Info size={10} strokeWidth={3} />
+            </span>
+            <Tooltip text="Triangulated scores are validated across behavioral, perceptual, and research data sources and represent the highest fidelity measurement." />
+          </div>
         )}
         {is_dissonant && (
-          <span style={{ ...badgeStyle, background: '#fffbeb', color: '#b45309', borderColor: '#fef3c7', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <AlertTriangle size={10} style={{ marginTop: '-1px' }}/> INSIGHT ALERT
-          </span>
+          <div className="fidelity-trigger" style={{ position: 'relative' }}>
+            <span style={{ ...badgeStyle, background: '#fffbeb', color: '#b45309', borderColor: '#fef3c7' }}>
+              INSIGHT ALERT <Info size={10} strokeWidth={3} />
+            </span>
+            <Tooltip text="Leadership perception of adaptiveness significantly exceeds behavioral indicators. This may indicate strategic dissonance." />
+          </div>
         )}
         {!is_triangulated && !is_dissonant && (
-          <span style={{ ...badgeStyle, background: '#f8fafc', color: '#64748b', borderColor: '#e2e8f0', display: 'flex', alignItems: 'center' }}>
-            INFERRED
-          </span>
+          <div className="fidelity-trigger" style={{ position: 'relative' }}>
+            <span style={{ ...badgeStyle, background: '#f8fafc', color: '#475569', borderColor: '#e2e8f0' }}>
+              INFERRED <Info size={10} strokeWidth={3} />
+            </span>
+            <Tooltip text="This score is inferred from external intelligence signals such as market behavior, industry events, and institutional actions." />
+          </div>
         )}
       </div>
     );
