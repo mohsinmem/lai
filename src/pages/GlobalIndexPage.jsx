@@ -313,12 +313,15 @@ const GlobalIndexPage = () => {
           <span style={{ display: 'inline-block', padding: '0.35rem 1.2rem', background: 'rgba(13,148,136,0.2)', color: '#2dd4bf', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', borderRadius: 9999, border: '1px solid rgba(45,212,191,0.3)', marginBottom: '1.5rem' }}>
             AFERR Methodology · v1.3.2_SOVEREIGN
           </span>
-          <h1 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', fontFamily: 'Georgia,serif', marginBottom: '1rem', lineHeight: 1.15 }}>Global Leadership Adaptiveness Index</h1>
-          <p style={{ color: '#94a3b8', fontSize: '1.1rem', fontWeight: 300 }}>Weighted Truth Hierarchy: Aggregating simulation behavioral data with sovereign research. Total Verified Signals: <strong style={{ color: '#2dd4bf' }}>{loading ? '600+' : rankings.length}</strong></p>
+          <h1 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', fontFamily: 'Georgia,serif', marginBottom: '1rem', lineHeight: 1.15, color: 'white' }}>Global Leadership Adaptiveness Index</h1>
+          <p style={{ color: '#cbd5e1', fontSize: '1.1rem', fontWeight: 400 }}>Weighted Truth Hierarchy: Aggregating simulation behavioral data with sovereign research. Total Verified Signals: <strong style={{ color: '#2dd4bf' }}>{loading ? '600+' : rankings.length}</strong></p>
         </motion.div>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '3rem', marginTop: '2.5rem' }}>
           {[{ label: 'Antifragile', color: '#3b82f6', value: stats.antifragile }, { label: 'Emergent', color: '#0d9488', value: stats.emergent }, { label: 'Fragile', color: '#94a3b8', value: stats.fragile }].map(s => (
-            <div key={s.label}><div style={{ fontSize: '2rem', fontWeight: 800, color: s.color, fontFamily: 'Georgia,serif' }}>{s.value}</div><div style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1 }}>{s.label}</div></div>
+            <div key={s.label}>
+              <div style={{ fontSize: '2rem', fontWeight: 800, color: s.color, fontFamily: 'Georgia,serif' }}>{s.value}</div>
+              <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.5 }}>{s.label}</div>
+            </div>
           ))}
         </div>
       </header>
