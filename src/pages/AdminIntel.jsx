@@ -3,11 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Shield, Users, AlertCircle, Sparkles, Database, CheckCircle, TrendingUp, Cpu } from 'lucide-react';
 
 const DIMENSIONS = [
-  { key: 'signal_interpretation', label: 'Signal Interpretation' },
+  { key: 'signal_detection',      label: 'Signal Detection' },
   { key: 'cognitive_framing',     label: 'Cognitive Framing' },
-  { key: 'resource_reallocation', label: 'Resource Reallocation' },
   { key: 'decision_alignment',    label: 'Decision Alignment' },
-  { key: 'execution_responsiveness', label: 'Execution Responsiveness' }
+  { key: 'resource_calibration',  label: 'Resource Calibration' },
+  { key: 'integrated_responsiveness', label: 'Integrated Responsiveness' }
 ];
 
 const ScoreBar = ({ score, color = '#3b82f6' }) => (
@@ -108,7 +108,7 @@ const AdminIntel = () => {
           </h1>
           <p style={{ color: '#64748b', fontSize: '1rem' }}>
             Submit proprietary research or perception surveys. The Researcher Agent v2.0 extracts scores
-            across all 5 Evaluation Layer dimensions and injects them into the Hierarchy of Truth.
+            across all 5 LAI Behavioral Dimensions and injects them into the Hierarchy of Truth.
           </p>
         </motion.div>
 

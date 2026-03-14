@@ -6,27 +6,32 @@ const dimensions = [
   {
     icon: <Signal size={40} />,
     title: '1. Signal Detection',
-    desc: 'Adaptiveness begins with the ability to recognize that circumstances are changing. Organizations constantly generate signals — emerging technologies, market shifts, competitor moves. Many signals remain unnoticed or dismissed. Signal Detection measures how effectively leaders identify early indicators of change and differentiate signal from noise.'
+    desc: 'Adaptiveness begins with the ability to recognize that circumstances are changing. Organizations constantly generate signals — emerging technologies, market shifts, competitor moves. Many signals remain unnoticed or dismissed. Signal Detection measures how effectively leaders identify early indicators of change and differentiate signal from noise.',
+    metrics: 'Recognition Speed, Signal Sensitivity, Signal-to-Noise Ratio, Environmental Scan Breadth'
   },
   {
     icon: <Heart size={40} />,
     title: '2. Cognitive Framing',
-    desc: 'Recognizing change is not enough. Leaders must also interpret uncertainty in a productive way. When uncertainty appears, leadership teams often respond with either a Threat Orientation or an Opportunity Orientation. Cognitive Framing measures how leadership teams psychologically interpret change and uncertainty, influencing whether they approach disruption as a danger or an opportunity.'
-  },
-  {
-    icon: <Layers size={40} />,
-    title: '3. Resource Reallocation',
-    desc: 'Adaptiveness becomes visible when organizations redirect effort. Even when leaders recognize change, organizations often continue investing in outdated priorities. Resource Reallocation measures how effectively leadership teams shift budgets toward emerging priorities and discontinue initiatives that no longer serve the strategy.'
+    desc: 'Recognizing change is not enough. Leaders must interpret uncertainty in a productive way. When uncertainty appears, leadership teams typically adopt either a Threat Orientation or an Opportunity Orientation. Cognitive Framing measures how leadership teams interpret signals and how they forecast potential outcomes.',
+    metrics: 'Threat vs Opportunity Orientation, Forecast Horizon, Confidence Calibration, Scenario Diversity'
   },
   {
     icon: <Target size={40} />,
-    title: '4. Decision Alignment',
-    desc: 'Leadership teams frequently agree on the need for change in meetings but diverge in their decisions afterward. Decision Alignment measures whether leadership decisions reinforce a shared strategic response to change. When alignment is strong, leaders reinforce each other’s decisions and organizations maintain coherent momentum.'
+    title: '3. Decision Alignment',
+    desc: 'Leadership teams frequently agree on the need for change in meetings but diverge in their decisions afterward. Decision Alignment measures whether leadership decisions reinforce a shared strategic response to change. When alignment is strong, leaders reinforce each other’s decisions and organizations maintain coherent momentum.',
+    metrics: 'Strategic Consistency, Decision Latency, Cross-Leadership Convergence, Experimentation Bias'
+  },
+  {
+    icon: <Layers size={40} />,
+    title: '4. Resource Calibration',
+    desc: 'Adaptiveness becomes visible when organizations redirect effort. Even when leaders recognize change, organizations often continue investing in outdated priorities. Resource Calibration measures how effectively leadership teams redirect capital, talent, and attention toward emerging priorities.',
+    metrics: 'Resource Reallocation Speed, Strategic Resource Ratio, Budget Flexibility, Talent Reassignment Rate'
   },
   {
     icon: <Zap size={40} />,
-    title: '5. Execution Responsiveness',
-    desc: 'The final dimension of adaptiveness is execution. Adaptation only becomes real when actions change across the organization. Execution Responsiveness measures how quickly organizations translate leadership decisions into operational shifts, including changes in workflows, new product development, and process redesign.'
+    title: '5. Integrated Responsiveness',
+    desc: 'Adaptation becomes real only when organizations translate leadership decisions into operational change. Integrated Responsiveness measures how quickly organizations operationalize strategic adjustments and integrate learning across teams to ensure systemic evolution.',
+    metrics: 'Pivot Speed, Execution Synchronization, Learning Integration Rate, Systemic Adaptation Index'
   }
 ];
 
@@ -68,7 +73,7 @@ const FrameworkPage = () => {
                 <h2>{dim.title}</h2>
                 <p>{dim.desc}</p>
                 <div className="dim-metrics">
-                  <span>Key Metrics: Recognition Speed, Signal Sensitivity, Noise Ratio</span>
+                  <span>Key Metrics: {dim.metrics}</span>
                 </div>
               </div>
             </motion.div>
@@ -76,21 +81,27 @@ const FrameworkPage = () => {
         </div>
       </section>
 
-      <section className="adaptiveness-loop">
+    <section className="adaptiveness-loop">
         <div className="container">
           <div className="loop-card">
             <h2>The Adaptiveness Loop</h2>
             <p>These five dimensions operate as a continuous feedback loop. If any stage weakens, the entire system slows down.</p>
-            <div className="loop-visual">
-              <div className="loop-step">Signal</div>
-              <ArrowRight className="loop-arrow" />
-              <div className="loop-step">Frame</div>
-              <ArrowRight className="loop-arrow" />
-              <div className="loop-step">Resource</div>
-              <ArrowRight className="loop-arrow" />
-              <div className="loop-step">Align</div>
-              <ArrowRight className="loop-arrow" />
-              <div className="loop-step">Execute</div>
+            <div className="loop-visual-container">
+              <div className="loop-visual">
+                <div className="loop-step">Signal Detection</div>
+                <ArrowRight className="loop-arrow" />
+                <div className="loop-step">Cognitive Framing</div>
+                <ArrowRight className="loop-arrow" />
+                <div className="loop-step">Decision Alignment</div>
+                <ArrowRight className="loop-arrow" />
+                <div className="loop-step">Resource Calibration</div>
+                <ArrowRight className="loop-arrow" />
+                <div className="loop-step">Integrated Responsiveness</div>
+              </div>
+              <div className="loop-feedback">
+                <div className="feedback-line"></div>
+                <span>NEW SIGNALS</span>
+              </div>
             </div>
           </div>
         </div>
@@ -134,9 +145,19 @@ const FrameworkPage = () => {
         .loop-card h2 { font-size: 2.5rem; margin-bottom: 1.5rem; }
         .loop-card p { color: var(--text-muted); margin-bottom: 4rem; max-width: 600px; margin-left: auto; margin-right: auto; }
 
-        .loop-visual { display: flex; align-items: center; justify-content: space-between; max-width: 900px; margin: 0 auto; }
-        .loop-step { padding: 1.5rem 2rem; background: white; border: 2px solid var(--teal); border-radius: 8px; font-weight: 700; color: var(--navy); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-        .loop-arrow { color: var(--slate-light); }
+        .loop-visual-container { position: relative; max-width: 1000px; margin: 0 auto; }
+        .loop-visual { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 2; }
+        .loop-step { padding: 1.2rem 1.5rem; background: white; border: 2px solid var(--teal); border-radius: 8px; font-weight: 700; color: var(--navy); box-shadow: 0 10px 20px rgba(0,0,0,0.05); font-size: 0.85rem; }
+        .loop-arrow { color: var(--slate-light); flex-shrink: 0; }
+        
+        .loop-feedback { 
+          margin-top: 3rem; position: relative; display: flex; flex-direction: column; align-items: center; 
+          color: var(--teal); font-weight: 800; font-size: 0.7rem; letter-spacing: 2px;
+        }
+        .feedback-line { 
+          width: 80%; height: 20px; border: 2px solid var(--teal-light); border-top: none; 
+          border-radius: 0 0 20px 20px; margin-bottom: 0.5rem; opacity: 0.3;
+        }
 
         @media (max-width: 992px) {
           .dim-block, .dim-block.reverse { flex-direction: column; text-align: center; gap: 2rem; }

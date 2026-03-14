@@ -26,7 +26,7 @@ const dimensions = [
   },
   { 
     id: 'resource', 
-    name: 'Resource Reallocation', 
+    name: 'Resource Calibration', 
     questions: [
       "When priorities change, how quickly does the organization reallocate budget or resources?",
       "How often are outdated initiatives stopped when they no longer support strategy?",
@@ -46,7 +46,7 @@ const dimensions = [
   },
   { 
     id: 'execution', 
-    name: 'Execution Responsiveness', 
+    name: 'Integrated Responsiveness', 
     questions: [
       "Once leadership decisions change, how quickly do operational teams adjust their actions?",
       "How often do outdated processes continue after strategy has shifted?", // Reverse mapped

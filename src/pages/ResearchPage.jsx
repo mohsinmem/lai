@@ -173,7 +173,7 @@ const SignalCard = ({ signal, index }) => {
         {score && (
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
             <div style={{ fontSize: '2rem', fontWeight: 800, color: '#2dd4bf', fontFamily: 'Georgia,serif' }}>{score}</div>
-            <p style={{ fontSize: '0.6rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px' }}>Adaptiveness Velocity</p>
+            <p style={{ fontSize: '0.6rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px' }}>LAI Score (Adaptive Capacity)</p>
           </div>
         )}
       </div>
@@ -262,12 +262,11 @@ const ResearchPage = () => {
       <section style={{ background: 'white', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0', padding: '5rem 0' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '2rem' }}>
           {[
-            { Icon: Target,      name: 'Signal Detection',        desc: 'Differentiating actionable market signals from background noise — measured against global industry baselines.' },
-            { Icon: Brain,       name: 'Cognitive Framing',       desc: 'Interpreting uncertainty with executive composure and strategic curiosity rather than defensive posture.' },
-
-            { Icon: ArrowDownUp, name: 'Resource Reallocation',   desc: 'Measurable velocity of capital, talent, and attention shifts toward emerging revenue opportunities.' },
-            { Icon: Minimize,    name: 'Decision Alignment',      desc: 'Maintaining organizational coherence as leadership decisions cascade across business units.' },
-            { Icon: FastForward, name: 'Execution Responsiveness',desc: 'Speed of translating updated strategy into measurable operational and financial outcomes.' },
+            { Icon: Target,      name: 'Signal Detection',        desc: 'Identifying early indicators of change and differentiating meaningful signal from environmental noise.' },
+            { Icon: Brain,       name: 'Cognitive Framing',       desc: 'Interpreting uncertainty productively and reframing disruption as opportunity rather than threat.' },
+            { Icon: ArrowDownUp, name: 'Decision Alignment',      desc: 'Ensuring leadership decisions reinforce a shared strategic response and maintain coherent momentum.' },
+            { Icon: Minimize,    name: 'Resource Calibration',   desc: 'The velocity of redirecting capital, talent, and attention toward emerging priorities.' },
+            { Icon: FastForward, name: 'Integrated Responsiveness',desc: 'Speed of operationalizing strategic adjustments and integrating learning for systemic evolution.' },
           ].map(({ Icon, name, desc }) => (
             <div key={name} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
               <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#f0fdfa', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>

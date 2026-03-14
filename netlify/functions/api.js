@@ -391,7 +391,7 @@ app.get('/api/resources', async (req, res) => {
       return res.json([
         {
           id: 'gt1',
-          title:       'The $4M Cost of Rigid Decision Cycles: AFERR ROI Model for 2026',
+          title:       'The $4M Cost of Rigid Decision Cycles: LAI Score ROI Model for 2026',
           type:        'Framework',
           category:    'Framework',
           description: 'A capital-allocation and decision-velocity model for global executives. This framework quantifies the direct ROI of adaptiveness investment across 602+ behavioral simulations.',
@@ -485,7 +485,7 @@ app.get('/api/research/live', async (req, res) => {
         ...d,
         overall_score: score,
         summary: d.metadata?.summary ||
-          `AFERR ${currentPhase} Complete — ${d.organization_name} | Adaptiveness Velocity: ${score} | Tier: ${tier}.`,
+          `LAI Score: ${score} ${tier.toUpperCase()} — ${d.organization_name} | Adaptive Capacity Validated via AFERR Translation Layer.`,
       };
     });
 

@@ -65,12 +65,12 @@ const HomePage = () => {
             <div className="gap-text">
               <h2 className="section-title">The Adaptiveness Gap</h2>
               <p>
-                Across industries, a consistent pattern appears. Leaders recognize change intellectually, but actual decisions lag behind. This creates the <strong>Adaptiveness Gap</strong>: the distance between recognition and action.
+                A core insight produced by the LAI system is the <strong>Adaptiveness Gap</strong>. This measures the difference between <strong>Perceived Adaptiveness</strong> (what leaders believe) and <strong>Behavioral Adaptiveness</strong> (what leaders actually do).
               </p>
               <ul className="gap-list">
-                <li><ArrowRight size={16} className="text-teal" /> Budgets remain tied to outdated priorities.</li>
-                <li><ArrowRight size={16} className="text-teal" /> Teams execute plans with expired assumptions.</li>
-                <li><ArrowRight size={16} className="text-teal" /> Strategic drift accumulates into systemic failure.</li>
+                <li><ArrowRight size={16} className="text-teal" /> Perception bias often masks underlying fragility.</li>
+                <li><ArrowRight size={16} className="text-teal" /> Decision Alignment fragments under strategic pressure.</li>
+                <li><ArrowRight size={16} className="text-teal" /> Resource inertia traps organizations in outdated priorities.</li>
               </ul>
             </div>
             <div className="gap-visual">
@@ -98,11 +98,11 @@ const HomePage = () => {
           
           <div className="framework-grid">
             {[
-              { icon: <Signal />, title: 'Signal Detection', desc: 'The precision in detecting environmental signals and translating them into strategy.' },
-              { icon: <Heart />, title: 'Cognitive Framing', desc: 'The ability to reframe threats as opportunities and pivot mental models under pressure.' },
-              { icon: <Target />, title: 'Decision Alignment', desc: 'The presence of psychological safety and dissent channels to stress-test decisions.' },
-              { icon: <Layers />, title: 'Resource Calibration', desc: 'The speed and precision of skill acquisition and capital reallocation.' },
-              { icon: <Zap />, title: 'Integrated Responsiveness', desc: 'The capacity to maintain high-performance decision-making during extended disruption.' }
+              { icon: <Signal />, title: 'Signal Detection', desc: 'Identify early indicators of change and differentiate meaningful signal from environmental noise.' },
+              { icon: <Heart />, title: 'Cognitive Framing', desc: 'Interpret uncertainty productively and reframe disruption as opportunity rather than threat.' },
+              { icon: <Target />, title: 'Decision Alignment', desc: 'Ensure leadership decisions reinforce a shared strategic response and maintain coherent momentum.' },
+              { icon: <Layers />, title: 'Resource Calibration', desc: 'Speed and precision of redirecting capital, talent, and attention toward emerging priorities.' },
+              { icon: <Zap />, title: 'Integrated Responsiveness', desc: 'Operationalize strategic adjustments quickly and integrate learning across teams for systemic evolution.' }
             ].map((dim, i) => (
               <motion.div 
                 key={dim.title} 
