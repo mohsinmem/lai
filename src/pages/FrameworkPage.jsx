@@ -6,6 +6,7 @@ import {
   ZapOff, Activity, Layout, Info,
   TrendingUp, Search, MousePointer2, Briefcase
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const PILLAR_DETAILS = [
   {
