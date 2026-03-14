@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import { 
   Zap, TrendingUp, FlaskConical, Microscope, 
   RefreshCcw, ArrowRight, Download, Eye, 
-  Brain, Shield, Target, Activity, Search
+  Brain, Shield, Target, Activity, Search,
+  ExternalLink
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -159,6 +160,24 @@ const AFERRPage = () => {
         </div>
       </section>
 
+      {/* ── SECTION 7: INSTITUTIONAL ORIGINS & RESEARCH ────────────────────────── */}
+      <section style={SEC_STYLE}>
+        <div className="container">
+          <div className="research-ode-box">
+             <div className="ode-header">
+                <Microscope className="text-teal-400" size={32} />
+                <h2 className="section-h2 mb-0">Institutional Origins & Primary Research</h2>
+             </div>
+             <p className="ode-text">The Leadership Adaptiveness Framework is built upon the foundational cognitive-behavioral research hosted at <strong>AFERR.org</strong>. As the primary repository for the AFERR methodology, the site provides deep-dive documentation on the longitudinal studies that define how leadership systems respond to volatility.</p>
+             <div className="ode-actions">
+                <a href="https://aferr.org" target="_blank" rel="noopener noreferrer" className="btn-outline">
+                   Access Primary Research at AFERR.org <ExternalLink size={16} className="ml-2" />
+                </a>
+             </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── CTA SECTION ───────────────────────────────────────────────────────── */}
       <section style={{ padding: '6rem 0', borderTop: '1px solid #e2e8f0' }}>
         <div className="container">
@@ -247,6 +266,12 @@ const AFERRPage = () => {
         /* CTA */
         .cta-gradient-box { background: #0a192f; padding: 6rem 4rem; border-radius: 40px; }
         .cta-split-modern { display: grid; grid-template-columns: 1.5fr 1fr; gap: 4rem; background: #f0fdfa; padding: 4rem; border-radius: 40px; }
+
+        /* Research Ode */
+        .research-ode-box { background: #f8fafc; padding: 4rem; border-radius: 32px; border: 1px solid #e2e8f0; }
+        .ode-header { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; }
+        .ode-text { font-size: 1.15rem; line-height: 1.8; color: #475569; margin-bottom: 2.5rem; max-width: 900px; }
+        .ml-2 { margin-left: 0.5rem; }
 
         @media (max-width: 992px) {
           .grid-2, .cycle-grid, .cta-split-modern { grid-template-columns: 1fr; }
