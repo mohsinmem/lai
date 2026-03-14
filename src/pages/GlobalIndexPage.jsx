@@ -351,7 +351,7 @@ const GlobalIndexPage = () => {
           <span style={{ display: 'inline-block', padding: '0.4rem 1.4rem', background: 'rgba(45,212,191,0.1)', color: '#2dd4bf', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '4px', textTransform: 'uppercase', borderRadius: 6, border: '1px solid rgba(45,212,191,0.2)', marginBottom: '2rem' }}>
             AFERR Methodology · v1.3.2_SOVEREIGN
           </span>
-          <h1 style={{ fontSize: 'clamp(2.5rem,6vw,4rem)', fontFamily: 'Georgia,serif', marginBottom: '1.5rem', lineHeight: 1.1, fontWeight: 900, letterSpacing: '-0.03em' }}>Global Leadership Adaptiveness Index</h1>
+          <h1 style={{ fontSize: 'clamp(2.5rem,6vw,4rem)', fontFamily: 'Georgia,serif', marginBottom: '1.5rem', lineHeight: 1.1, fontWeight: 900, letterSpacing: '-0.03em', color: 'white' }}>Global Leadership Adaptiveness Index</h1>
           <p style={{ color: '#94a3b8', fontSize: '1.25rem', fontWeight: 400, lineHeight: 1.6, maxWidth: 650, margin: '0 auto' }}>
             The definitive benchmark for organizational response. Aggregating behavioral simulations, sovereign research, and environmental intelligence.
           </p>
