@@ -4,7 +4,7 @@ import {
   Globe, Search, ChevronDown, ChevronUp, Zap, 
   Shield, ShieldCheck, TrendingUp, Brain, CheckCircle2, 
   AlertTriangle, Info, Layers, BarChart3, Waves, 
-  Scale, ExternalLink, Activity
+  Scale, ExternalLink, Activity, ArrowUp, ArrowDown, CheckCircle
 } from 'lucide-react';
 import { supabase } from '../supabase';
 
@@ -106,11 +106,10 @@ const MapDot = React.memo(({ org, onClick, selected }) => {
 const ScoreBar = ({ score }) => {
   // To make the gradient stay 'pinned' to the 0-100 track, 
   // the background-size of the filled part needs to be the width of the track.
-  // Since the filled part width is score%, its bg-size must be (100/score)*100%
   const bgSize = score > 0 ? `${(100 / score) * 100}% 100%` : '100% 100%';
   
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '220px' }}>
       <div style={{ flex: 1, height: 8, background: '#f1f5f9', borderRadius: 9999, overflow: 'hidden', position: 'relative' }}>
         {/* Background track - subtle version of the master gradient */}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, #b91c1c, #b45309, #1e40af, #065f46)', opacity: 0.1 }} />
@@ -138,6 +137,7 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
   const is_triangulated = r.is_triangulated;
   const is_dissonant = r.strategic_dissonance;
   const is_inferred = !is_triangulated && (r.source_breakdown_obj?.contributions?.environmental > 80);
+  const formattedIdx = (idx + 1).toString().padStart(2, '0');
 
   const FidelityBadge = () => {
     const badgeStyle = {
@@ -219,29 +219,47 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
   };
 
   return (
-    <div key={r.organization + idx}>
-      <motion.div onClick={() => { setExpandedId(isOpen ? null : idx); setFocusDot(r); }}
-        whileHover={{ background: '#f8fafc' }}
-        className={`leaderboard-row ${isOpen ? 'active' : ''}`}
-        style={{ display: 'grid', gridTemplateColumns: '100px 1.5fr 200px 100px 200px', padding: '1.75rem 2.5rem',
-          borderBottom: '1px solid #f1f5f9', alignItems: 'center', cursor: 'pointer', background: isOpen ? '#f8fafc' : 'white' }}>
-        <span style={{ fontWeight: 800, color: '#94a3b8', fontSize: '1.25rem', fontFamily: 'Georgia, serif', letterSpacing: '-0.02em' }}>{r.rank.toString().padStart(2, '0')}</span>
-        <span style={{ minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.1rem', fontFamily: 'Georgia, serif', letterSpacing: '-0.01em' }}>{r.organization}</div>
-            {r.is_verified && (
-              <CheckCircle2 size={14} className="text-teal-500" fill="rgba(20, 184, 166, 0.1)" />
-            )}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-            <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>{r.industry || 'Global Baseline'} · {r.region}</div>
-          </div>
+    <div style={{ position: 'relative' }}>
+      <motion.div 
+        onClick={() => { setExpandedId(isOpen ? null : idx); setFocusDot(r); }}
+        style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'minmax(100px, 120px) minmax(280px, 1fr) minmax(400px, 450px) 120px 240px',
+          alignItems: 'center', 
+          padding: '1.75rem 2.5rem', 
+          cursor: 'pointer',
+          background: isOpen ? '#f8fafc' : (idx === 0 ? 'rgba(16, 185, 129, 0.03)' : 'white'),
+          borderBottom: '1px solid #f1f5f9',
+          borderLeft: idx === 0 ? '4px solid #10b981' : '4px solid transparent',
+          transition: 'all 0.2s ease',
+          zIndex: isOpen ? 10 : 1
+        }}
+        whileHover={{ background: idx === 0 ? 'rgba(16, 185, 129, 0.05)' : '#f8fafc' }}
+      >
+        <span style={{ 
+          fontSize: '1.5rem', 
+          fontWeight: 900, 
+          color: idx === 0 ? '#0f172a' : '#64748b', 
+          opacity: idx < 3 ? 1 : 0.6, 
+          fontFamily: 'Georgia, serif',
+          letterSpacing: '-0.02em'
+        }}>
+          {formattedIdx}
         </span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <span style={{ fontWeight: 900, fontSize: '1.2rem', color: '#0f172a', letterSpacing: '-0.01em', fontFamily: 'Georgia, serif' }}>{r.organization}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {r.is_verified && <CheckCircle size={10} className="text-teal-500" />}
+            <span style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.5, color: '#94a3b8' }}>
+              {r.industry} · {r.region}
+            </span>
+          </div>
+        </div>
         <span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
             <ScoreBar score={r.score} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: '150px' }}>
-              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: getScoreColor(r.score), fontFamily: 'Georgia, serif' }}>{r.score}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '1.5rem', fontWeight: 900, color: getScoreColor(r.score), fontFamily: 'Georgia, serif' }}>{r.score}</span>
               <span style={{ 
                 fontSize: '0.6rem', 
                 fontWeight: 900, 
@@ -259,10 +277,19 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
             </div>
           </div>
         </span>
-        <span style={{ fontWeight: 800, fontSize: '0.9rem', color: r.cognitiveShift?.startsWith('+') ? '#10b981' : '#ef4444', opacity: (r.is_verified && r.evidence_density === 0) ? 0.3 : 1 }}>
+        <span style={{ 
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          fontWeight: 800, 
+          fontSize: '0.95rem', 
+          color: r.cognitiveShift?.startsWith('+') ? '#10b981' : '#ef4444', 
+          opacity: (r.is_verified && r.evidence_density === 0) ? 0.3 : 1 
+        }}>
+          {r.score !== 0 && (r.cognitiveShift?.startsWith('+') ? <ArrowUp size={14} strokeWidth={3} /> : <ArrowDown size={14} strokeWidth={3} />)}
           {r.score === 0 ? '--' : r.cognitiveShift}
         </span>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '1.25rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '1.25rem' }}>
           <FidelityBadge />
           {isOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-300" />}
         </div>
@@ -430,7 +457,7 @@ const GlobalIndexPage = () => {
         .leaderboard-row:hover { border-left-color: #2dd4bf; }
         .leaderboard-row.active { border-left-color: #0d9488; }
         
-        .fidelity-badge-mini { padding: 0.25rem 0.75rem; border-radius: 99px; font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; border: 1px solid transparent; }
+        .fidelity-badge-mini { padding: 0.25rem 0.75rem; border-radius: 99px; font-size: 0.6rem; font-weight: 800; letterSpacing: 1px; border: 1px solid transparent; }
         
         .text-teal-500 { color: #14b8a6 !important; }
         .text-slate-300 { color: #cbd5e1 !important; }
@@ -495,13 +522,29 @@ const GlobalIndexPage = () => {
         </div>
 
 
-        <div style={{ background: 'white', borderRadius: 24, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '100px 1.5fr 200px 100px 200px', padding: '1.25rem 2.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: 2, color: '#94a3b8' }}>
-            <span>Rank</span>
-            <span>Institution</span>
-            <span>LAI Score (Adaptive Capacity)</span>
-            <span>Shift</span>
-            <span style={{ textAlign: 'right' }}>Truth Fidelity</span>
+        <div style={{ background: 'white', borderRadius: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'minmax(100px, 120px) minmax(280px, 1fr) minmax(400px, 450px) 120px 240px', 
+            padding: '1.5rem 2.5rem', 
+            background: '#f8fafc', 
+            borderBottom: '2px solid #e2e8f0' 
+          }}>
+            {['RANK', 'INSTITUTION', 'LAI SCORE'].map(h => (
+              <span key={h} style={{ 
+                fontSize: '0.65rem', 
+                fontWeight: h === 'LAI SCORE' ? 900 : 800, 
+                color: h === 'LAI SCORE' ? '#0f172a' : '#64748b', 
+                letterSpacing: 2,
+                transform: h === 'LAI SCORE' ? 'scale(1.05)' : 'none',
+                transformOrigin: 'left'
+              }}>
+                {h === 'LAI SCORE' ? 'LAI SCORE' : h}
+                {h === 'LAI SCORE' && <div style={{ fontSize: '0.45rem', fontWeight: 700, opacity: 0.6, letterSpacing: 1, marginTop: '2px' }}>(ADAPTIVENESS INDEX)</div>}
+              </span>
+            ))}
+            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#64748b', letterSpacing: 2 }}>SHIFT</span>
+            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#64748b', letterSpacing: 2 }}>TRUTH FIDELITY</span>
           </div>
           {loading ? (
             <div style={{ padding: '5rem', textAlign: 'center', color: '#cbd5e1' }}><Brain size={48} style={{ margin: '0 auto 1rem', opacity: 0.2 }} /><p>Synthesizing Global Signals...</p></div>
