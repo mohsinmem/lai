@@ -128,7 +128,7 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
     <div key={r.organization + idx}>
       <motion.div onClick={() => { setExpandedId(isOpen ? null : idx); setFocusDot(r); }}
         whileHover={{ background: '#f8fafc' }}
-        style={{ display: 'grid', gridTemplateColumns: '70px 2.5fr 150px 100px 180px', padding: '1rem 1.5rem',
+        style={{ display: 'grid', gridTemplateColumns: '60px 1.2fr 1.5fr 80px 240px', padding: '1rem 1.5rem',
           borderBottom: '1px solid #f1f5f9', alignItems: 'center', cursor: 'pointer', background: isOpen ? '#f8fafc' : 'white' }}>
         <span style={{ fontWeight: 800, color: '#cbd5e1', fontSize: '1rem' }}>#{r.rank}</span>
         <span style={{ minWidth: 0 }}>
@@ -351,12 +351,12 @@ const GlobalIndexPage = () => {
         </div>
 
         <div style={{ background: 'white', borderRadius: 24, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '70px 2.5fr 150px 100px 180px', padding: '1.25rem 1.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.5, color: '#94a3b8' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '60px 1.2fr 1.5fr 80px 240px', padding: '1.25rem 1.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.5, color: '#94a3b8' }}>
             <span>Rank</span>
-            <span>Organization Profile</span>
-            <span>LAI Score</span>
+            <span>Profile</span>
+            <span>LAI Score (Adaptive Capacity)</span>
             <span>Trend</span>
-            <span style={{ textAlign: 'right' }}>Data Fidelity</span>
+            <span style={{ textAlign: 'right' }}>Truth Fidelity & Meta Status</span>
           </div>
           {loading ? (
             <div style={{ padding: '5rem', textAlign: 'center', color: '#cbd5e1' }}><Brain size={48} style={{ margin: '0 auto 1rem', opacity: 0.2 }} /><p>Synthesizing Global Signals...</p></div>
