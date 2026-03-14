@@ -192,7 +192,7 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
     };
 
     return (
-      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-start' }}>
         {is_triangulated && (
           <div className="fidelity-trigger" style={{ position: 'relative' }}>
             <span style={{ ...badgeStyle, background: '#eff6ff', color: '#1e40af', borderColor: '#dbeafe' }}>
@@ -217,7 +217,7 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
             <Tooltip text="This score is inferred from external intelligence signals such as market behavior, industry events, and institutional actions." />
           </div>
         )}
-        <div className="fidelity-trigger" style={{ marginTop: '8px', position: 'relative' }}>
+        <div className="fidelity-trigger" style={{ position: 'relative' }}>
           <div style={{ fontSize: '0.55rem', fontWeight: 900, color: '#94a3b8', letterSpacing: 1.5, fontVariantNumeric: 'tabular-nums' }}>
             CONFIDENCE {signalConfidence}%
           </div>
@@ -233,7 +233,7 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
         onClick={() => { setExpandedId(isOpen ? null : idx); setFocusDot(r); }}
         style={{ 
           display: 'grid', 
-          gridTemplateColumns: '80px 210px minmax(400px, 1fr) 140px 240px',
+          gridTemplateColumns: '80px 210px minmax(400px, 1fr) 200px 160px',
           alignItems: 'center', 
           padding: '24px 40px', 
           cursor: 'pointer',
@@ -641,7 +641,7 @@ const GlobalIndexPage = () => {
         <div style={{ background: 'white', borderRadius: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', overflow: 'hidden', padding: '12px' }}>
           <div style={{ 
             display: 'grid', 
-            gridTemplateColumns: '80px 210px minmax(400px, 1fr) 140px 240px',
+            gridTemplateColumns: '80px 210px minmax(400px, 1fr) 200px 160px',
             padding: '24px 40px', 
             background: 'white', 
             borderBottom: '1px solid #f1f5f9',
