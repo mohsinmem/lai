@@ -131,6 +131,34 @@ const ScoreBar = ({ score }) => {
   );
 };
 
+const Tooltip = ({ text }) => (
+  <div className="badge-tooltip" style={{
+    position: 'absolute',
+    bottom: '140%',
+    right: '0',
+    width: '240px',
+    background: '#0f172a',
+    color: 'white',
+    padding: '0.8rem 1rem',
+    borderRadius: '12px',
+    fontSize: '0.65rem',
+    lineHeight: '1.5',
+    textAlign: 'left',
+    zIndex: 1000,
+    boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+    pointerEvents: 'none',
+    opacity: 0,
+    visibility: 'hidden',
+    transition: 'all 0.2s ease',
+    fontWeight: 400,
+    textTransform: 'none',
+    letterSpacing: 'normal'
+  }}>
+    {text}
+    <div style={{ position: 'absolute', top: '100%', right: '15px', border: '6px solid transparent', borderTopColor: '#0f172a' }} />
+  </div>
+);
+
 const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocusDot }) => {
   const ev = getEvolutionaryState(r.score);
   const isOpen = expandedId === idx;
@@ -163,40 +191,8 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
       transition: 'all 0.2s'
     };
 
-    const Tooltip = ({ text }) => (
-      <div className="badge-tooltip" style={{
-        position: 'absolute',
-        bottom: '140%',
-        right: '0',
-        width: '240px',
-        background: '#0f172a',
-        color: 'white',
-        padding: '0.8rem 1rem',
-        borderRadius: '12px',
-        fontSize: '0.65rem',
-        lineHeight: '1.5',
-        textAlign: 'left',
-        zIndex: 1000,
-        boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-        pointerEvents: 'none',
-        opacity: 0,
-        visibility: 'hidden',
-        transition: 'all 0.2s ease',
-        fontWeight: 400,
-        textTransform: 'none',
-        letterSpacing: 'normal'
-      }}>
-        {text}
-        <div style={{ position: 'absolute', top: '100%', right: '15px', border: '6px solid transparent', borderTopColor: '#0f172a' }} />
-      </div>
-    );
-
     return (
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-        <style>{`
-          .fidelity-trigger:hover .badge-tooltip { opacity: 1 !important; visibility: visible !important; transform: translateY(-5px); }
-          .fidelity-trigger:hover { filter: brightness(0.95); }
-        `}</style>
         {is_triangulated && (
           <div className="fidelity-trigger" style={{ position: 'relative' }}>
             <span style={{ ...badgeStyle, background: '#eff6ff', color: '#1e40af', borderColor: '#dbeafe' }}>
@@ -535,7 +531,9 @@ const GlobalIndexPage = () => {
         .leaderboard-row { transition: all 0.2s ease; border-left: 4px solid transparent; }
         .leaderboard-row:hover { background: rgba(248, 250, 252, 0.8) !important; filter: brightness(0.99); }
         .fidelity-badge-mini { padding: 0.25rem 0.75rem; border-radius: 99px; font-size: 0.6rem; font-weight: 800; letterSpacing: 1px; border: 1px solid transparent; }
+        .fidelity-trigger { position: relative; cursor: help; }
         .fidelity-trigger:hover .badge-tooltip { opacity: 1 !important; visibility: visible !important; transform: translateY(-5px); }
+        .fidelity-trigger:hover { filter: brightness(0.95); }
         
         .text-teal-500 { color: #14b8a6 !important; }
         .text-slate-300 { color: #cbd5e1 !important; }
