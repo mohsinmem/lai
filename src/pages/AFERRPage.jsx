@@ -90,15 +90,21 @@ const AFERRPage = () => {
           <div className="grid-2 items-center">
             <div>
               <h2 className="section-h2 text-white">Framework {'>'} Behavior Integration</h2>
-              <p className="text-slate-400 mb-4">The Leadership Adaptiveness Framework maps the structural stages of organizational adaptation. AFERR explains the behavioral transitions that occur inside each stage.</p>
+              <p className="text-slate-400 mb-4">
+                The <Link to="/framework" className="text-link">Leadership Adaptiveness Framework</Link> maps the structural stages of organizational adaptation. 
+                <a href="https://aferr.org" target="_blank" rel="noopener noreferrer" className="text-link">AFERR</a> explains the behavioral transitions that occur inside each stage. 
+                And <a href="https://evivve.com" target="_blank" rel="noopener noreferrer" className="text-link">Evivve Diagnostic</a> provides the industry's gold standard on verifiable behavior signals.
+              </p>
               <div className="triangulation-badge">Unified Measurement System</div>
             </div>
             <div className="diagram-placeholder">
-               {/* Simplified Diagram Representation */}
+               {/* Expanded Integration Stack */}
                <div className="integration-box">
-                  <div className="layer-framework">LAI Framework (Structure)</div>
+                  <Link to="/framework" className="layer-framework">LAI Framework (Structure)</Link>
                   <div className="layer-connector"><RefreshCcw className="text-teal-400" /></div>
-                  <div className="layer-aferr">AFERR (Cognition)</div>
+                  <a href="https://aferr.org" target="_blank" rel="noopener noreferrer" className="layer-aferr">AFERR (Cognition)</a>
+                  <div className="layer-connector"><RefreshCcw className="text-teal-400" /></div>
+                  <a href="https://evivve.com" target="_blank" rel="noopener noreferrer" className="layer-evivve">Evivve Diagnostic (Collection)</a>
                </div>
             </div>
           </div>
@@ -238,10 +244,15 @@ const AFERRPage = () => {
         .cycle-card h3 { font-size: 1.1rem; font-weight: 800; margin: 0; }
 
         /* Integration Layer */
-        .integration-box { display: flex; flex-direction: column; gap: 1rem; align-items: center; }
-        .layer-framework, .layer-aferr { padding: 2rem; border-radius: 16px; width: 100%; text-align: center; font-weight: 800; border: 1px solid rgba(255,255,255,0.1); }
+        .integration-box { display: flex; flex-direction: column; gap: 0.5rem; align-items: center; }
+        .layer-framework, .layer-aferr, .layer-evivve { padding: 2rem; border-radius: 16px; width: 100%; text-align: center; font-weight: 800; border: 1px solid rgba(255,255,255,0.1); text-decoration: none; color: white; transition: all 0.3s; }
         .layer-framework { background: rgba(255,255,255,0.05); }
         .layer-aferr { background: #0d9488; }
+        .layer-evivve { background: #0a192f; border: 2px solid #0d9488; }
+        .layer-framework:hover, .layer-aferr:hover, .layer-evivve:hover { transform: translateY(-3px); box-shadow: 0 4px 20px rgba(13,148,136,0.3); }
+
+        .text-link { color: #2dd4bf; text-decoration: underline; font-weight: 600; }
+        .text-link:hover { color: #5eead4; }
 
         /* Mapping List */
         .mapping-list { display: flex; flex-direction: column; gap: 2rem; }
