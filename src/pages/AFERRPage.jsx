@@ -291,8 +291,8 @@ const AFERRPage = () => {
         .ode-text { font-size: 1.15rem; line-height: 1.8; color: #475569; margin-bottom: 2.5rem; max-width: 900px; }
         .ml-2 { margin-left: 0.5rem; }
 
-        .logo-watermark-container { position: absolute; top: 0rem; right: -2rem; width: 45%; height: 50%; display: flex; align-items: flex-start; justify-content: flex-end; pointer-events: none; opacity: 0.2; z-index: 1; padding: 1rem; }
-        .logo-watermark-img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; filter: grayscale(1) contrast(1.4); }
+        .logo-watermark-container { position: absolute; top: -2rem; right: -2rem; width: 55%; height: 50%; display: flex; align-items: flex-start; justify-content: flex-end; pointer-events: none; opacity: 0.25; z-index: 1; padding: 0; }
+        .logo-watermark-img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; filter: grayscale(1) contrast(1.5); }
 
         @media (max-width: 992px) {
           .grid-2, .cycle-grid, .cta-split-modern { grid-template-columns: 1fr; }

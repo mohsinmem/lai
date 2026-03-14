@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe, Search, ChevronDown, ChevronUp, Zap, Shield, ShieldCheck, TrendingUp, Brain, CheckCircle2, AlertTriangle, Info, Layers } from 'lucide-react';
+import { 
+  Globe, Search, ChevronDown, ChevronUp, Zap, 
+  Shield, ShieldCheck, TrendingUp, Brain, CheckCircle2, 
+  AlertTriangle, Info, Layers, BarChart3, Waves, 
+  Scale, ExternalLink, Activity
+} from 'lucide-react';
 import { supabase } from '../supabase';
 
 const PILLAR_DEFINITIONS = {
@@ -73,6 +78,21 @@ const MapDot = React.memo(({ org, onClick, selected }) => {
   );
 });
 
+const ScoreRangeVisual = () => (
+  <div className="score-range-container">
+    <div className="range-track">
+      <div className="range-marker start">0</div>
+      <div className="range-marker end">100</div>
+      <div className="range-fill-gradient"></div>
+    </div>
+    <div className="range-labels-detailed">
+      <span>Fragile</span>
+      <span>Emergent</span>
+      <span>Antifragile</span>
+    </div>
+  </div>
+);
+
 const ScoreBar = ({ score }) => {
   const ev = getEvolutionaryState(score);
   return (
@@ -128,40 +148,33 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
     <div key={r.organization + idx}>
       <motion.div onClick={() => { setExpandedId(isOpen ? null : idx); setFocusDot(r); }}
         whileHover={{ background: '#f8fafc' }}
-        style={{ display: 'grid', gridTemplateColumns: '60px 1.2fr 150px 100px 180px', padding: '1rem 1.5rem',
-          borderBottom: '1px solid #f1f5f9', alignItems: 'center', cursor: 'pointer', background: isOpen ? '#f8fafc' : 'white' }}>
-        <span style={{ fontWeight: 800, color: '#cbd5e1', fontSize: '1rem' }}>#{r.rank}</span>
+        className={`leaderboard-row ${isOpen ? 'active' : ''}`}
+        style={{ display: 'grid', gridTemplateColumns: '80px 1.5fr 150px 100px 180px', padding: '1.25rem 2rem',
+          borderBottom: '1px solid #f1f5f9', alignItems: 'center', cursor: 'pointer', background: isOpen ? '#f1f5f9' : 'white' }}>
+        <span style={{ fontWeight: 800, color: '#cbd5e1', fontSize: '1.1rem', letterSpacing: '-0.02em' }}>{r.rank.toString().padStart(2, '0')}</span>
         <span style={{ minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '0.9rem' }}>{r.organization}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '1rem', letterSpacing: '-0.01em' }}>{r.organization}</div>
             {r.is_verified && (
-              <CheckCircle2 size={13} color="#3b82f6" fill="rgba(59, 130, 246, 0.1)" 
-                style={{ cursor: 'help' }} 
-                title={`Verified Institutional Signal: ${r.evidence_density} data points synthesized.`} />
+              <CheckCircle2 size={14} className="text-teal-500" fill="rgba(20, 184, 166, 0.1)" />
             )}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase' }}>{r.industry || 'Global Baseline'} · {r.region}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+            <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>{r.industry || 'Global Baseline'} · {r.region}</div>
           </div>
         </span>
         <span>
-          {r.is_verified && r.evidence_density === 0 ? (
-            <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Data Pending
-            </div>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <ScoreBar score={r.score} />
-              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#0f172a', minWidth: '2.5ch' }}>{r.score}</span>
-            </div>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <ScoreBar score={r.score} />
+            <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#0f172a', minWidth: '3ch' }}>{r.score}</span>
+          </div>
         </span>
-        <span style={{ fontWeight: 700, fontSize: '0.85rem', color: r.cognitiveShift?.startsWith('+') ? '#10b981' : '#ef4444', opacity: (r.is_verified && r.evidence_density === 0) ? 0.3 : 1 }}>
+        <span style={{ fontWeight: 800, fontSize: '0.9rem', color: r.cognitiveShift?.startsWith('+') ? '#10b981' : '#ef4444', opacity: (r.is_verified && r.evidence_density === 0) ? 0.3 : 1 }}>
           {r.score === 0 ? '--' : r.cognitiveShift}
         </span>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '1.25rem' }}>
           <FidelityBadge />
-          {isOpen ? <ChevronUp size={14} color="#94a3b8" /> : <ChevronDown size={14} color="#cbd5e1" />}
+          {isOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-300" />}
         </div>
       </motion.div>
 
@@ -306,21 +319,53 @@ const GlobalIndexPage = () => {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', paddingBottom: '6rem', fontFamily: 'Inter, sans-serif' }}>
-      <style>{`@keyframes antifragilePulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.1); } 100% { opacity: 1; transform: scale(1); } }`}</style>
+      <style>{`
+        @keyframes antifragilePulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.1); } 100% { opacity: 1; transform: scale(1); } }
+        
+        .score-range-container { max-width: 800px; margin: 0 auto; }
+        .range-track { height: 12px; background: #e2e8f0; border-radius: 10px; position: relative; margin-bottom: 2rem; }
+        .range-fill-gradient { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 10px; background: linear-gradient(to right, #ef4444, #f59e0b, #10b981); }
+        .range-marker { position: absolute; top: -25px; font-weight: 800; font-size: 0.8rem; color: #94a3b8; }
+        .range-marker.start { left: 0; }
+        .range-marker.end { right: 0; }
+        .range-labels-detailed { display: flex; justify-content: space-between; font-weight: 900; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2.5px; color: #475569; }
+
+        .leaderboard-row { transition: all 0.2s ease; border-left: 4px solid transparent; }
+        .leaderboard-row:hover { border-left-color: #2dd4bf; }
+        .leaderboard-row.active { border-left-color: #0d9488; }
+        
+        .fidelity-badge-mini { padding: 0.25rem 0.75rem; border-radius: 99px; font-size: 0.6rem; font-weight: 800; letter-spacing: 1px; border: 1px solid transparent; }
+        
+        .text-teal-500 { color: #14b8a6 !important; }
+        .text-slate-300 { color: #cbd5e1 !important; }
+        .text-slate-400 { color: #94a3b8 !important; }
+      `}</style>
       
-      <header style={{ paddingTop: '8rem', paddingBottom: '4rem', background: '#0a192f', textAlign: 'center', color: 'white' }}>
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} style={{ maxWidth: 700, margin: '0 auto', padding: '0 1.5rem' }}>
-          <span style={{ display: 'inline-block', padding: '0.35rem 1.2rem', background: 'rgba(13,148,136,0.2)', color: '#2dd4bf', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '3px', textTransform: 'uppercase', borderRadius: 9999, border: '1px solid rgba(45,212,191,0.3)', marginBottom: '1.5rem' }}>
+      <header style={{ paddingTop: '8rem', paddingBottom: '6rem', background: '#0a192f', textAlign: 'center', color: 'white', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0.05 }}>
+           <Globe size={800} style={{ position: 'absolute', top: -100, right: -200 }} />
+        </div>
+        
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} style={{ maxWidth: 800, margin: '0 auto', padding: '0 1.5rem', position: 'relative', zIndex: 2 }}>
+          <span style={{ display: 'inline-block', padding: '0.4rem 1.4rem', background: 'rgba(45,212,191,0.1)', color: '#2dd4bf', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '4px', textTransform: 'uppercase', borderRadius: 6, border: '1px solid rgba(45,212,191,0.2)', marginBottom: '2rem' }}>
             AFERR Methodology · v1.3.2_SOVEREIGN
           </span>
-          <h1 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', fontFamily: 'Georgia,serif', marginBottom: '1rem', lineHeight: 1.15, color: 'white' }}>Global Leadership Adaptiveness Index</h1>
-          <p style={{ color: '#cbd5e1', fontSize: '1.1rem', fontWeight: 400 }}>Weighted Truth Hierarchy: Aggregating simulation behavioral data with sovereign research. Total Verified Signals: <strong style={{ color: '#2dd4bf' }}>{loading ? '600+' : rankings.length}</strong></p>
+          <h1 style={{ fontSize: 'clamp(2.5rem,6vw,4rem)', fontFamily: 'Georgia,serif', marginBottom: '1.5rem', lineHeight: 1.1, fontWeight: 900, letterSpacing: '-0.03em' }}>Global Leadership Adaptiveness Index</h1>
+          <p style={{ color: '#94a3b8', fontSize: '1.25rem', fontWeight: 400, lineHeight: 1.6, maxWidth: 650, margin: '0 auto' }}>
+            The definitive benchmark for organizational response. Aggregating behavioral simulations, sovereign research, and environmental intelligence.
+          </p>
         </motion.div>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '3rem', marginTop: '2.5rem' }}>
-          {[{ label: 'Antifragile', color: '#3b82f6', value: stats.antifragile }, { label: 'Emergent', color: '#0d9488', value: stats.emergent }, { label: 'Fragile', color: '#94a3b8', value: stats.fragile }].map(s => (
-            <div key={s.label}>
-              <div style={{ fontSize: '2rem', fontWeight: 800, color: s.color, fontFamily: 'Georgia,serif' }}>{s.value}</div>
-              <div style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.5 }}>{s.label}</div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', maxWidth: 800, margin: '3.5rem auto 0', gap: '2rem', position: 'relative', zIndex: 2 }}>
+          {[
+            { label: 'Antifragile', color: '#3b82f6', value: stats.antifragile, desc: 'Dynamic Response' },
+            { label: 'Emergent', color: '#0d9488', value: stats.emergent, desc: 'Developing Capability' },
+            { label: 'Fragile', color: '#64748b', value: stats.fragile, desc: 'Structural Dissonance' }
+          ].map(s => (
+            <div key={s.label} style={{ background: 'rgba(255,255,255,0.03)', padding: '1.5rem', borderRadius: 16, border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ fontSize: '2.5rem', fontWeight: 900, color: s.color, fontFamily: 'serif', lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontSize: '0.75rem', color: '#2dd4bf', fontWeight: 900, textTransform: 'uppercase', letterSpacing: 2, marginTop: '0.5rem' }}>{s.label}</div>
+              <div style={{ fontSize: '0.6rem', color: '#475569', fontWeight: 700, marginTop: '0.25rem' }}>{s.desc}</div>
             </div>
           ))}
         </div>
@@ -353,13 +398,19 @@ const GlobalIndexPage = () => {
           </div>
         </div>
 
+        <div style={{ background: 'white', borderRadius: 24, border: '1px solid #e2e8f0', padding: '4rem 2rem', textAlign: 'center', marginBottom: '3rem' }}>
+           <h2 style={{ fontSize: '2rem', fontWeight: 900, fontFamily: 'serif', marginBottom: '1rem' }}>The Leadership Adaptiveness Index</h2>
+           <p style={{ color: '#64748b', marginBottom: '3rem', maxWidth: '600px', margin: '0 auto 3rem' }}>The overall LAI score is calculated as the weighted average of behavioral signals across five critical dimensions.</p>
+           <ScoreRangeVisual />
+        </div>
+
         <div style={{ background: 'white', borderRadius: 24, border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '60px 1.2fr 150px 100px 180px', padding: '1.25rem 1.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.5, color: '#94a3b8' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '80px 1.5fr 150px 100px 180px', padding: '1.25rem 2rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.7rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: 2, color: '#94a3b8' }}>
             <span>Rank</span>
-            <span>Profile</span>
+            <span>Institution</span>
             <span>LAI Score (Adaptive Capacity)</span>
-            <span>Trend</span>
-            <span style={{ textAlign: 'right' }}>Truth Fidelity & Meta Status</span>
+            <span>Shift</span>
+            <span style={{ textAlign: 'right' }}>Truth Fidelity</span>
           </div>
           {loading ? (
             <div style={{ padding: '5rem', textAlign: 'center', color: '#cbd5e1' }}><Brain size={48} style={{ margin: '0 auto 1rem', opacity: 0.2 }} /><p>Synthesizing Global Signals...</p></div>
