@@ -8,8 +8,9 @@ import { Link } from 'react-router-dom';
 import RelatedPathwaysSection from '../components/RelatedPathwaysSection';
 
 const pageMeta = {
-  domain: "observatory",
-  concepts: ["environmental signals", "disruption types", "real-time intelligence"],
+  id: "signals",
+  category: "observatory",
+  dimension: "signal-detection",
   related: ["/global-index", "/methodology", "/simulation", "/library"]
 };
 

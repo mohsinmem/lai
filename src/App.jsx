@@ -14,8 +14,8 @@ import GlobalSignalsPage from './pages/GlobalSignalsPage';
 
 // Phase 2: Observatory Layer
 import GlobalIndexPage from './pages/GlobalIndexPage';
-// import ObservatoryExplainerPage from './pages/ObservatoryExplainerPage'; // [NEW]
-// import DataCompletenessPage from './pages/DataCompletenessPage'; // [NEW]
+import ObservatoryPage from './pages/ObservatoryPage';
+import CompletenessPage from './pages/CompletenessPage';
 // import MethodologyPage from './pages/MethodologyPage'; // [NEW]
 // import ResearchFlywheelPage from './pages/ResearchFlywheelPage'; // [NEW]
 
@@ -53,15 +53,15 @@ function App() {
             {/* Phase 1: Institutional Authority */}
             <Route path="/" element={<HomePage />} />
             <Route path="/manifesto" element={<ManifestoPage />} />
-            <Route path="/gap" element={<div>Adaptiveness Gap (Coming Soon)</div>} />
+            <Route path="/gap" element={<AdaptivenessGapPage />} />
             <Route path="/framework" element={<FrameworkPage />} />
             <Route path="/how-measured" element={<LAIMeasurementPage />} />
-            <Route path="/signals" element={<div>Global Adaptiveness Signals (Coming Soon)</div>} />
+            <Route path="/signals" element={<GlobalSignalsPage />} />
 
             {/* Phase 2: Observatory Layer */}
-            <Route path="/observatory" element={<div>Leadership Adaptiveness Observatory (Coming Soon)</div>} />
+            <Route path="/observatory" element={<ObservatoryPage />} />
             <Route path="/global-index" element={<GlobalIndexPage />} />
-            <Route path="/completeness" element={<div>Understanding Data Completeness (Coming Soon)</div>} />
+            <Route path="/completeness" element={<CompletenessPage />} />
             <Route path="/methodology" element={<div>Measurement Methodology (Coming Soon)</div>} />
             <Route path="/flywheel" element={<div>The LAI Research Flywheel (Coming Soon)</div>} />
 

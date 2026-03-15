@@ -4,8 +4,9 @@ import { Shield, Target, Clock, AlertTriangle, ArrowRight } from 'lucide-react';
 import RelatedPathwaysSection from '../components/RelatedPathwaysSection';
 
 const pageMeta = {
-  domain: "insight",
-  concepts: ["structural lag", "strategic drift", "behavioral observation"],
+  id: "gap",
+  category: "insight",
+  dimension: "all",
   related: ["/framework", "/how-measured", "/signals", "/observatory"]
 };
 

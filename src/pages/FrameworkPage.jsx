@@ -8,8 +8,9 @@ import { Link } from 'react-router-dom';
 import RelatedPathwaysSection from '../components/RelatedPathwaysSection';
 
 const pageMeta = {
-  domain: "framework",
-  concepts: ["behavioral dimensions", "measurement standards", "systemic resilience"],
+  id: "framework",
+  category: "framework",
+  dimension: "all",
   related: ["/how-measured", "/signals", "/observatory", "/global-index"]
 };
 
@@ -23,7 +24,7 @@ const PILLAR_DETAILS = [
   },
   {
     icon: <Brain size={40} />,
-    title: '2. Sense-Making',
+    title: '2. Cognitive Framing',
     subtitle: 'Interpretation vs Entrenchment',
     desc: 'Recognizing change is insufficient. Leadership systems must interpret uncertainty constructively. Frame-of-reference determines whether a team responds with defensive entrenchment or strategic curiosity.',
     metrics: ['Threat vs Opportunity Orientation', 'Forecast Horizon', 'Confidence Calibration']
@@ -37,16 +38,16 @@ const PILLAR_DETAILS = [
   },
   {
     icon: <Layers size={40} />,
-    title: '4. Resource Fluidity',
+    title: '4. Resource Calibration',
     subtitle: 'Velocity vs Inertia',
-    desc: 'Adaptiveness becomes observable when resource allocation shifts. Fluidity measures the speed and precision of redirecting capital, talent, and attention the moment a strategic assumption is revised.',
+    desc: 'Adaptiveness becomes observable when resource allocation shifts. Calibration measures the speed and precision of redirecting capital, talent, and attention the moment a strategic assumption is revised.',
     metrics: ['Reallocation Speed', 'Capital Agility', 'Talent Mobility']
   },
   {
     icon: <Zap size={40} />,
-    title: '5. Operational Change',
+    title: '5. Integrated Responsiveness',
     subtitle: 'Response vs Latency',
-    desc: 'The final measure of adaptiveness is the transition from intent to behavior. Operational change measures how quickly shifted decisions translate into coordinated systemic action.',
+    desc: 'The final measure of adaptiveness is the transition from intent to behavior. Integrated responsiveness measures how quickly shifted decisions translate into coordinated systemic action.',
     metrics: ['Pivot Execution Speed', 'Systemic Adaptation Index', 'Operational Lag']
   }
 ];

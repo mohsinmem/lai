@@ -9,8 +9,9 @@ import { Link } from 'react-router-dom';
 import RelatedPathwaysSection from '../components/RelatedPathwaysSection';
 
 const pageMeta = {
-  domain: "home",
-  concepts: ["leadership adaptiveness", "institutional benchmarking", "global observatory"],
+  id: "home",
+  category: "home",
+  dimension: null,
   related: ["/manifesto", "/gap", "/framework", "/observatory"]
 };
 
@@ -90,10 +91,10 @@ const HomePage = () => {
           <div className="home-framework-grid">
             {[
               { id: '01', title: 'Signal Detection', icon: <Signal /> },
-              { id: '02', title: 'Sense-Making', icon: <Brain /> },
+              { id: '02', title: 'Cognitive Framing', icon: <Brain /> },
               { id: '03', title: 'Decision Alignment', icon: <Target /> },
-              { id: '04', title: 'Resource Fluidity', icon: <Layers /> },
-              { id: '05', title: 'Operational Change', icon: <Zap /> }
+              { id: '04', title: 'Resource Calibration', icon: <Layers /> },
+              { id: '05', title: 'Integrated Responsiveness', icon: <Zap /> }
             ].map(dim => (
               <div key={dim.id} className="home-f-card">
                  <div className="h-f-icon">{dim.icon}</div>

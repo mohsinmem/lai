@@ -3,8 +3,9 @@ import { motion } from 'framer-motion';
 import RelatedPathwaysSection from '../components/RelatedPathwaysSection';
 
 const pageMeta = {
-  domain: "vision",
-  concepts: ["institutional standards", "continuous change", "measurement problem"],
+  id: "manifesto",
+  category: "vision",
+  dimension: null,
   related: ["/gap", "/framework", "/how-measured", "/observatory"]
 };
 

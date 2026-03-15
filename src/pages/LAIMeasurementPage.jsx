@@ -10,8 +10,9 @@ import { Link } from 'react-router-dom';
 import RelatedPathwaysSection from '../components/RelatedPathwaysSection';
 
 const pageMeta = {
-  domain: "methodology",
-  concepts: ["triangulation", "behavioral observation", "measurement confidence"],
+  id: "measurement",
+  category: "methodology",
+  dimension: null,
   related: ["/methodology", "/completeness", "/flywheel", "/global-index"]
 };
 
@@ -26,7 +27,7 @@ const LAIMeasurementPage = () => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <span className="eyebrow text-teal">Methodology</span>
             <h1 className="text-white">How Leadership Behavior Is Measured</h1>
-            <p className="hero-lead">From Perception-Based Assessment to Behavioral Observation</p>
+            <p className="hero-lead">From Perception-Based Assessment to Structured Behavioral Observation</p>
           </motion.div>
         </div>
       </header>
@@ -42,18 +43,18 @@ const LAIMeasurementPage = () => {
           <div className="triangulation-grid">
             <div className="tri-card">
               <div className="tri-icon"><Search /></div>
-              <h3>Signal Ingestion</h3>
-              <p>Continuous monitoring of market actions, technological shifts, and external environmental intelligence to detect organizational recognition speed.</p>
+              <h3>Institutional Signal Ingestion</h3>
+              <p>Continuous monitoring of market actions, technological shifts, and external environmental intelligence to detect organizational recognition context.</p>
             </div>
             <div className="tri-card">
               <div className="tri-icon"><Activity /></div>
               <h3>Diagnostic Assessment</h3>
-              <p>Perception-based diagnostics capture how leadership teams believe they are responding to uncertainty and institutional disruption.</p>
+              <p>Evidence-based diagnostics capture how leadership teams believe they are responding to uncertainty and institutional disruption.</p>
             </div>
             <div className="tri-card highlight">
               <div className="tri-icon"><Microscope /></div>
-              <h3>Leadership Simulation</h3>
-              <p>Ground-truth behavioral observation of leadership decisions within dynamic, high-stakes simulation environments (AFERR Platform).</p>
+              <h3>Behavioral Observation</h3>
+              <p>Ground-truth observation of leadership decisions within dynamic simulation environments (AFERR Platform) and institutional research audits.</p>
             </div>
           </div>
         </div>
@@ -65,11 +66,11 @@ const LAIMeasurementPage = () => {
           <div className="formula-box">
              <div className="formula-header">The Measurement Confidence Formula</div>
              <div className="formula-visual">
-                <span>Confidence</span>
+                <span>Measurement Confidence</span>
                 <span className="op">=</span>
                 <div className="fraction">
-                   <div className="top">Signals + Perception + Simulation</div>
-                   <div className="bottom">Data Completeness</div>
+                   <div className="top">Evidence (Depth × Diversity × Reliability)</div>
+                   <div className="bottom">Structured Observation Scale</div>
                 </div>
              </div>
              <p className="formula-desc text-center">Institutional scores are not static. They represent a dynamic confidence level based on the richness and variety of observed behavioral evidence.</p>
@@ -84,10 +85,10 @@ const LAIMeasurementPage = () => {
           <div className="dim-row-list">
              {[
                { id: '01', title: 'Signal Detection', desc: 'Measuring the delta between environmental changes and organizational recognition.' },
-               { id: '02', title: 'Sense-Making', desc: 'Evaluating the cognitive framing (threat vs opportunity) of detected shifts.' },
+               { id: '02', title: 'Cognitive Framing', desc: 'Evaluating the cognitive framing (threat vs opportunity) of detected shifts.' },
                { id: '03', title: 'Decision Alignment', desc: 'Quantifying the coherence of decisions across the leadership system.' },
-               { id: '04', title: 'Resource Fluidity', desc: 'Observing the speed of capital and talent redirection.' },
-               { id: '05', title: 'Operational Change', desc: 'Measuring the final translation of strategy into systemic behavior.' }
+               { id: '04', title: 'Resource Calibration', desc: 'Observing the speed of capital and talent redirection.' },
+               { id: '05', title: 'Integrated Responsiveness', desc: 'Measuring the final translation of strategy into systemic behavior.' }
              ].map(dim => (
                <div key={dim.id} className="dim-summary-item">
                   <span className="dim-id">{dim.id}</span>
@@ -109,16 +110,16 @@ const LAIMeasurementPage = () => {
             <p className="text-slate-400 mb-4">To maintain institutional authority, the LAI system labels every score with a \"Measurement Confidence\" indicator. We reject the false precision of numbers that lack sufficient behavioral evidence.</p>
             <div className="alert-box-dark">
                <AlertTriangle size={20} className="text-amber-500" />
-               <p>Scores with low data completeness are marked as \"Preliminary\" until simulation or signal data is verified.</p>
+               <p>Organizations with minimal behavioral evidence are marked as "Insufficient Behavioral Data."</p>
             </div>
           </div>
           <div className="visual-placeholder-dark">
              <div className="confidence-meter-visual">
-                <div className="meter-label">Measurement Confidence</div>
+                <div className="meter-label">Data Completeness</div>
                 <div className="meter-bar">
                    <div className="meter-fill" style={{ width: '85%' }}></div>
                 </div>
-                <div className="meter-status">HIGH CONFIDENCE (TRIANGULATED)</div>
+                <div className="meter-status">STATE: TRIANGULATED MEASUREMENT</div>
              </div>
           </div>
         </div>

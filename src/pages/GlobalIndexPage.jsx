@@ -8,12 +8,19 @@ import {
 } from 'lucide-react';
 import { supabase } from '../supabase';
 
+const pageMeta = {
+  id: "global-index",
+  category: "observatory",
+  dimension: null,
+  related: ["/observatory", "/completeness", "/how-measured", "/signals"]
+};
+
 const PILLAR_DEFINITIONS = {
-  signal_detection: "Measures how quickly leadership systems recognize emerging environmental signals such as technological change, regulatory shifts, or competitive disruption.",
-  cognitive_framing: "Measures how leadership interprets uncertainty — whether it is framed as a threat requiring defense or an opportunity requiring exploration.",
-  decision_alignment: "Measures whether leadership decisions reinforce a coherent strategic response across teams and business units.",
-  resource_calibration: "Measures the speed and precision with which capital and talent are reallocated to high-potential opportunities during shifts.",
-  integrated_responsiveness: "Measures the capacity to maintain high-performance decision execution while simultaneously learning from environmental feedback."
+  signal_detection: "Measures the delta between environmental changes and institutional recognition context.",
+  cognitive_framing: "Evaluates the cognitive framing (threat vs opportunity) of detected environmental shifts.",
+  decision_alignment: "Measures the coherence and precision of decisions across the leadership system.",
+  resource_calibration: "Observes the speed and precision of capital and talent redirection during disruption.",
+  integrated_responsiveness: "Measures the translation of strategy into systemic, coordinated behavioral response."
 };
 
 // ── Evolutionary State Logic ──────────────────────────────────────────────────
@@ -22,6 +29,12 @@ const getEvolutionaryState = (score) => {
   if (score >= 65) return { label: 'Adaptive',    color: '#1e40af', pill: 'bg-blue-900/10 text-blue-800 border-blue-200' };
   if (score >= 50) return { label: 'Emergent',    color: '#b45309', pill: 'bg-amber-900/10 text-amber-800 border-amber-200' };
   return                { label: 'Fragile',     color: '#b91c1c', pill: 'bg-rose-900/10 text-rose-800 border-rose-200' };
+};
+
+const getCompletenessState = (org) => {
+  if (org.is_triangulated) return { label: 'Triangulated Measurement', color: '#10b981', icon: <CheckCircle2 size={10} /> };
+  if (org.evidence_density > 0.5) return { label: 'Partial Insight', color: '#3b82f6', icon: <Info size={10} /> };
+  return { label: 'Insufficient Behavioral Data', color: '#94a3b8', icon: <AlertTriangle size={10} /> };
 };
 
 const getScoreColor = (score) => {
@@ -292,6 +305,7 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
   const glowClass = activeEvent ? `event-glow-${activeEvent.severity}` : '';
 
   const FidelityBadge = () => {
+    const completeness = getCompletenessState(r);
     const badgeStyle = {
       padding: '0.25rem 0.6rem',
       borderRadius: '4px',
@@ -305,40 +319,25 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
       gap: '6px',
       cursor: 'help',
       position: 'relative',
-      transition: 'all 0.2s'
+      transition: 'all 0.2s',
+      background: `${completeness.color}11`,
+      color: completeness.color,
+      borderColor: `${completeness.color}33`
     };
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'center' }}>
-        {is_triangulated && (
-          <div className="fidelity-trigger" style={{ position: 'relative' }}>
-            <span style={{ ...badgeStyle, background: '#eff6ff', color: '#1e40af', borderColor: '#dbeafe' }}>
-              TRIANGULATED <Info size={10} strokeWidth={3} />
-            </span>
-            <Tooltip text="Triangulated scores are validated across behavioral, perceptual, and research data sources and represent the highest fidelity measurement." />
-          </div>
-        )}
-        {is_dissonant && (
-          <div className="fidelity-trigger" style={{ position: 'relative' }}>
-            <span style={{ ...badgeStyle, background: '#fffbeb', color: '#b45309', borderColor: '#fef3c7' }}>
-              INSIGHT ALERT <Info size={10} strokeWidth={3} />
-            </span>
-            <Tooltip text="Leadership perception of adaptiveness significantly exceeds behavioral indicators. This may indicate strategic dissonance." />
-          </div>
-        )}
-        {!is_triangulated && !is_dissonant && (
-          <div className="fidelity-trigger" style={{ position: 'relative' }}>
-            <span style={{ ...badgeStyle, background: '#f8fafc', color: '#475569', borderColor: '#e2e8f0' }}>
-              INFERRED <Info size={10} strokeWidth={3} />
-            </span>
-            <Tooltip text="This score is inferred from external intelligence signals such as market behavior, industry events, and institutional actions." />
-          </div>
-        )}
+        <div className="fidelity-trigger" style={{ position: 'relative' }}>
+          <span style={badgeStyle}>
+            {completeness.label} {completeness.icon}
+          </span>
+          <Tooltip text={`Data Completeness: ${completeness.label}. Based on the depth, diversity, and reliability of evidence including direct behavioral observation.`} />
+        </div>
         <div className="fidelity-trigger" style={{ position: 'relative' }}>
           <div style={{ fontSize: '0.55rem', fontWeight: 900, color: '#94a3b8', letterSpacing: 1.5, fontVariantNumeric: 'tabular-nums' }}>
             CONFIDENCE {signalConfidence}%
           </div>
-          <Tooltip text="Confidence reflects the volume, diversity, and reliability of signals used to calculate the LAI score." />
+          <Tooltip text="Confidence reflects the volume, diversity, and reliability of evidence used for structured observation." />
         </div>
       </div>
     );
@@ -416,20 +415,20 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
             gap: '6px',
             fontWeight: 900, 
             fontSize: '1.1rem', 
-            color: r.cognitiveShift?.startsWith('+') ? '#059669' : '#dc2626', 
+            color: r.score >= 50 ? '#059669' : '#dc2626', 
             fontVariantNumeric: 'tabular-nums'
           }}>
-            {r.score !== 0 && (r.cognitiveShift?.startsWith('+') ? <ArrowUp size={18} strokeWidth={3} /> : <ArrowDown size={18} strokeWidth={3} />)}
-            {r.score === 0 ? '--' : r.cognitiveShift}
+            {r.score >= 50 ? <ArrowUp size={18} strokeWidth={3} /> : <ArrowDown size={18} strokeWidth={3} />}
+            {Math.round(r.evidence_density * 100)}%
           </span>
-          <div style={{ fontSize: '0.55rem', fontWeight: 900, color: '#64748b', letterSpacing: 1.5, display: 'flex', alignItems: 'center', gap: '4px' }}>
-             {signalVelocity === 'ACCELERATING' ? <ArrowUp size={8} /> : <ArrowDown size={8} />} {signalVelocity}
+          <div style={{ fontSize: '0.55rem', fontWeight: 900, color: '#64748b', letterSpacing: 1.5, textTransform: 'uppercase' }}>
+             Evidence Density
           </div>
           <div className="fidelity-trigger" style={{ position: 'relative' }}>
             <div style={{ fontSize: '0.55rem', fontWeight: 900, color: '#94a3b8', letterSpacing: 1, textTransform: 'uppercase' }}>
-              Activity: {activityLevel} · {signalActivity} / wk
+              Tier: {r.is_triangulated ? 'Behavioral' : 'Environmental'}
             </div>
-            <Tooltip text="Environmental Turbulence: Measures the volume of strategic signals detected this week." />
+            <Tooltip text="Observability Tier: Indicates whether measurement is based on direct observation or external context." />
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2rem' }}>
@@ -700,10 +699,10 @@ const GlobalIndexPage = () => {
         {/* Monitor Labels (Top Left) */}
         <div style={{ position: 'absolute', top: '24px', left: '32px', zIndex: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#2dd4bf', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '8px' }}>
-            <Activity size={12} strokeWidth={3} /> GLOBAL ADAPTIVENESS RADAR
+            <Activity size={12} strokeWidth={3} /> GLOBAL OBSERVATION RADAR
           </div>
           <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '1px' }}>
-            Live spatial view of institutional turbulence & signal density
+            Structured geospatial view of institutional turbulence & evidence density
           </div>
         </div>
 
