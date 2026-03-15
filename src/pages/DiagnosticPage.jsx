@@ -498,13 +498,13 @@ const DiagnosticPage = () => {
               )}
 
               <div className="report-access-card" style={{ background: '#0f172a', color: 'white', padding: '3rem', borderRadius: '24px', marginBottom: '3rem', boxShadow: '0 30px 60px -12px rgba(0,0,0,0.25)', textAlign: 'left' }}>
-                <div style={{ marginBottom: '2rem' }}>
-                  <h3 style={{ fontSize: '1.75rem', fontWeight: '800', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Leadership Adaptiveness Profile</h3>
+                <div style={{ marginBottom: '2.5rem' }}>
+                  <h3 style={{ fontSize: '1.75rem', fontWeight: '800', marginBottom: '0.75rem', letterSpacing: '-0.02em', color: '#ffffff' }}>Leadership Adaptiveness Profile</h3>
                   <p style={{ color: '#94a3b8', fontSize: '1.1rem', lineHeight: '1.5' }}>Your individual results and research brief are now available for review.</p>
                 </div>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                  <Link to={`/report/perception/${reportId}`} className="btn-institutional primary" style={{ background: '#14b8a6', color: 'white', padding: '1.25rem', borderRadius: '12px', textAlign: 'center', fontWeight: '700', fontSize: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', textDecoration: 'none' }}>
+                <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+                  <Link to={`/report/perception/${reportId}`} className="btn-institutional primary" style={{ background: '#14b8a6', color: 'white', padding: '1rem 2rem', borderRadius: '12px', textAlign: 'center', fontWeight: '700', fontSize: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', textDecoration: 'none', flex: '1', minWidth: '200px' }}>
                     View Results Brief <ArrowRight size={20} />
                   </Link>
                   
@@ -515,13 +515,14 @@ const DiagnosticPage = () => {
                       setCopied('report');
                       setTimeout(() => setCopied(null), 2000);
                     }}
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', padding: '1.25rem', borderRadius: '12px', color: 'white', fontSize: '1rem', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', transition: 'all 0.2s' }}
+                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.2)', padding: '1rem 2rem', borderRadius: '12px', color: 'white', fontSize: '1rem', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', transition: 'all 0.2s', flex: '1', minWidth: '200px' }}
                   >
                     {copied === 'report' ? <><CheckCircle2 size={18} color="#14b8a6" /> Copied!</> : <><LinkIcon size={18} /> Copy Report Link</>}
                   </button>
                 </div>
-                <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', fontSize: '0.7rem', color: '#475569', fontFamily: 'monospace', textAlign: 'center' }}>
-                  PERSISTENT LOG ID: {reportId}
+
+                <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', fontSize: '0.75rem', color: '#64748b', fontFamily: 'monospace', textAlign: 'center' }}>
+                  PERSISTENT LOG ID: <span style={{ color: '#94a3b8' }}>{reportId}</span>
                 </div>
               </div>
 
