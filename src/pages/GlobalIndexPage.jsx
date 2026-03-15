@@ -265,7 +265,7 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
   }, [isOpen, activeEvent, r.id]);
 
   const Sparkline = ({ data, color }) => {
-    if (!data || data.length < 2) return <div style={{ height: 30, color: '#94a3b8', fontSize: '0.6rem' }}>Insufficient data</div>;
+    if (!Array.isArray(data) || data.length < 2) return <div style={{ height: 30, color: '#94a3b8', fontSize: '0.6rem' }}>Insufficient data</div>;
     const scores = data.map(d => d.overall_score);
     const min = Math.min(...scores);
     const max = Math.max(...scores);
@@ -632,7 +632,7 @@ const GlobalIndexPage = () => {
         r.region?.toLowerCase().includes(s)
       );
     }
-    return list.filter(r => r.session_date && (r.duration_seconds || r.duration));
+    return list;
   }, [rankings, filter, search, regionFilter]);
 
   const stats = useMemo(() => ({

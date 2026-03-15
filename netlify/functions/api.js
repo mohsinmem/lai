@@ -387,6 +387,7 @@ app.get('/api/analytics/global', async (req, res) => {
 
       if (hasData || verifiedOrg) {
         finalData.push({
+          id:           key,
           organization: orgName,
           region:       verifiedOrg ? verifiedOrg.region : (first?.region || 'Global'),
           industry:     first?.industry || 'General Business',
