@@ -59,10 +59,11 @@ const dimensions = [
 
 const DiagnosticPage = () => {
   const navigate = useNavigate();
-  // Steps: 0:Intro, 1:Mode, 2:Consent, 3:Context, 3.5:TeamInvite, 4:Questions, 5:Results
   const [step, setStep] = useState(0); 
   const [mode, setMode] = useState(null); // 'individual', 'team_create', 'team_join'
+  const [identity, setIdentity] = useState({ name: '', email: '' });
   const [teamCode, setTeamCode] = useState('');
+  const [teamOrgName, setTeamOrgName] = useState('');
   const [invites, setInvites] = useState(['']);
   const [consent, setConsent] = useState(false);
   const [meta, setMeta] = useState({ 
@@ -78,17 +79,32 @@ const DiagnosticPage = () => {
   const [answers, setAnswers] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reportId, setReportId] = useState(null);
+  const [serverTeamCode, setServerTeamCode] = useState('');
 
   const totalQuestions = dimensions.length * 2;
   const currentGlobalIndex = currentDimIndex * 2 + currentQIndex;
 
-  // Generate a random team code for creators
+  // v1.8.0: Handle Join Link and Initial State
   useEffect(() => {
-    if (step === 1 && mode === 'team_create' && !teamCode) {
-      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-      setTeamCode(code);
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('team');
+    if (code) {
+      setMode('team_join');
+      setTeamCode(code.toUpperCase());
+      setStep(1); // Jump to mode to confirm joining
+      
+      // Fetch team context if code provided
+      fetch(`/.netlify/functions/api/teams/${code}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.organization_name) {
+            setTeamOrgName(data.organization_name);
+            setMeta(prev => ({ ...prev, organization_name: data.organization_name }));
+          }
+        })
+        .catch(err => console.error('Team verify error:', err));
     }
-  }, [step, mode]);
+  }, []);
 
   const handleAnswer = (value) => {
     const dimId = dimensions[currentDimIndex].id;
@@ -111,15 +127,22 @@ const DiagnosticPage = () => {
     
     const overallScore = calculateOverallScore();
     const resultData = {
-      ...meta,
+      name: identity.name,
+      email: identity.email,
+      organization_name: meta.organization_name,
+      industry: meta.industry,
+      region: meta.region,
+      role_level: meta.role_level,
+      org_size: meta.org_size,
       participation_mode: mode,
-      team_code: teamCode,
+      team_code: mode === 'team_join' ? teamCode : null, // team_create generates code on server
       overall_score: overallScore,
       signal_detection_score: calculateDimScore('signal_detection'),
       cognitive_framing_score: calculateDimScore('cognitive_framing'),
       decision_alignment_score: calculateDimScore('decision_alignment'),
       resource_calibration_score: calculateDimScore('resource_calibration'),
       integrated_responsiveness_score: calculateDimScore('integrated_responsiveness'),
+      answers, // Granular scores for variance
       metadata: {
         research_consent: consent,
         invites: mode === 'team_create' ? invites.filter(i => i) : [],
@@ -140,12 +163,13 @@ const DiagnosticPage = () => {
       if (!response.ok) throw new Error(data.error || 'Failed to submit diagnostic');
       
       setReportId(data.id);
-      setStep(5);
+      if (data.team_code) setServerTeamCode(data.team_code);
+      setStep(7);
     } catch (err) {
       console.error('Failed to save result:', err);
-      // Fallback for demo/dev if API is not available
+      // Fallback for demo
       setReportId('pending-' + Math.random().toString(36).substring(7));
-      setStep(5);
+      setStep(7);
     } finally {
       setIsSubmitting(false);
     }
@@ -210,7 +234,7 @@ const DiagnosticPage = () => {
           {step === 1 && (
             <motion.div key="mode" className="diag-card" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
               <button className="btn-back-nav" onClick={() => setStep(0)}><ChevronLeft size={16} /> Back</button>
-              <div className="step-count">Step 1 of 4</div>
+              <div className="step-count">Step 1 of 6</div>
               <h2>Participation Mode</h2>
               <p>Choose how you would like to participate in this measurement cycle.</p>
               
@@ -234,21 +258,47 @@ const DiagnosticPage = () => {
 
               {mode === 'team_join' && (
                 <div className="mode-input-row">
-                  <input type="text" placeholder="Enter Team Code" value={teamCode} onChange={(e) => setTeamCode(e.target.value.toUpperCase())} maxLength={6} />
+                  <input type="text" placeholder="Enter Team Code" value={teamCode} onChange={(e) => setTeamCode(e.target.value.toUpperCase())} maxLength={8} />
+                  {teamOrgName && <div className="team-found-label">Joining: <strong>{teamOrgName}</strong></div>}
                 </div>
               )}
 
               <div className="diag-actions">
-                <button disabled={!mode || (mode === 'team_join' && teamCode.length < 6)} onClick={() => setStep(2)} className="btn-institutional primary">Continue</button>
+                <button disabled={!mode || (mode === 'team_join' && teamCode.length < 4)} onClick={() => setStep(2)} className="btn-institutional primary">Continue</button>
               </div>
             </motion.div>
           )}
 
-          {/* STEP 2: RESEARCH CONSENT */}
+          {/* STEP 2: IDENTITY */}
           {step === 2 && (
+            <motion.div key="identity" className="diag-card" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <button className="btn-back-nav" onClick={() => setStep(1)}><ChevronLeft size={16} /> Back</button>
+              <div className="step-count">Step 2 of 6</div>
+              <h2>Identify Yourself</h2>
+              <p>Reports and invitations are linked to your professional identity.</p>
+              
+              <div className="meta-grid">
+                <div className="form-group">
+                  <label>Full Name</label>
+                  <input type="text" placeholder="Your Name" value={identity.name} onChange={(e) => setIdentity({...identity, name: e.target.value})} />
+                </div>
+                <div className="form-group">
+                  <label>Professional Email</label>
+                  <input type="email" placeholder="you@org.com" value={identity.email} onChange={(e) => setIdentity({...identity, email: e.target.value})} />
+                </div>
+              </div>
+
+              <div className="diag-actions">
+                <button disabled={!identity.name || !identity.email || !identity.email.includes('@')} onClick={() => setStep(3)} className="btn-institutional primary">Continue</button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* STEP 3: RESEARCH CONSENT */}
+          {step === 3 && (
             <motion.div key="consent" className="diag-card" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
               <button className="btn-back-nav" onClick={() => setStep(1)}><ChevronLeft size={16} /> Back</button>
-              <div className="step-count">Step 2 of 4</div>
+              <div className="step-count">Step 3 of 6</div>
               <h2>Research Consent</h2>
               <p>Institutional measurement relies on data completeness and integrity.</p>
               
@@ -263,23 +313,28 @@ const DiagnosticPage = () => {
               </div>
 
               <div className="diag-actions">
-                <button disabled={!consent} onClick={() => setStep(3)} className="btn-institutional primary">I Agree</button>
+                <button disabled={!consent} onClick={() => setStep(4)} className="btn-institutional primary">I Agree</button>
               </div>
             </motion.div>
           )}
 
-          {/* STEP 3: CONTEXT FIELDS */}
-          {step === 3 && (
+          {/* STEP 4: CONTEXT FIELDS */}
+          {step === 4 && (
             <motion.div key="context" className="diag-card" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-              <button className="btn-back-nav" onClick={() => setStep(2)}><ChevronLeft size={16} /> Back</button>
-              <div className="step-count">Step 3 of 4</div>
-              <h2>Context Fields</h2>
+              <button className="btn-back-nav" onClick={() => setStep(3)}><ChevronLeft size={16} /> Back</button>
+              <div className="step-count">Step 4 of 6</div>
+              <h2>Context Metadata</h2>
               <p>Meta-data helps us provide accurate benchmarking for your role and organization.</p>
               
               <div className="meta-grid">
                 <div className="form-group">
-                  <label>Organization Name</label>
-                  <input type="text" placeholder="e.g. Modern Logistics" value={meta.organization_name} onChange={(e) => setMeta({...meta, organization_name: e.target.value})} />
+                  <label>Organization Name {mode === 'team_create' && <span className="text-red-500">*</span>}</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Modern Logistics" 
+                    value={meta.organization_name} 
+                    onChange={(e) => setMeta({...meta, organization_name: e.target.value})} 
+                  />
                 </div>
                 <div className="form-group">
                   <label>Industry</label>
@@ -327,8 +382,8 @@ const DiagnosticPage = () => {
 
               <div className="diag-actions">
                 <button 
-                  disabled={!meta.organization_name || !meta.industry || !meta.role_level || !meta.org_size} 
-                  onClick={() => setStep(mode === 'team_create' ? 3.5 : 4)} 
+                  disabled={ (mode === 'team_create' && !meta.organization_name) || !meta.industry || !meta.role_level || !meta.org_size} 
+                  onClick={() => setStep(mode === 'team_create' ? 5 : 6)} 
                   className="btn-institutional primary"
                 >
                   Continue
@@ -337,20 +392,18 @@ const DiagnosticPage = () => {
             </motion.div>
           )}
 
-          {/* STEP 3.5: TEAM INVITATIONS */}
-          {step === 3.5 && (
+          {/* STEP 5: TEAM CONFIGURATION */}
+          {step === 5 && (
             <motion.div key="invites" className="diag-card" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-              <button className="btn-back-nav" onClick={() => setStep(3)}><ChevronLeft size={16} /> Back</button>
-              <div className="step-count">Team Configuration</div>
-              <h2>Invite Your Leadership Team</h2>
-              <p>Measure the alignment of your leadership system by observing multiple perceptions.</p>
+              <button className="btn-back-nav" onClick={() => setStep(4)}><ChevronLeft size={16} /> Back</button>
+              <div className="step-count">Step 5 of 6</div>
+              <h2>Team Configuration</h2>
+              <p>Measure the alignment of your leadership system by inviting multiple perspectives.</p>
               
-              <div className="team-code-badge">
-                <div className="badge-label">SHARE TEAM CODE</div>
-                <div className="code-display">
-                  <span>{teamCode}</span>
-                  <button className="btn-copy" onClick={() => navigator.clipboard.writeText(teamCode)}><LinkIcon size={14} /></button>
-                </div>
+              <div className="team-intro-graphic">
+                <Users size={48} className="text-teal mb-4" />
+                <h3>Enable Team Analysis</h3>
+                <p className="text-sm text-slate-500">A unique Team Code will be generated after you complete the diagnostic. You can invite colleagues now or share the link later.</p>
               </div>
 
               <div className="invites-list">
@@ -368,19 +421,19 @@ const DiagnosticPage = () => {
               </div>
 
               <div className="diag-actions">
-                <button onClick={() => setStep(4)} className="btn-institutional primary">Finalize and Start</button>
+                <button onClick={() => setStep(6)} className="btn-institutional primary">Continue to Assessment</button>
               </div>
             </motion.div>
           )}
 
-          {/* STEP 4: DIAGNOSTIC QUESTIONS */}
-          {step === 4 && (
+          {/* STEP 6: DIAGNOSTIC QUESTIONS */}
+          {step === 6 && (
             <motion.div key="questions" className="diag-card questions" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <div className="diag-progress">
                 <div className="diag-progress-bar">
                   <div className="fill" style={{ width: `${(currentGlobalIndex / totalQuestions) * 100}%` }}></div>
                 </div>
-                <div className="diag-progress-label">Dimension {currentDimIndex + 1} of 5 · {dimensions[currentDimIndex].name}</div>
+                <div className="diag-progress-label">Question {currentGlobalIndex + 1} of {totalQuestions} · {dimensions[currentDimIndex].name}</div>
               </div>
 
               <div className="question-content">
@@ -403,13 +456,13 @@ const DiagnosticPage = () => {
               <button className="btn-back-nav" onClick={() => {
                 if (currentQIndex > 0) setCurrentQIndex(0);
                 else if (currentDimIndex > 0) { setCurrentDimIndex(currentDimIndex - 1); setCurrentQIndex(1); }
-                else setStep(mode === 'team_create' ? 3.5 : 3);
+                else setStep(mode === 'team_create' ? 5 : 4);
               }}><ChevronLeft size={16} /> Previous Question</button>
             </motion.div>
           )}
 
-          {/* STEP 5: RESULTS (PLACEHOLDER FOR PART 1 REPORT) */}
-          {step === 5 && (
+          {/* STEP 7: RESULTS */}
+          {step === 7 && (
             <motion.div key="results" className="diag-card results-preview" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
               <div className="results-intro">
                 <CheckCircle2 size={48} className="text-teal" />
@@ -417,10 +470,21 @@ const DiagnosticPage = () => {
                 <p>Establishing your institutional profile...</p>
               </div>
               
+              {serverTeamCode && (
+                <div className="team-code-badge success">
+                  <div className="badge-label">YOUR TEAM CODE</div>
+                  <div className="code-display">
+                    <span>{serverTeamCode}</span>
+                    <button className="btn-copy" onClick={() => navigator.clipboard.writeText(serverTeamCode)}><LinkIcon size={14} /></button>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-2">Share this code with colleagues to enable team alignment variance analysis.</p>
+                </div>
+              )}
+
               <div className="report-access-card">
                 <div className="access-info">
                   <h3>Leadership Adaptiveness Profile</h3>
-                  <p>Your institutional research brief has been generated.</p>
+                  <p>Your individual Perception Profile has been generated.</p>
                 </div>
                 <Link to={`/report/perception/${reportId}`} className="btn-institutional primary">View Research Brief <ArrowRight size={18} /></Link>
               </div>
@@ -429,15 +493,15 @@ const DiagnosticPage = () => {
                 <div className="info-node">
                   <Mail size={20} />
                   <div>
-                    <strong>Email Confirmation</strong>
-                    <span>A link to your persistent report has been sent to your registered organization record.</span>
+                    <strong>Report Persistence</strong>
+                    <span>A secure link to your persistent report has been sent to {identity.email}.</span>
                   </div>
                 </div>
                 <div className="info-node">
-                  <Sparkles size={20} className="text-amber-500" />
+                  <TrendingUp size={20} className="text-teal" />
                   <div>
-                    <strong>Upcoming Behavioral Observation</strong>
-                    <span>In 3 days, you will receive an invitation to observe these perceptions in a behavioral simulation.</span>
+                    <strong>Team Alignment</strong>
+                    <span>Team variance insights will activate once 3 members complete the assessment.</span>
                   </div>
                 </div>
               </div>
@@ -488,12 +552,14 @@ const DiagnosticPage = () => {
         .mode-btn strong { display: block; margin: 1rem 0 0.5rem; font-size: 1.1rem; color: #0f172a; }
         .mode-btn span { font-size: 0.8rem; color: #64748b; }
 
-        .mode-input-row { margin-bottom: 2rem; }
+        .mode-input-row { margin-bottom: 2rem; position: relative; }
         .mode-input-row input { 
           width: 100%; padding: 1.25rem; border: 1px solid #e2e8f0; border-radius: 12px;
           font-family: monospace; font-size: 1.5rem; text-align: center; letter-spacing: 0.5rem;
-          color: #0f172a;
+          color: #0f172a; outline: none; transition: border-color 0.2s;
         }
+        .mode-input-row input:focus { border-color: #2dd4bf; }
+        .team-found-label { position: absolute; bottom: -1.5rem; left: 0; width: 100%; text-align: center; font-size: 0.75rem; color: #64748b; }
 
         /* Consent Box */
         .consent-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 2rem; margin: 2rem 0; }
@@ -516,10 +582,14 @@ const DiagnosticPage = () => {
         .form-group input:focus { border-color: #2dd4bf; }
 
         /* Team Invite */
-        .team-code-badge { background: #0f172a; color: white; padding: 2rem; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin: 2rem 0; }
-        .badge-label { font-size: 0.6rem; font-weight: 900; letter-spacing: 2px; color: #94a3b8; }
+        .team-intro-graphic { text-align: center; margin-bottom: 2.5rem; background: #f8fafc; padding: 2rem; border-radius: 16px; border: 1px solid #e2e8f0; }
+        .team-intro-graphic h3 { font-size: 1.25rem; margin-bottom: 0.5rem; color: #0f172a; }
+
+        .team-code-badge { background: #0f172a; color: white; padding: 2rem; border-radius: 16px; display: flex; flex-direction: column; align-items: center; margin: 2rem 0; }
+        .team-code-badge.success { background: #14b8a6; }
+        .badge-label { font-size: 0.6rem; font-weight: 900; letter-spacing: 2px; color: rgba(255,255,255,0.6); margin-bottom: 1rem; }
         .code-display { display: flex; align-items: center; gap: 1rem; font-size: 2.5rem; font-weight: 900; font-family: monospace; letter-spacing: 0.5rem; }
-        .btn-copy { background: rgba(255,255,255,0.1); border: none; color: white; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .btn-copy { background: rgba(255,255,255,0.1); border: none; color: white; width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         
         .invites-list { margin-bottom: 2.5rem; }
         .label-row { display: flex; justify-content: space-between; margin-bottom: 0.75rem; }

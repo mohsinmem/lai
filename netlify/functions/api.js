@@ -173,18 +173,80 @@ app.get('/api/intelligence/history', async (req, res) => {
   }
 });
 
-// Diagnostic Results
+// Team Verification — Check if a team code exists and return context
+app.get('/api/teams/:code', async (req, res) => {
+  const { code } = req.params;
+  try {
+    const { data, error } = await supabaseClient
+      .from('teams')
+      .select('id, organization_name')
+      .eq('team_code', code.toUpperCase())
+      .single();
+
+    if (error) throw new Error('Team not found');
+    res.json(data);
+  } catch (err) {
+    res.status(404).json({ error: err.message });
+  }
+});
+
+// Diagnostic Results — Enhanced for Team Insights
 app.get('/api/diagnostic/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const { data, error } = await supabaseClient
+    // 1. Fetch individual result
+    const { data: individual, error: individualError } = await supabaseClient
       .from('diagnostic_results')
-      .select('*')
+      .select('*, participants(name, email)')
       .eq('id', id)
       .single();
 
-    if (error) throw error;
-    res.json(data);
+    if (individualError) throw individualError;
+
+    let teamData = null;
+    if (individual.team_id) {
+      // 2. Fetch team average and count
+      const { data: teamMembers, error: teamError } = await supabaseClient
+        .from('diagnostic_results')
+        .select('signal_detection_score, cognitive_framing_score, decision_alignment_score, resource_calibration_score, integrated_responsiveness_score')
+        .eq('team_id', individual.team_id);
+
+      if (!teamError && teamMembers.length > 0) {
+        const count = teamMembers.length;
+        const averages = {
+          signal_detection: teamMembers.reduce((a, b) => a + Number(b.signal_detection_score), 0) / count,
+          cognitive_framing: teamMembers.reduce((a, b) => a + Number(b.cognitive_framing_score), 0) / count,
+          decision_alignment: teamMembers.reduce((a, b) => a + Number(b.decision_alignment_score), 0) / count,
+          resource_calibration: teamMembers.reduce((a, b) => a + Number(b.resource_calibration_score), 0) / count,
+          integrated_responsiveness: teamMembers.reduce((a, b) => a + Number(b.integrated_responsiveness_score), 0) / count
+        };
+
+        // 3. Calculate Variance if 3+ members
+        let variance = null;
+        if (count >= 3) {
+          const { data: rawResponses } = await supabaseClient
+            .from('responses')
+            .select('dimension_id, score')
+            .eq('team_id', individual.team_id);
+          
+          if (rawResponses) {
+            variance = {};
+            const dims = ['signal_detection', 'cognitive_framing', 'decision_alignment', 'resource_calibration', 'integrated_responsiveness'];
+            dims.forEach(dim => {
+              const scores = rawResponses.filter(r => r.dimension_id === dim).map(r => r.score);
+              if (scores.length > 0) {
+                const diff = Math.max(...scores) - Math.min(...scores);
+                variance[dim] = diff <= 2 ? 'Low alignment variance' : diff <= 5 ? 'Moderate alignment variance' : 'High alignment variance';
+              }
+            });
+          }
+        }
+
+        teamData = { count, averages, variance };
+      }
+    }
+
+    res.json({ ...individual, team_insights: teamData });
   } catch (err) {
     console.error('Diagnostic Fetch Error:', err.message);
     res.status(404).json({ error: 'Report not found' });
@@ -193,17 +255,79 @@ app.get('/api/diagnostic/:id', async (req, res) => {
 
 app.post('/api/diagnostic', async (req, res) => {
   const { 
-    organization_name, industry, region,
+    name, email, organization_name, industry, region,
     overall_score, signal_detection_score, cognitive_framing_score, resource_calibration_score, decision_alignment_score, integrated_responsiveness_score,
-    email, participation_mode, team_code, role_level, org_size, metadata = {}
+    participation_mode, team_code, role_level, org_size, answers = {}, metadata = {}
   } = req.body;
 
-  if (!organization_name) {
-    return res.status(400).json({ error: 'Organization name is required' });
+  if (!email || !name) {
+    return res.status(400).json({ error: 'Name and Email are required' });
   }
   
   try {
-    // v1.3.3: Auto-map by domain if email is provided
+    let team_id = null;
+    let final_team_code = team_code;
+
+    // 1. Team Logic
+    if (participation_mode === 'team_create') {
+      // Generate unique code LAI-XXXX
+      final_team_code = `LAI-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      const { data: newTeam, error: teamError } = await supabaseClient
+        .from('teams')
+        .insert([{ 
+          team_code: final_team_code, 
+          organization_name: organization_name || null,
+          creator_email: email 
+        }])
+        .select()
+        .single();
+      if (teamError) throw teamError;
+      team_id = newTeam.id;
+    } else if (participation_mode === 'team_join' && team_code) {
+      const { data: existingTeam } = await supabaseClient
+        .from('teams')
+        .select('id')
+        .eq('team_code', team_code.toUpperCase())
+        .single();
+      if (existingTeam) team_id = existingTeam.id;
+    }
+
+    // 2. Identity Upsert
+    const { data: participant, error: partError } = await supabaseClient
+      .from('participants')
+      .upsert([{
+        name,
+        email,
+        organization: organization_name,
+        industry,
+        role_level,
+        org_size,
+        region: region || 'Global',
+        team_id
+      }], { onConflict: 'email, team_id' })
+      .select()
+      .single();
+
+    if (partError) throw partError;
+
+    // 3. Save granular responses for variance analysis
+    const responseRows = Object.keys(answers).map(key => {
+      const [dim, qIdx] = key.split('_');
+      return {
+        participant_id: participant.id,
+        team_id,
+        dimension_id: dim,
+        question_index: parseInt(qIdx),
+        score: parseInt(answers[key])
+      };
+    });
+
+    if (responseRows.length > 0) {
+      const { error: respError } = await supabaseClient.from('responses').insert(responseRows);
+      if (respError) console.error('Response save error:', respError);
+    }
+
+    // 4. v1.3.3: Auto-map by domain if email is provided
     let verified_entity_id = null;
     if (email && email.includes('@')) {
       const domain = email.split('@')[1].toLowerCase();
@@ -216,10 +340,13 @@ app.post('/api/diagnostic', async (req, res) => {
       if (org) verified_entity_id = org.id;
     }
 
-    const { data, error } = await supabaseClient
+    // 5. Final Diagnostic Result
+    const { data: finalResult, error: diagError } = await supabaseClient
       .from('diagnostic_results')
       .insert([{
-        organization_name,
+        participant_id: participant.id,
+        team_id,
+        organization_name: organization_name || (participation_mode === 'team_join' ? 'Team Member' : 'Individual'),
         industry,
         region: region || 'Global',
         overall_score: overall_score || 0,
@@ -233,11 +360,9 @@ app.post('/api/diagnostic', async (req, res) => {
           ...metadata,
           source: 'Perceptual',
           participation_mode: participation_mode || 'Individual',
-          team_code: team_code || null,
+          team_code: final_team_code || null,
           role_level: role_level || 'Not Specified',
           org_size: org_size || 'Not Specified',
-          industry: industry || 'Other',
-          region: region || 'Global',
           is_published: true,
           auto_mapped: !!verified_entity_id,
           recorded_at: new Date().toISOString()
@@ -245,8 +370,14 @@ app.post('/api/diagnostic', async (req, res) => {
       }])
       .select();
 
-    if (error) throw error;
-    res.status(201).json({ id: data[0].id, auto_mapped: !!verified_entity_id });
+    if (diagError) throw diagError;
+
+    res.status(201).json({ 
+      id: finalResult[0].id, 
+      team_code: final_team_code,
+      team_id,
+      participant_id: participant.id 
+    });
   } catch (err) {
     console.error('Supabase Save Error:', err.message);
     res.status(500).json({ error: `Save failed: ${err.message}` });

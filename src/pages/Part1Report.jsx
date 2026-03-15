@@ -15,30 +15,33 @@ const dimensions = [
   { id: 'integrated_responsiveness', name: 'Integrated Responsiveness', desc: 'Systemic translation of strategy into behavioral output.' }
 ];
 
-const RadarChart = ({ scores }) => {
+const RadarChart = ({ scores, teamScores }) => {
   const size = 300;
   const center = size / 2;
   const radius = size * 0.4;
   const angleStep = (Math.PI * 2) / 5;
 
-  // Grid lines
+  // Grid levels
   const gridLevels = [0.2, 0.4, 0.6, 0.8, 1.0];
   
   const getPoint = (score, index, r = radius) => {
     const angle = angleStep * index - Math.PI / 2;
-    const factor = score / 100;
+    const factor = (score || 0) / 100;
     const x = center + r * factor * Math.cos(angle);
     const y = center + r * factor * Math.sin(angle);
     return { x, y };
   };
 
-  const points = dimensions.map((d, i) => getPoint(scores[d.id] || 0, i));
+  const points = dimensions.map((d, i) => getPoint(scores[d.id], i));
   const pointsString = points.map(p => `${p.x},${p.y}`).join(' ');
+
+  const teamPoints = teamScores ? dimensions.map((d, i) => getPoint(teamScores[d.id], i)) : null;
+  const teamPointsString = teamPoints ? teamPoints.map(p => `${p.x},${p.y}`).join(' ') : null;
 
   return (
     <div className="radar-container">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        {/* Grid */}
+        {/* Grid lines */}
         {gridLevels.map((level, i) => (
           <polygon
             key={i}
@@ -52,47 +55,55 @@ const RadarChart = ({ scores }) => {
           />
         ))}
         
-        {/* Axis Lines */}
+        {/* Axis lines */}
         {dimensions.map((_, i) => {
           const p = getPoint(100, i);
-          return (
-            <line key={i} x1={center} y1={center} x2={p.x} y2={p.y} stroke="#e2e8f0" strokeWidth="1" />
-          );
+          return <line key={i} x1={center} y1={center} x2={p.x} y2={p.y} stroke="#f1f5f9" strokeWidth="1" />;
         })}
 
-        {/* Data Area */}
+        {/* Team Average Area (Backend Layer) */}
+        {teamPointsString && (
+          <motion.polygon
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            points={teamPointsString}
+            fill="rgba(15, 23, 42, 0.1)"
+            stroke="#0f172a"
+            strokeWidth="2"
+            strokeDasharray="4 2"
+          />
+        )}
+
+        {/* Individual Data Area (Fore Layer) */}
         <motion.polygon
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           points={pointsString}
           fill="rgba(20, 184, 166, 0.2)"
           stroke="#14b8a6"
-          strokeWidth="2"
+          strokeWidth="3"
         />
 
         {/* Labels */}
         {dimensions.map((d, i) => {
-          const p = getPoint(115, i);
+          const p = getPoint(120, i);
           return (
             <text
-              key={i}
-              x={p.x}
-              y={p.y}
-              fontSize="8"
-              fontWeight="800"
-              fill="#94a3b8"
-              textAnchor="middle"
-              dominantBaseline="middle"
-              className="radar-label"
+              key={i} x={p.x} y={p.y} fontSize="8" fontWeight="800" fill="#94a3b8"
+              textAnchor="middle" dominantBaseline="middle" className="radar-label"
               style={{ textTransform: 'uppercase', letterSpacing: '1px' }}
             >
-              {d.name.split(' ').map((word, wi) => (
-                <tspan key={wi} x={p.x} dy={wi === 0 ? 0 : 10}>{word}</tspan>
-              ))}
+              {d.name.split(' ').map((word, wi) => <tspan key={wi} x={p.x} dy={wi === 0 ? 0 : 10}>{word}</tspan>)}
             </text>
           );
         })}
       </svg>
+      {teamScores && (
+        <div className="radar-legend">
+          <div className="legend-item"><span className="dot perception" /> Individual</div>
+          <div className="legend-item"><span className="dot team" /> Team Avg</div>
+        </div>
+      )}
     </div>
   );
 };
@@ -111,23 +122,8 @@ const Part1Report = () => {
         const report = await response.json();
         setData(report);
 
-        // If team code exists, fetch team average
-        if (report.metadata?.team_code) {
-          // Note: In a production environment, this would also be a backend endpoint
-          // For now, we keep the aggregation logic or move it to a new endpoint if needed.
-          const { data: teamResults } = await supabase
-            .from('diagnostic_results')
-            .select('*')
-            .eq('metadata->>team_code', report.metadata.team_code);
-          
-          if (teamResults && teamResults.length > 1) {
-            const avg = dimensions.reduce((acc, dim) => {
-              const field = `${dim.id}_score`;
-              acc[dim.id] = teamResults.reduce((sum, r) => sum + (r[field] || 0), 0) / teamResults.length;
-              return acc;
-            }, {});
-            setTeamData({ count: teamResults.length, scores: avg });
-          }
+        if (report.team_insights) {
+          setTeamData(report.team_insights);
         }
       } catch (err) {
         console.error('Report Error:', err);
@@ -188,7 +184,7 @@ const Part1Report = () => {
         <section className="report-section profile-section">
           <div className="chart-area">
              <h2>Your Adaptiveness Profile</h2>
-             <RadarChart scores={scores} />
+             <RadarChart scores={scores} teamScores={teamData?.averages} />
              <p className="chart-caption">Scores reflect self-perception across five dimensions of leadership adaptiveness.</p>
           </div>
           
@@ -216,15 +212,41 @@ const Part1Report = () => {
               <h2>Leadership System Perception</h2>
             </div>
             <p>Aggregated results from <strong>{teamData.count}</strong> leadership team members.</p>
-            <div className="team-comparison-grid">
+            
+            <div className="team-insights-grid">
                <div className="comparison-card">
                   <h4>Perception Alignment</h4>
                   <p>Leadership teams frequently discover differences in how members perceive decision alignment and responsiveness.</p>
+                  
+                  {teamData.variance ? (
+                    <div className="variance-list">
+                      {Object.keys(teamData.variance).map(dimId => (
+                        <div key={dimId} className="variance-item">
+                          <span className="v-dim">{dimensions.find(d => d.id === dimId)?.name}</span>
+                          <span className={`v-status ${teamData.variance[dimId].toLowerCase().includes('high') ? 'high' : 'low'}`}>
+                            {teamData.variance[dimId]}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="variance-threshold-message">
+                      <Info size={14} /> Alignment variance analysis activates after 3 members complete the assessment.
+                    </div>
+                  )}
                </div>
-               <div className="variance-check">
-                  {/* Simplistic variance logic */}
-                  <div className="v-label">System Variance</div>
-                  <div className="v-value">MODERATE</div>
+               
+               <div className="team-stats">
+                  <div className="stat-node">
+                     <div className="s-label">Team Average</div>
+                     <div className="s-value">
+                       {Math.round(Object.values(teamData.averages).reduce((a, b) => a + b, 0) / 5)}
+                     </div>
+                  </div>
+                  <div className="stat-node">
+                     <div className="s-label">Members</div>
+                     <div className="s-value">{teamData.count}</div>
+                  </div>
                </div>
             </div>
           </section>
@@ -300,7 +322,12 @@ const Part1Report = () => {
         /* Profile Section */
         .profile-section { display: grid; grid-template-columns: 350px 1fr; gap: 4rem; align-items: center; }
         .chart-area { text-align: center; }
-        .radar-container { margin: 2rem 0; }
+        .radar-legend { display: flex; justify-content: center; gap: 2rem; margin-top: 2rem; }
+        .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: #64748b; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .dot.perception { background: #14b8a6; }
+        .dot.team { background: #0f172a; border: 1px dashed #0f172a; }
+
         .chart-caption { font-size: 0.75rem; color: #94a3b8; font-style: italic; }
         
         .dimension-list { display: flex; flex-direction: column; gap: 1.5rem; }
@@ -315,11 +342,22 @@ const Part1Report = () => {
         /* Team Section */
         .section-header-row { display: flex; align-items: center; gap: 1rem; color: #14b8a6; margin-bottom: 1rem; }
         .section-header-row h2 { flex: 1; border: none; margin: 0; }
-        .team-comparison-grid { display: grid; grid-template-columns: 1fr 200px; gap: 2rem; margin-top: 2rem; }
-        .comparison-card { background: #f8fafc; padding: 2rem; border-radius: 16px; h4 { margin-top: 0; font-size: 1rem; } }
-        .variance-check { background: #0f172a; color: white; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .v-label { font-size: 0.6rem; color: #94a3b8; font-weight: 800; letter-spacing: 2px; margin-bottom: 0.5rem; }
-        .v-value { font-size: 1.5rem; font-weight: 900; }
+        .team-insights-grid { display: grid; grid-template-columns: 1fr 200px; gap: 2rem; margin-top: 2rem; }
+        .comparison-card { background: #f8fafc; padding: 2.5rem; border-radius: 20px; h4 { margin-top: 0; font-size: 1.1rem; } }
+        
+        .variance-list { margin-top: 2rem; display: flex; flex-direction: column; gap: 1rem; }
+        .variance-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; }
+        .v-dim { font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; }
+        .v-status { font-size: 0.8rem; font-weight: 900; }
+        .v-status.high { color: #f43f5e; }
+        .v-status.low { color: #10b981; }
+        
+        .variance-threshold-message { margin-top: 2rem; padding: 1rem; background: #f1f5f9; border-radius: 8px; font-size: 0.8rem; color: #64748b; display: flex; gap: 0.5rem; align-items: center; }
+
+        .team-stats { display: flex; flex-direction: column; gap: 1.5rem; }
+        .stat-node { background: #0f172a; color: white; padding: 1.5rem; border-radius: 16px; text-align: center; }
+        .s-label { font-size: 0.6rem; color: #94a3b8; font-weight: 800; letter-spacing: 2px; margin-bottom: 0.5rem; text-transform: uppercase; }
+        .s-value { font-size: 2rem; font-weight: 900; font-family: monospace; }
 
         /* Research Insight */
         .research-insight { background: #0f172a; color: white; padding: 3rem; border-radius: 24px; }
