@@ -151,7 +151,7 @@ const DiagnosticPage = () => {
     };
 
     try {
-      const response = await fetch('/.netlify/functions/api/diagnostic', {
+      const response = await fetch('/api/diagnostic', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

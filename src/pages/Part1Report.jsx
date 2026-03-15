@@ -117,7 +117,7 @@ const Part1Report = () => {
   useEffect(() => {
     const fetchReport = async () => {
       try {
-        const response = await fetch(`/.netlify/functions/api/diagnostic/${id}`);
+        const response = await fetch(`/api/diagnostic/${id}`);
         if (!response.ok) throw new Error('Report not found');
         const report = await response.json();
         setData(report);
