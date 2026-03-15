@@ -85,21 +85,93 @@ li {
   animation: fadeIn 0.8s ease forwards;
 }
 
-/* Section Header Utility */
-.section-header {
-  text-align: center;
-  margin-bottom: var(--spacing-lg);
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
+/* Institutional Typography */
+.eyebrow { 
+  display: block; 
+  font-size: 0.8rem; 
+  font-weight: 800; 
+  text-transform: uppercase; 
+  letter-spacing: 2px; 
+  margin-bottom: 1rem; 
+  color: var(--teal);
 }
 
-.section-header h2 {
-  font-size: 2.5rem;
-  margin-bottom: var(--spacing-sm);
+.section-h2 { 
+  font-size: 2.75rem; 
+  font-weight: 800; 
+  color: var(--navy); 
+  margin-bottom: 1.5rem; 
 }
 
-.section-header p {
-  color: var(--text-muted);
-  font-size: 1.1rem;
+.large-p { 
+  font-size: 1.35rem; 
+  line-height: 1.7; 
+  color: #475569; 
 }
+
+.body-p { 
+  font-size: 1.15rem; 
+  line-height: 1.7; 
+  color: #475569; 
+}
+
+/* Institutional Buttons */
+.btn-institutional { 
+  padding: 1rem 2.5rem; 
+  border-radius: 12px; 
+  font-weight: 800; 
+  text-decoration: none; 
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border: none;
+  font-family: var(--font-sans);
+}
+
+.btn-institutional.primary { 
+  background: #2dd4bf; 
+  color: #0a192f !important; 
+}
+
+.btn-institutional.primary:hover { 
+  background: #14b8a6; 
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(20, 184, 166, 0.2);
+}
+
+.btn-institutional.outline { 
+  background: transparent;
+  border: 1px solid #cbd5e1; 
+  color: #0a192f; 
+}
+
+.btn-institutional.outline.white { 
+  color: white !important; 
+  border-color: rgba(255,255,255,0.4); 
+}
+
+.btn-institutional.outline.white:hover { 
+  background: rgba(255,255,255,0.1); 
+  border-color: white; 
+}
+
+.btn-institutional:hover { 
+  transform: translateY(-2px); 
+  box-shadow: 0 10px 20px rgba(0,0,0,0.05); 
+}
+
+.btn-institutional:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Utility Classes */
+.text-teal { color: #2dd4bf; }
+.bg-navy { background: #0a192f; }
+.bg-light { background: #f8fafc; }
+.text-white { color: white; }
