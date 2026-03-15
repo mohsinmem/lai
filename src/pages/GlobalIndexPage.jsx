@@ -53,31 +53,28 @@ const formatDate = (val) => {
   return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
-const REGION_COORDINATES = {
-  'North America': [38, 18], 'USA': [38, 20], 'Canada': [25, 20],
-  'Latin America': [65, 30], 'South America': [70, 32], 'Brazil': [68, 35],
-  'Western Europe': [32, 48], 'Europe': [30, 50], 'UK': [28, 46], 'Germany': [30, 51],
-  'Eastern Europe': [32, 56], 'Middle East': [45, 58],
-  'Africa': [60, 52], 'Nigeria': [55, 48], 'South Africa': [82, 58],
-  'South Asia': [48, 72], 'India': [52, 74],
-  'East Asia': [38, 85], 'China': [40, 82], 'Japan': [35, 88],
-  'APAC': [55, 88], 'LATAM': [65, 30],
-  'Global': [50, 50],
+const REGION_HUBS = {
+  'North America': { top: 35, left: 15 },
+  'Western Europe': { top: 30, left: 48 },
+  'East Asia': { top: 38, left: 82 },
+  'South Asia': { top: 50, left: 70 },
+  'APAC': { top: 60, left: 85 },
+  'Americas': { top: 55, left: 25 },
+  'Global': { top: 45, left: 50 }
 };
 
 function getDotPosition(org) {
   const hash = org.organization.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  let regionKey = Object.keys(REGION_COORDINATES).find(k => org.region?.toLowerCase().includes(k.toLowerCase())) || 'Global';
-  if (regionKey === 'Global') {
-    const keys = Object.keys(REGION_COORDINATES).filter(k => k !== 'Global');
-    regionKey = keys[hash % keys.length];
-  }
-  let [baseTop, baseLeft] = REGION_COORDINATES[regionKey];
-  const jitterTop = ((hash * 13) % 8) - 4;
-  const jitterLeft = ((hash * 7) % 8) - 4;
+  let regionKey = Object.keys(REGION_HUBS).find(k => (org.region || '').toLowerCase().includes(k.toLowerCase())) || 'Global';
+  
+  const hub = REGION_HUBS[regionKey];
+  // Tighter jitter for clustering
+  const jitterTop = ((hash * 13) % 15) - 7.5;
+  const jitterLeft = ((hash * 7) % 15) - 7.5;
+  
   return {
-    top: Math.max(5, Math.min(92, baseTop + jitterTop)),
-    left: Math.max(2, Math.min(96, baseLeft + jitterLeft)),
+    top: Math.max(5, Math.min(92, hub.top + jitterTop)),
+    left: Math.max(2, Math.min(96, hub.left + jitterLeft)),
   };
 }
 
@@ -666,46 +663,55 @@ const GlobalIndexPage = () => {
         @keyframes antifragilePulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
       `}</style>
       
-      {/* GLOBAL ADAPTIVENESS RADAR (Phase 3C Recalibrated) */}
-      <div style={{ height: '65vh', background: '#0a192f', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        {/* Geospatial Structure: Lat/Long Grid */}
-        <div style={{ position: 'absolute', inset: 0, opacity: 0.05, pointerEvents: 'none' }}>
-           <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 50% 50%, transparent 0%, transparent 1px, #fff 1px)', backgroundSize: '100px 100px' }} />
-           {[...Array(6)].map((_, i) => (
-             <div key={i} style={{ position: 'absolute', left: `${(i+1)*16.6}%`, top: 0, bottom: 0, width: 1, background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.3), transparent)' }} />
+      {/* GLOBAL ADAPTIVENESS RADAR (Phase 3 Instrument Refactor) */}
+      <div style={{ height: '45vh', background: '#0a0f1d', position: 'relative', overflow: 'hidden', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+        {/* Geospatial Structure: Faint Continents & Precision Grid */}
+        <div style={{ position: 'absolute', inset: 0, opacity: 0.1, pointerEvents: 'none' }}>
+           {/* High Precision Grid */}
+           <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)', backgroundSize: '50px 50px' }} />
+           
+           {/* Latitude/Longitude Anchors */}
+           {[...Array(12)].map((_, i) => (
+             <div key={i} style={{ position: 'absolute', left: `${i*8.33}%`, top: 0, bottom: 0, width: 1, background: 'rgba(255,255,255,0.03)' }} />
            ))}
-           {[...Array(4)].map((_, i) => (
-             <div key={i} style={{ position: 'absolute', top: `${(i+1)*20}%`, left: 0, right: 0, height: 1, background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent)' }} />
+           {[...Array(8)].map((_, i) => (
+             <div key={i} style={{ position: 'absolute', top: `${i*12.5}%`, left: 0, right: 0, height: 1, background: 'rgba(255,255,255,0.03)' }} />
            ))}
         </div>
 
-        <div style={{ position: 'absolute', inset: 0, opacity: 0.08 }}>
-           <Globe size={1200} style={{ margin: '0 auto' }} />
+        {/* Faint Geographic Silhouettes (Globe as proxy for world structure) */}
+        <div style={{ position: 'absolute', inset: 0, opacity: 0.05, filter: 'blur(1px)' }}>
+           <Globe size={1100} style={{ margin: '-10% auto 0' }} />
         </div>
 
-        {/* Global Entity Pings (Observatory Layer) */}
-        {!loading && displayed.slice(0, 100).map((org, i) => (
+        {/* Clustered Intelligence Nodes */}
+        {!loading && displayed.slice(0, 150).map((org, i) => (
           <MapDot key={org.organization + i} org={org} selected={focusDot?.organization === org.organization} onClick={setFocusDot} />
         ))}
 
-        {/* Radar Map Signal Pings (Restrained Observer) */}
+        {/* Signal Hotspot Pings */}
         {Object.values(recentEvents).filter(ev => 
           (ev.severity === 'major' || ev.severity === 'critical') && 
-          (ev.confidence > 0.75) &&
-          (ev.source_tier <= 2)
+          (ev.confidence > 0.7)
         ).map((ev, i) => (
-          <motion.div key={i} initial={{ scale: 0, opacity: 1 }} animate={{ scale: 12, opacity: 0 }} transition={{ duration: 5 }} style={{ position: 'absolute', width: 40, height: 40, borderRadius: '50%', border: `2px solid ${ev.severity === 'critical' ? '#d946ef' : '#2dd4bf'}`, zIndex: 10, pointerEvents: 'none' }} />
+          <motion.div key={i} initial={{ scale: 0, opacity: 1 }} animate={{ scale: 8, opacity: 0 }} transition={{ duration: 3 }} style={{ position: 'absolute', width: 40, height: 40, borderRadius: '50%', border: `1.5px solid ${ev.severity === 'critical' ? '#d946ef' : '#f59e0b'}`, zIndex: 10, pointerEvents: 'none', top: '40%', left: '50%' }} />
         ))}
 
-        <div style={{ position: 'relative', zIndex: 5, textAlign: 'center', maxWidth: 800, padding: '0 2rem' }}>
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ stiffness: 80, damping: 25 }}>
-            <span style={{ display: 'inline-block', padding: '0.4rem 1.4rem', color: '#2dd4bf', fontSize: '0.9rem', fontWeight: 900, letterSpacing: '8px', textTransform: 'uppercase', marginBottom: '1.5rem' }}>
-              GLOBAL ADAPTIVENESS RADAR
-            </span>
-            <p style={{ color: '#94a3b8', fontSize: '1.1rem', lineHeight: 1.6, maxWidth: '600px', margin: '0 auto', fontWeight: 400, letterSpacing: '0.5px' }}>
-              Live spatial view of institutional turbulence, signal density, and adaptive movement.
-            </p>
-          </motion.div>
+        {/* Monitor Labels (Top Left) */}
+        <div style={{ position: 'absolute', top: '24px', left: '32px', zIndex: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#2dd4bf', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '8px' }}>
+            <Activity size={12} strokeWidth={3} /> GLOBAL ADAPTIVENESS RADAR
+          </div>
+          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.6rem', fontWeight: 600, letterSpacing: '1px' }}>
+            Live spatial view of institutional turbulence & signal density
+          </div>
+        </div>
+
+        {/* Status Overlay (Bottom Right) */}
+        <div style={{ position: 'absolute', bottom: '24px', right: '32px', zIndex: 20, textAlign: 'right' }}>
+           <div style={{ color: '#2dd4bf', fontSize: '0.55rem', fontWeight: 900, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: 1.5 }}>
+             Confidence: 94.2% · Precision Mode Active
+           </div>
         </div>
       </div>
 
