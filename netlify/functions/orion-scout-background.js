@@ -1,6 +1,7 @@
-const chromium = require('@sparticuz/chromium');
-const puppeteer = require('puppeteer-core');
-const { supabase } = require('./lib/supabase.cjs');
+import chromium from '@sparticuz/chromium';
+import puppeteer from 'puppeteer-core';
+import { supabase } from './lib/supabase.cjs';
+import crypto from 'crypto';
 
 /**
  * Orion Scout v3 — Volatility-Hunting Intelligence Scraper
@@ -45,30 +46,57 @@ async function detectVolatileSectors(page) {
   return scores.sort((a, b) => b.count - a.count).slice(0, 2).map(s => s.sector);
 }
 
-// ── AFERR Score Calculator ────────────────────────────────────────────────────
-function calculateAFERR(signals, newsItems) {
-  const freshNews = newsItems.filter(i => i.date?.includes('hour') || i.date?.includes('min') || i.date?.includes('day'));
-  const activationScore = Math.min(100, 40 + (freshNews.length * 10));
+// ── AFERR Signal Extractor ───────────────────────────────────────────────────
+function extractAFERRSignals(newsItems, company) {
+  const signals = [];
+  
+  newsItems.forEach(item => {
+    const text = item.text.toLowerCase();
+    
+    // Check against each AFERR category
+    Object.keys(AFERR_WORDS).forEach(category => {
+      const dimensionMap = {
+        proactive:       'cognitive_framing',
+        reactive:        'cognitive_framing',
+        experimentation: 'resource_calibration',
+        reflection:      'integrated_responsiveness'
+      };
 
-  let pro = 0, re = 0, exp = 0, ref = 0;
-  AFERR_WORDS.proactive.forEach(w       => pro += (signals.match(new RegExp(`\\b${w}\\b`, 'gi')) || []).length);
-  AFERR_WORDS.reactive.forEach(w        => re  += (signals.match(new RegExp(`\\b${w}\\b`, 'gi')) || []).length);
-  AFERR_WORDS.experimentation.forEach(w => exp += (signals.match(new RegExp(`\\b${w}\\b`, 'gi')) || []).length);
-  AFERR_WORDS.reflection.forEach(w      => ref += (signals.match(new RegExp(`\\b${w}\\b`, 'gi')) || []).length);
+      AFERR_WORDS[category].forEach(word => {
+        if (text.includes(word)) {
+          const fingerprint = crypto.createHash('md5')
+            .update(`${company.id || 'sector'}-${category}-${word}-${item.text.substring(0, 100)}`)
+            .digest('hex');
 
-  const total = pro + re;
-  const forecastingScore   = total === 0 ? 50 : Math.min(100, (pro / (total + 1)) * 120);
-  const experimentScore    = Math.min(100, 40 + exp * 8);
-  const categoriesFound    = [pro > 0, re > 0, exp > 0].filter(Boolean).length;
-  const realizationScore   = 40 + categoriesFound * 20;
-  const reflectionScore    = Math.min(100, 40 + ref * 12);
-  const overallScore       = Math.round((activationScore + forecastingScore + experimentScore + realizationScore + reflectionScore) / 5);
+          signals.push({
+            institution_id:   company.id,
+            institution_name: company.name,
+            region:           company.region,
+            sector:           company.industry,
+            signal_type:      `Keyword Match: ${word}`,
+            dimension_impacted: dimensionMap[category] || 'signal_detection',
+            source_tier:      3, // Perceptual/Environmental
+            source_name:      'Google News',
+            impact_direction: category === 'reactive' ? -1 : 1,
+            impact_strength:  1.5, // Standard keyword strength
+            confidence:       0.7, // Scraped confidence
+            fingerprint:      fingerprint,
+            metadata: {
+              source_text: item.text.substring(0, 200),
+              category,
+              matched_word: word
+            }
+          });
+        }
+      });
+    });
+  });
 
-  return { activationScore, forecastingScore, experimentScore, realizationScore, reflectionScore, overallScore, hits: pro + re + exp + ref, framing: pro > re ? 'proactive' : 'reactive' };
+  return signals;
 }
 
 // ── Main Handler ──────────────────────────────────────────────────────────────
-exports.handler = async (event) => {
+export const handler = async (event) => {
   const startTime = Date.now();
 
   let body = {};
@@ -78,14 +106,14 @@ exports.handler = async (event) => {
   const hasSecret  = event.headers?.['x-orion-secret'] === process.env.ORION_SECRET || body.secret === process.env.ORION_SECRET;
   if (!isCron && !hasSecret) return { statusCode: 401, body: 'Unauthorized' };
 
-  console.log('🔭 Orion Scout v3 initiated (Volatility-Hunting mode)…');
+  console.log('🔭 Orion Scout v3 initiated (Signal Emission mode)…');
 
   let browser = null;
   try {
     // 1. Fetch anchor org targets
     let { data: targets } = await supabase
       .from('organizations')
-      .select('name, region, industry')
+      .select('id, name, region, industry')
       .order('last_scanned', { ascending: true, nullsFirst: true })
       .limit(5);
 
@@ -107,21 +135,17 @@ exports.handler = async (event) => {
     await page.setExtraHTTPHeaders({ 'Accept-Language': 'en-US,en;q=0.9' });
 
     // 3. Detect volatile sectors (Volatility Hunting)
-    console.log('📡 Detecting volatile sectors…');
     const volatileSectors = await detectVolatileSectors(page);
-    console.log(`🔥 Volatile sectors detected: ${volatileSectors.join(', ')}`);
-
     const activeSectors = [...new Set([...ANCHOR_SECTORS, ...volatileSectors])];
 
-    // Log volatile sectors to scraper_logs for the dashboard
     await supabase.from('scraper_logs').insert([{
       status: 'info',
-      summary: `Orion Scout: Active sector rotation → ${activeSectors.join(' | ')}. Volatile: ${volatileSectors.join(', ')}`,
+      summary: `Orion Scout: Active sector rotation → ${activeSectors.join(' | ')}`,
       duration_ms: Date.now() - startTime
     }]);
 
     // 4. Scan anchor orgs
-    const scanResults = [];
+    const allEmittedSignals = [];
     for (const company of targets) {
       console.log(`🔍 Scanning: ${company.name}`);
       const url = `https://www.google.com/search?q=${encodeURIComponent(company.name + ' leadership strategy news 2026')}&tbm=nws`;
@@ -130,74 +154,89 @@ exports.handler = async (event) => {
 
       const newsItems = await page.evaluate(() =>
         Array.from(document.querySelectorAll('div.So033e, div.nS4uS')).map(el => ({
-          text: el.innerText?.toLowerCase() || '',
+          text: el.innerText || '',
           date: el.querySelector('span')?.innerText || ''
         }))
       );
 
-      const signals = newsItems.map(i => i.text).join(' ');
-      const aferr   = calculateAFERR(signals, newsItems);
+      const signals = extractAFERRSignals(newsItems, company);
 
-      const { error } = await supabase.from('diagnostic_results').insert([{
-        organization_name:              company.name,
-        region:                         company.region || 'Global',
-        overall_lai_score:              aferr.overallScore,
-        signal_interpretation_score:        parseFloat(aferr.forecastingScore.toFixed(2)),
-        cognitive_framing_score:    parseFloat(aferr.activationScore.toFixed(2)),
-        resource_reallocation_score:       parseFloat(aferr.experimentScore.toFixed(2)),
-        decision_alignment_score:         parseFloat(aferr.realizationScore.toFixed(2)),
-        execution_responsiveness_score:  parseFloat(aferr.reflectionScore.toFixed(2)),
-        metadata: {
-          source:          'orion-scout-v3',
-          sector_rotation: activeSectors,
-          volatile:        volatileSectors,
-          proactive_ratio: aferr.framing,
-          timestamp:       new Date().toISOString()
+      if (signals.length > 0) {
+        // Soft Deduplication: Check if fingerprints already exist
+        const fingerprints = signals.map(s => s.fingerprint);
+        const { data: existing } = await supabase
+          .from('signals_normalized')
+          .select('fingerprint')
+          .in('fingerprint', fingerprints);
+
+        const existingSet = new Set(existing?.map(e => e.fingerprint) || []);
+        const newSignals = signals.filter(s => !existingSet.has(s.fingerprint));
+
+        if (newSignals.length > 0) {
+          const { error } = await supabase.from('signals_normalized').insert(newSignals);
+          if (!error) {
+            await supabase.from('organizations').update({ last_scanned: new Date().toISOString() }).eq('id', company.id);
+            allEmittedSignals.push(...newSignals);
+          }
         }
-      }]);
-
-      if (!error) {
-        await supabase.from('organizations').update({ last_scanned: new Date().toISOString() }).eq('name', company.name);
       }
-
-      scanResults.push({ company: company.name, score: aferr.overallScore, framing: aferr.framing, hits: aferr.hits });
     }
 
-    // 5. Also scan one volatile-sector news page for signal extraction
+    // 5. Also scan volatile-sector news for broad trend signals
     for (const sector of volatileSectors) {
       const url = `https://www.google.com/search?q=${encodeURIComponent(sector + ' leadership adaptiveness strategies 2026')}&tbm=nws`;
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
-      const text = await page.evaluate(() => document.body?.innerText?.toLowerCase() || '');
-      const aferr = calculateAFERR(text, []);
+      
+      const newsItems = await page.evaluate(() =>
+        Array.from(document.querySelectorAll('div.So033e, div.nS4uS')).map(el => ({
+          text: el.innerText || '',
+          date: el.querySelector('span')?.innerText || ''
+        }))
+      );
+
+      const signals = extractAFERRSignals(newsItems, { name: sector, industry: sector, region: 'Global' });
+      if (signals.length > 0) {
+        // Sector-level signals are stored with null institution_id but sector context
+        const sectorSignals = signals.map(s => ({ ...s, institution_id: null }));
+        await supabase.from('signals_normalized').insert(sectorSignals);
+        allEmittedSignals.push(...sectorSignals);
+      }
 
       await supabase.from('scraper_logs').insert([{
         status: 'signal',
-        summary: `GLAM Signal | Sector: ${sector} | AFERR Velocity: ${aferr.overallScore} | Framing: ${aferr.framing}`,
+        summary: `Orion Sector Scout | Sector: ${sector} | Signals Found: ${signals.length}`,
         duration_ms: Date.now() - startTime
       }]);
     }
 
-    // 6. Audit log
+    // 6. Final Audit log
     const duration = Date.now() - startTime;
     await supabase.from('scraper_logs').insert([{
       status: 'success',
       duration_ms: duration,
-      signals_found: scanResults.reduce((a, c) => a + c.hits, 0),
-      summary: `Orion Scout v3 complete. Sectors: ${activeSectors.join(', ')}. Orgs: ${scanResults.map(r => `${r.company}(${r.score})`).join(', ')}`
+      signals_found: allEmittedSignals.length,
+      summary: `Orion Scout v3 complete. Sectors: ${activeSectors.join(', ')}. Signals Emitted: ${allEmittedSignals.length}`
     }]);
 
-    return { statusCode: 200, body: JSON.stringify({ sectors: activeSectors, results: scanResults }) };
+    return { 
+      statusCode: 200, 
+      body: JSON.stringify({ 
+        status: 'success',
+        sectors: activeSectors, 
+        signals_emitted: allEmittedSignals.length 
+      }) 
+    };
 
   } catch (err) {
     console.error('Orion Scout Failure:', err);
     await supabase.from('scraper_logs').insert([{ status: 'error', summary: `Orion Scout v3 Error: ${err.message}` }]);
-    throw err;
+    return { statusCode: 500, body: err.message };
   } finally {
     if (browser) await browser.close();
   }
 };
 
 // Netlify 60-minute Cron Activation
-exports.config = {
+export const config = {
   schedule: "@hourly"
 };

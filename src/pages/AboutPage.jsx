@@ -174,7 +174,7 @@ const AboutPage = () => {
               subtitle="[ XX ] Lead Behavioral Scientists & Psychometricians"
               icon={Microscope}
               items={[
-                { name: "Mohsin Memon", expertise: "Developer of the AFERR Model & Founder of Evivve – Expertise: Gamified Behavioral Science & Applied Behavioral Intelligence" },
+                { name: "[Insert Name]", expertise: "Developer of the AFERR Model & Founder of Evivve – Expertise: Gamified Behavioral Science & Applied Behavioral Intelligence" },
                 { name: "[Insert Name]", expertise: "Expertise: Cognitive Load & Executive Decision Making" },
                 { name: "[Insert Name]", expertise: "Expertise: Organizational Psychology" },
                 { name: "(... space for additional researchers...)", expertise: "" },

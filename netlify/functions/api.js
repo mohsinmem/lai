@@ -84,6 +84,21 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// Signal Attribution — Fetch evidence signals for a specific event
+app.get('/api/intelligence/history', async (req, res) => {
+  const { id } = req.query;
+  if (!id) return res.json([]);
+  const { data, error } = await supabaseClient
+    .from('institution_score_history')
+    .select('*')
+    .eq('institution_id', id)
+    .order('recorded_at', { ascending: true })
+    .limit(30);
+    
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
 // Scraper Logs Audit
 app.get('/api/scraper-logs', async (req, res) => {
   try {
@@ -98,6 +113,63 @@ app.get('/api/scraper-logs', async (req, res) => {
   } catch (err) {
     console.error('Logs Error:', err);
     res.json([]);
+  }
+});
+
+// Signal Attribution — Fetch evidence signals for a specific event
+app.get('/api/intelligence/attribution', async (req, res) => {
+  const { ids } = req.query;
+  if (!ids) return res.json([]);
+  
+  const idArray = ids.split(',').filter(id => id.length > 30); // Basic UUID check
+  
+  try {
+    const { data, error } = await supabaseClient
+      .from('signals_normalized')
+      .select('*')
+      .in('signal_id', idArray);
+
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    console.error('Attribution Error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Intelligence Events — Chronological feed for a specific institution
+app.get('/api/intelligence/events', async (req, res) => {
+  const { id } = req.query;
+  if (!id) return res.json([]);
+  try {
+    const { data, error } = await supabaseClient
+      .from('intelligence_events')
+      .select('*')
+      .eq('institution_id', id)
+      .order('event_timestamp', { ascending: false })
+      .limit(20);
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Intelligence History — Historical snapshots for sparklines
+app.get('/api/intelligence/history', async (req, res) => {
+  const { id } = req.query;
+  if (!id) return res.json([]);
+  try {
+    const { data, error } = await supabaseClient
+      .from('institution_score_history')
+      .select('*')
+      .eq('institution_id', id)
+      .order('recorded_at', { ascending: true })
+      .limit(30);
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

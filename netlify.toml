@@ -6,6 +6,12 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+[functions."reordering-worker"]
+  schedule = "*/1 * * * *"
+
+[functions."scoring-worker"]
+  schedule = "*/15 * * * *"
+
 [functions."orion-scout-background"]
   schedule = "*/15 * * * *"
 

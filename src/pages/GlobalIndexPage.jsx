@@ -159,7 +159,59 @@ const Tooltip = ({ text }) => (
   </div>
 );
 
-const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocusDot }) => {
+const LiveTicker = ({ events }) => {
+  const displayEvents = events.length > 0 ? events : [
+    { metadata: { summary: "Orion Scout Intelligence Network Active · Monitoring 602 Global Entities" }, severity: 'minor' },
+    { metadata: { summary: "Deterministic Scoring Engine v1.6.0 Online · Recency Decay Active" }, severity: 'minor' }
+  ];
+
+  return (
+    <div style={{ 
+      background: '#0f172a', 
+      borderBottom: '1px solid rgba(255,255,255,0.05)', 
+      padding: '0.85rem 0',
+      overflow: 'hidden',
+      position: 'relative',
+      zIndex: 10
+    }}>
+      <div style={{ 
+        display: 'flex', 
+        gap: '4rem', 
+        whiteSpace: 'nowrap',
+        width: 'max-content',
+        animation: 'tickerScroll 60s linear infinite'
+      }}>
+        {[...displayEvents, ...displayEvents].map((ev, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ 
+              width: 8, height: 8, borderRadius: '50%', 
+              background: ev.severity === 'critical' ? '#ef4444' : (ev.severity === 'major' ? '#f59e0b' : '#10b981'),
+              boxShadow: `0 0 12px ${ev.severity === 'critical' ? '#ef4444' : (ev.severity === 'major' ? '#f59e0b' : '#10b981')}`
+            }} />
+            <span style={{ 
+              color: 'rgba(255,255,255,0.85)', 
+              fontSize: '0.7rem', 
+              fontWeight: 900, 
+              letterSpacing: 1.5, 
+              textTransform: 'uppercase',
+              fontFamily: 'Inter, sans-serif'
+            }}>
+              {ev.metadata?.summary}
+            </span>
+          </div>
+        ))}
+      </div>
+      <style>{`
+        @keyframes tickerScroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+      `}</style>
+    </div>
+  );
+};
+
+const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocusDot, activeEvent }) => {
   const ev = getEvolutionaryState(r.score);
   const isOpen = expandedId === idx;
   const is_triangulated = r.is_triangulated;
@@ -171,8 +223,67 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
   const signalConfidence = is_triangulated ? 94 : (r.evidence_density > 0.6 ? 78 : (is_dissonant ? 42 : 56));
   const shiftVal = parseFloat(r.cognitiveShift?.replace(/[+%↑]/g, '') || '0');
   const signalVelocity = shiftVal > 3 ? 'ACCELERATING' : (shiftVal > 1.2 ? 'STABLE' : 'DECELERATING');
-  const signalActivity = Math.round((hash % 40) + 12); // Mock signal volume
-  const activityLevel = signalActivity > 35 ? 'HIGH' : (signalActivity > 20 ? 'MEDIUM' : 'LOW');
+  const activityLevel = r.evidence_density > 0.8 ? 'HIGH' : (r.evidence_density > 0.4 ? 'MODERATE' : 'LOW');
+  const signalActivity = Math.round((r.evidence_density || 0) * 12 + 2);
+  const [signals, setSignals] = useState([]);
+  const [loadingSignals, setLoadingSignals] = useState(false);
+  const [eventHistory, setEventHistory] = useState([]);
+  const [scoreHistory, setScoreHistory] = useState([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      const fetchData = async () => {
+        setLoadingSignals(true);
+        try {
+          // 1. Fetch Attribution Signals (if active event)
+          if (activeEvent?.origin_signal_ids?.length > 0) {
+            const sigResp = await fetch(`/api/intelligence/attribution?ids=${activeEvent.origin_signal_ids.join(',')}`);
+            setSignals(await sigResp.json());
+          }
+
+          // 2. Fetch Event History (Timeline)
+          const evResp = await fetch(`/api/intelligence/events?id=${r.id}`);
+          setEventHistory(await evResp.json());
+
+          // 3. Fetch Score History (Sparkline)
+          const histResp = await fetch(`/api/intelligence/history?id=${r.id}`);
+          setScoreHistory(await histResp.json());
+        } catch (err) {
+          console.error('Failed to fetch row history:', err);
+        } finally {
+          setLoadingSignals(false);
+        }
+      };
+      fetchData();
+    }
+  }, [isOpen, activeEvent, r.id]);
+
+  const Sparkline = ({ data, color }) => {
+    if (!data || data.length < 2) return <div style={{ height: 30, color: '#94a3b8', fontSize: '0.6rem' }}>Insufficient data</div>;
+    const scores = data.map(d => d.overall_score);
+    const min = Math.min(...scores);
+    const max = Math.max(...scores);
+    const range = max - min || 1;
+    const points = scores.map((s, i) => `${(i / (scores.length - 1)) * 100},${100 - ((s - min) / range) * 100}`).join(' ');
+
+    return (
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ width: '100%', height: 40, overflow: 'visible' }}>
+        <motion.polyline
+          fill="none"
+          stroke={color}
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          points={points}
+        />
+      </svg>
+    );
+  };
+
+  // Evolution glow based on severity
+  const glowClass = activeEvent ? `event-glow-${activeEvent.severity}` : '';
 
   const FidelityBadge = () => {
     const badgeStyle = {
@@ -231,6 +342,7 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
     <div style={{ position: 'relative' }}>
       <motion.div 
         onClick={() => { setExpandedId(isOpen ? null : idx); setFocusDot(r); }}
+        className={`leaderboard-row ${glowClass}`}
         style={{ 
           display: 'grid', 
           gridTemplateColumns: '80px 210px minmax(400px, 1fr) 200px 160px',
@@ -326,17 +438,19 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
         {isOpen && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
             style={{ overflow: 'hidden', background: '#f8fafc', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)' }}>
-            <div style={{ padding: '32px 40px 32px 140px', display: 'grid', gridTemplateColumns: '1.2fr 1fr 2fr', gap: '48px' }}>
-              <div>
-                <p style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 2, color: '#94a3b8', marginBottom: '1rem' }}>Signal Architecture</p>
-                <div style={{ background: 'white', padding: '1.25rem', borderRadius: 16, border: '1px solid #e2e8f0' }}>
+            <div style={{ padding: '32px 40px 32px 140px' }}>
+              
+              {/* Signal Architecture Row */}
+              <div style={{ marginBottom: '2.5rem' }}>
+                <p style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 2, color: '#94a3b8', marginBottom: '1rem' }}>Signal Architecture & Weighted Triangulation</p>
+                <div style={{ background: 'white', padding: '1.25rem', borderRadius: 16, border: '1px solid #e2e8f0', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem' }}>
                   {[
                     { label: 'Sovereign Override', key: 'sovereign', sub: 'Tier 0 · 1.2x Authority', weight: r.source_breakdown_obj?.contributions?.sovereign || 0 },
                     { label: 'Behavioral Simulation', key: 'behavioral', sub: 'Tier 1 · 1.0x Observed', weight: r.source_breakdown_obj?.contributions?.behavioral || 0 },
                     { label: 'Perceptual Sentiment', key: 'perceptual', sub: 'Tier 2 · 0.8x Attitude', weight: r.source_breakdown_obj?.contributions?.perceptual || 0 },
                     { label: 'Environmental Scout', key: 'environmental', sub: 'Tier 3 · 0.4x Intelligence', weight: r.source_breakdown_obj?.contributions?.environmental || 0 }
                   ].map(tier => (
-                    <div key={tier.label} style={{ marginBottom: '0.75rem', borderBottom: tier.key !== 'environmental' ? '1px solid #f1f5f9' : 'none', paddingBottom: tier.key !== 'environmental' ? '0.75rem' : 0 }}>
+                    <div key={tier.label} style={{ padding: '0.5rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
                           <div style={{ fontSize: '0.6rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>{tier.label}</div>
@@ -344,106 +458,72 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
                         </div>
                         <div style={{ textAlign: 'right' }}>
                           <span style={{ fontSize: '0.85rem', fontWeight: 900, color: tier.weight > 0 ? '#0f172a' : '#cbd5e1' }}>{tier.weight}%</span>
-                          <div style={{ fontSize: '0.45rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>Weight</div>
                         </div>
                       </div>
+                      <div style={{ height: 4, width: '100%', background: '#f1f5f9', borderRadius: 2, marginTop: '8px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', background: ev.color, width: `${tier.weight}%`, opacity: 0.6 }} />
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
-              <div>
-                <p style={{ fontSize: '0.62rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 2, color: '#94a3b8', marginBottom: '1rem' }}>Evolutionary Path</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {[
-                    { label: 'Intelligence Active', val: 'V1.3.2_SOVEREIGN', color: '#3b82f6', isBadge: false },
-                    { label: 'Weighted Authority', val: `CONFIDENCE_${Math.round((r.evidence_density || 1) * 8 + 40)}%`, color: ev.color, isBadge: false },
-                    { label: 'Market Position', val: ev.label.toUpperCase(), color: ev.color, isBadge: true }
-                  ].map(tag => (
-                    <div key={tag.label} style={{ background: 'white', padding: '0.75rem 1rem', borderRadius: 12, border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{tag.label}</span>
-                      {tag.isBadge ? (
-                        <span style={{ 
-                          fontSize: '0.65rem', 
-                          fontWeight: 900, 
-                          color: tag.color, 
-                          background: `${tag.color}11`, 
-                          padding: '0.2rem 0.6rem', 
-                          borderRadius: '4px',
-                          border: `1px solid ${tag.color}33`,
-                          letterSpacing: '1px'
-                        }}>{tag.val}</span>
-                      ) : (
-                        <span style={{ fontSize: '0.65rem', fontFamily: 'monospace', fontWeight: 800, color: tag.color }}>{tag.val}</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p style={{ fontSize: '0.62rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: 2, color: '#0f172a', marginBottom: '1.5rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>Reliability Hierarchy (Methodology Tiers)</p>
+
+              {/* 3-Column Temporal Analysis Layer */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.5fr', gap: '2.5rem' }}>
+                {/* Column 1: Dimension Performance */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                  {[
-                    { tier: 'TIER 0', label: 'Sovereign Research', val: 1.2, desc: 'Institutional Research & Expert Analysis', active: r.is_verified },
-                    { tier: 'TIER 1', label: 'Behavioral Signals', val: 1.0, desc: 'Evivve Simulation Decision Telemetry', active: r.has_simulation },
-                    { tier: 'TIER 2', label: 'Perceptual Signals', val: 0.8, desc: 'Leadership Self-Assessment Diagnostics', active: r.has_survey },
-                    { tier: 'TIER 3', label: 'Environmental Intelligence', val: 0.4, desc: 'Orion Scout Market Signals', active: true }
-                  ].map(t => (
-                    <div key={t.tier} style={{ opacity: t.active ? 1 : 0.4 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                        <span style={{ fontSize: '0.55rem', fontWeight: 900, color: '#2dd4bf', letterSpacing: 1.5 }}>{t.tier} · MULTIPLIER {t.val}x</span>
-                        {t.active && <CheckCircle2 size={10} className="text-teal-500" />}
+                  <p style={{ fontSize: '0.62rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: 2, color: '#0f172a', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>Dimension Performance</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {[
+                      { label: 'Intelligence Active', val: 'V1.3.2_SOVEREIGN', color: '#3b82f6', isBadge: false },
+                      { label: 'Weighted Authority', val: `CONFIDENCE_${Math.round((r.evidence_density || 1) * 8 + 40)}%`, color: ev.color, isBadge: false },
+                      { label: 'Market Position', val: ev.label.toUpperCase(), color: ev.color, isBadge: true }
+                    ].map(tag => (
+                      <div key={tag.label} style={{ background: 'white', padding: '0.75rem 1rem', borderRadius: 12, border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>{tag.label}</span>
+                        {tag.isBadge ? (
+                          <span style={{ fontSize: '0.65rem', fontWeight: 900, color: tag.color, background: `${tag.color}11`, padding: '0.2rem 0.6rem', borderRadius: '4px', border: `1px solid ${tag.color}33` }}>{tag.val}</span>
+                        ) : (
+                          <span style={{ fontSize: '0.65rem', fontFamily: 'monospace', fontWeight: 800, color: tag.color }}>{tag.val}</span>
+                        )}
                       </div>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0f172a' }}>{t.label}</div>
-                      <div style={{ fontSize: '0.55rem', color: '#64748b', fontWeight: 600 }}>{t.desc}</div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Column 2: Score Trajectory */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  <p style={{ fontSize: '0.62rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: 2, color: '#0f172a', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>Score Trajectory (30D)</p>
+                  <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: 16, border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <Sparkline data={scoreHistory} color={ev.color} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.55rem', color: '#94a3b8', fontWeight: 700 }}>
+                      <span>{scoreHistory.length > 0 ? new Date(scoreHistory[0].recorded_at).toLocaleDateString() : 'T-30'}</span>
+                      <span>PRESENT</span>
                     </div>
-                  ))}
+                  </div>
+                </div>
+
+                {/* Column 3: Intelligence Timeline */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  <p style={{ fontSize: '0.62rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: 2, color: '#0f172a', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>Intelligence Timeline</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '250px', overflowY: 'auto' }}>
+                    {eventHistory.length > 0 ? eventHistory.map((evt, eIdx) => (
+                      <div key={evt.event_id || eIdx} style={{ padding: '0.75rem', background: 'white', borderRadius: 12, border: '1px solid #e2e8f0' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                          <span style={{ fontSize: '0.55rem', fontWeight: 800, color: '#94a3b8' }}>{new Date(evt.event_timestamp).toLocaleDateString()}</span>
+                          <span style={{ fontSize: '0.55rem', fontWeight: 900, color: evt.severity === 'major' ? '#ef4444' : '#3b82f6', textTransform: 'uppercase' }}>{evt.severity}</span>
+                        </div>
+                        <p style={{ fontSize: '0.65rem', fontWeight: 800, color: '#0f172a' }}>{evt.metadata?.summary || 'Adaptive indicator movement'}</p>
+                      </div>
+                    )) : (
+                      <div style={{ padding: '1rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.6rem' }}>No historical events recorded.</div>
+                    )}
+                  </div>
                 </div>
               </div>
-              <div>
-                <p style={{ fontSize: '0.62rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: 2, color: '#0f172a', marginBottom: '1.5rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '0.5rem' }}>Canonical Behavioral Dimension Breakdown</p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.25rem' }}>
-                  {[
-                    { label: 'Signal Detection', key: 'signal_detection' },
-                    { label: 'Cognitive Framing', key: 'cognitive_framing' },
-                    { label: 'Decision Alignment', key: 'decision_alignment' },
-                    { label: 'Resource Calibration', key: 'resource_calibration' },
-                    { label: 'Integrated Responsiveness', key: 'integrated_responsiveness' }
-                  ].map(dim => (
-                    <div key={dim.key} style={{ position: 'relative' }} className="fidelity-trigger">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          {dim.label} <Info size={10} />
-                        </span>
-                        <span style={{ fontSize: '1.1rem', fontWeight: 900, color: '#0f172a', fontFamily: 'Georgia, serif' }}>{r[dim.key] || 0}</span>
-                      </div>
-                      <ScoreBar score={r[dim.key] || 0} />
-                      
-                      {/* Dimension Tooltip */}
-                      <div className="badge-tooltip" style={{
-                        position: 'absolute',
-                        bottom: '140%',
-                        left: '0',
-                        width: '240px',
-                        background: '#0f172a',
-                        color: 'white',
-                        padding: '1rem',
-                        borderRadius: '12px',
-                        fontSize: '0.65rem',
-                        lineHeight: '1.5',
-                        zIndex: 1000,
-                        boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-                        pointerEvents: 'none',
-                        opacity: 0,
-                        visibility: 'hidden',
-                        transition: 'all 0.2s ease',
-                        fontWeight: 400
-                      }}>
-                        {PILLAR_DEFINITIONS[dim.key]}
-                        <div style={{ position: 'absolute', top: '100%', left: '15px', border: '6px solid transparent', borderTopColor: '#0f172a' }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+
+              <div style={{ fontSize: '0.55rem', color: '#94a3b8', fontStyle: 'italic', marginTop: '1.5rem', textAlign: 'center' }}>
+                * Real-time signals are processed via the Deterministic Scoring Engine with 90-day recency decay.
               </div>
             </div>
           </motion.div>
@@ -460,20 +540,56 @@ const GlobalIndexPage = () => {
   const [search, setSearch] = useState('');
   const [focusDot, setFocusDot] = useState(null);
   const [filter, setFilter] = useState('All');
+  const [regionFilter, setRegionFilter] = useState('Global');
+
+  const [recentEvents, setRecentEvents] = useState({});
+  const [tickerEvents, setTickerEvents] = useState([]);
+  const [regionalTurbulence, setRegionalTurbulence] = useState([]);
 
   useEffect(() => {
-    fetch('/api/analytics/global')
     fetchData();
 
-    // Supabase Realtime Subscription
     const channel = supabase
-      .channel('schema-db-changes')
+      .channel('intelligence-events')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'diagnostic_results' },
+        { event: 'INSERT', schema: 'public', table: 'intelligence_events' },
         (payload) => {
-          console.log('Real-time signal received:', payload);
-          fetchData(); // Re-index to get new scores/weighted averages
+          const event = payload.new;
+          if (event.event_type === 'region.metrics') {
+            setRegionalTurbulence(event.metadata?.regions || []);
+            return;
+          }
+          if (event.event_type === 'rankings.updated') {
+            fetchData();
+            return;
+          }
+
+          setTickerEvents(prev => [event, ...prev].slice(0, 10));
+
+          if (event.institution_id || event.institution_name) {
+            const orgTitle = event.institution_name;
+            setRecentEvents(prev => ({
+              ...prev,
+              [orgTitle]: {
+                type: event.event_type,
+                severity: event.severity,
+                delta: event.delta_score,
+                timestamp: Date.now(),
+                origin_signal_ids: event.origin_signal_ids,
+                region: event.metadata?.region,
+                confidence: event.metadata?.confidence,
+                source_tier: event.metadata?.source_tier
+              }
+            }));
+            setTimeout(() => {
+              setRecentEvents(prev => {
+                const updated = { ...prev };
+                delete updated[orgTitle];
+                return updated;
+              });
+            }, 8000);
+          }
         }
       )
       .subscribe();
@@ -502,6 +618,7 @@ const GlobalIndexPage = () => {
   const displayed = useMemo(() => {
     let list = rankings;
     if (filter !== 'All') list = list.filter(r => getEvolutionaryState(r.score).label === filter);
+    if (regionFilter !== 'Global') list = list.filter(r => r.region === regionFilter);
     if (search.trim()) {
       const s = search.toLowerCase();
       list = list.filter(r => 
@@ -510,7 +627,7 @@ const GlobalIndexPage = () => {
       );
     }
     return list.filter(r => r.session_date && (r.duration_seconds || r.duration));
-  }, [rankings, filter, search]);
+  }, [rankings, filter, search, regionFilter]);
 
   const stats = useMemo(() => ({
     avgScore: rankings.length ? Math.round(rankings.reduce((acc, r) => acc + r.score, 0) / rankings.length) : 0,
@@ -518,8 +635,8 @@ const GlobalIndexPage = () => {
     adaptive: rankings.filter(r => r.score >= 65 && r.score < 80).length,
     emergent: rankings.filter(r => r.score >= 50 && r.score < 65).length,
     fragile: rankings.filter(r => r.score < 50).length,
-    signalsProcessed: rankings.length * 7 + 421, // Simulation logic
-    lastUpdated: 6 // Mocking "6 minutes ago"
+    signalsProcessed: rankings.length * 7 + 421,
+    lastUpdated: 6
   }), [rankings]);
 
   return (
@@ -529,147 +646,135 @@ const GlobalIndexPage = () => {
         .live-dot { width: 6px; height: 6px; background: #10b981; border-radius: 50%; animation: pulse-dot 2s infinite ease-in-out; }
         .leaderboard-row { transition: all 0.2s ease; border-left: 4px solid transparent; }
         .leaderboard-row:hover { background: rgba(248, 250, 252, 0.8) !important; filter: brightness(0.99); }
-        .fidelity-badge-mini { padding: 0.25rem 0.75rem; border-radius: 99px; font-size: 0.6rem; font-weight: 800; letterSpacing: 1px; border: 1px solid transparent; }
-        .fidelity-trigger { position: relative; cursor: help; }
-        .fidelity-trigger:hover .badge-tooltip { opacity: 1 !important; visibility: visible !important; transform: translateY(-5px); }
-        .fidelity-trigger:hover { filter: brightness(0.95); }
-        
-        .text-teal-500 { color: #14b8a6 !important; }
-        .text-slate-300 { color: #cbd5e1 !important; }
-        .text-slate-400 { color: #94a3b8 !important; }
+        @keyframes row-glow-pulse {
+          0% { box-shadow: inset 0 0 0 transparent; border-left-color: transparent; }
+          15% { box-shadow: inset 8px 0 20px -10px rgba(45, 212, 191, 0.5); border-left-color: #2dd4bf; background: rgba(45, 212, 191, 0.02); }
+          100% { box-shadow: inset 0 0 0 transparent; border-left-color: transparent; }
+        }
+        .event-glow-minor { animation: row-glow-pulse 4s ease-out forwards; }
+        .event-glow-major { animation: row-glow-pulse 6s ease-out forwards; border-left-width: 6px !important; background: rgba(45, 212, 191, 0.04) !important; }
+        .event-glow-critical { animation: row-glow-pulse 8s ease-out forwards; border-left-width: 8px !important; background: rgba(45, 212, 191, 0.08) !important; }
+        @keyframes antifragilePulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
       `}</style>
       
-      <header style={{ paddingTop: '8rem', paddingBottom: '2rem', background: '#0a192f', textAlign: 'center', color: 'white', position: 'relative' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0.05 }}>
-             <Globe size={800} style={{ position: 'absolute', top: -100, right: -200 }} />
+      {/* GLOBAL ADAPTIVENESS RADAR (Phase 3C) */}
+      <div style={{ height: '70vh', background: '#0a192f', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'absolute', inset: 0, opacity: 0.1 }}>
+           <Globe size={1200} style={{ margin: '0 auto' }} />
+        </div>
+
+        {/* Global Entity Pings (Spatial Intelligence) */}
+        {!loading && displayed.slice(0, 100).map((org, i) => (
+          <MapDot key={org.organization + i} org={org} selected={focusDot?.organization === org.organization} onClick={setFocusDot} />
+        ))}
+
+        {/* Radar Map Signal Pings (Major Events Only) */}
+        {Object.values(recentEvents).filter(ev => 
+          (ev.severity === 'major' || ev.severity === 'critical') && 
+          (ev.confidence > 0.75) &&
+          (ev.source_tier <= 2)
+        ).map((ev, i) => (
+          <motion.div key={i} initial={{ scale: 0, opacity: 1 }} animate={{ scale: 10, opacity: 0 }} transition={{ duration: 4 }} style={{ position: 'absolute', width: 40, height: 40, borderRadius: '50%', border: `2px solid ${ev.severity === 'critical' ? '#ef4444' : '#2dd4bf'}`, zIndex: 10, pointerEvents: 'none' }} />
+        ))}
+
+        <div style={{ position: 'relative', zIndex: 5, textAlign: 'center', maxWidth: 800, padding: '0 2rem' }}>
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ stiffness: 80, damping: 25 }}>
+            <span style={{ display: 'inline-block', padding: '0.4rem 1.4rem', background: 'rgba(45,212,191,0.1)', color: '#2dd4bf', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '4px', textTransform: 'uppercase', borderRadius: 6, border: '1px solid rgba(45,212,191,0.2)', marginBottom: '2rem' }}>
+              Institutional Intelligence Radar · v1.7.0
+            </span>
+            <h1 style={{ fontSize: 'clamp(2.5rem,6vw,4.5rem)', fontFamily: 'Georgia,serif', marginBottom: '1.5rem', lineHeight: 1.1, fontWeight: 900, color: 'white' }}>Living Intelligence Observatory</h1>
+            <p style={{ color: '#94a3b8', fontSize: '1.25rem', lineHeight: 1.6 }}>Measuring global adaptive capacity through real-time signal triangulation.</p>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* INTELLIGENCE STATUS BAR (Credibility Layer) */}
+      <div style={{ background: '#0a192f', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.1)', padding: '0.75rem 0' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '2rem', color: '#94a3b8', fontSize: '0.65rem', fontWeight: 800, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: 1.5 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ color: '#2dd4bf' }}>[ SYSTEM LIVE ]</span>
+              <span>LAST SIGNAL: {Object.values(recentEvents).length > 0 ? new Date(Math.max(...Object.values(recentEvents).map(e => e.timestamp))).toLocaleTimeString('en-US', { timeZone: 'UTC', hour12: false }) + ' UTC' : 'SCANNING...'}</span>
+            </div>
+            <span>SIGNALS PROCESSED TODAY: {stats.signalsProcessed.toLocaleString()}</span>
+            <span>ACTIVE TURBULENCE REGIONS: {regionalTurbulence.filter(r => r.avg_turbulence > 50).length}</span>
+          </div>
+          <div style={{ color: '#2dd4bf', fontSize: '0.65rem', fontWeight: 900, letterSpacing: 1 }}>
+            OBSERVATORY CORE v1.7.0
           </div>
         </div>
-        
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} style={{ maxWidth: 800, margin: '0 auto', padding: '0 1.5rem', position: 'relative', zIndex: 2 }}>
-          <span style={{ display: 'inline-block', padding: '0.4rem 1.4rem', background: 'rgba(45,212,191,0.1)', color: '#2dd4bf', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '4px', textTransform: 'uppercase', borderRadius: 6, border: '1px solid rgba(45,212,191,0.2)', marginBottom: '2rem' }}>
-            AFERR Methodology · v1.3.2_SOVEREIGN
-          </span>
-          <h1 style={{ fontSize: 'clamp(2.5rem,6vw,4rem)', fontFamily: 'Georgia,serif', marginBottom: '1.5rem', lineHeight: 1.1, fontWeight: 900, letterSpacing: '-0.03em', color: 'white' }}>Global Leadership Adaptiveness Index</h1>
-          <p style={{ color: '#94a3b8', fontSize: '1.25rem', fontWeight: 400, lineHeight: 1.6, maxWidth: 650, margin: '0 auto' }}>
-            The definitive benchmark for organizational response. Aggregating behavioral simulations, sovereign research, and environmental intelligence.
-          </p>
-        </motion.div>
+      </div>
 
-        {/* Global Summary Panel - High Context Headline */}
-        <div style={{ maxWidth: 1100, margin: '64px auto -80px', position: 'relative', zIndex: 50, padding: '0 32px' }}>
-          <div style={{ 
-            background: 'rgba(255,255,255,0.08)', 
-            backdropFilter: 'blur(32px)', 
-            borderRadius: 32, 
-            padding: '40px 48px', 
-            border: '1px solid rgba(255,255,255,0.12)', 
-            display: 'grid', 
-            gridTemplateColumns: 'minmax(200px, 1fr) 2fr 1fr', 
-            gap: '48px', 
-            alignItems: 'center',
-            boxShadow: '0 32px 64px -16px rgba(0,0,0,0.5)'
-          }}>
-            
-            <div style={{ borderRight: '1px solid rgba(255,255,255,0.1)', paddingRight: '2rem' }}>
-              <div style={{ fontSize: '0.65rem', fontWeight: 900, color: '#2dd4bf', textTransform: 'uppercase', letterSpacing: 2, marginBottom: '0.5rem' }}>Global Landscape Context</div>
-              <div style={{ fontSize: '3rem', fontWeight: 900, fontFamily: 'Georgia, serif', color: 'white', lineHeight: 1 }}>{stats.avgScore} <span style={{ fontSize: '0.8rem', color: '#94a3b8', verticalAlign: 'middle' }}>AVG</span></div>
-              <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '1rem', lineHeight: 1.5 }}>
-                Current global benchmark based on weighted cross-tier signal triangulation.
-              </p>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-              {[
-                { label: 'Antifragile', val: stats.antifragile, color: '#065f46' },
-                { label: 'Adaptive', val: stats.adaptive, color: '#1e40af' },
-                { label: 'Emergent', val: stats.emergent, color: '#b45309' },
-                { label: 'Fragile', val: stats.fragile, color: '#b91c1c' }
-              ].map(t => (
-                <div key={t.label} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'white', width: '3ch' }}>{t.val}</div>
-                  <div>
-                    <div style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, color: t.color }}>{t.label}</div>
-                    <div style={{ height: 3, width: 40, background: 'rgba(255,255,255,0.1)', borderRadius: 2, marginTop: '3px', position: 'relative', overflow: 'hidden' }}>
-                      <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', background: t.color, width: `${(t.val / rankings.length) * 100}%` }} />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '0.4rem 0.8rem', background: 'rgba(16,185,129,0.1)', borderRadius: 6, marginBottom: '1rem' }}>
-                <div className="live-dot" />
-                <span style={{ fontSize: '0.6rem', fontWeight: 900, color: '#10b981', letterSpacing: 1 }}>LIVE INTELLIGENCE</span>
+      {/* GLOBAL SUMMARY PANEL */}
+      <div style={{ maxWidth: 1100, margin: '-60px auto 0', position: 'relative', zIndex: 50, padding: '0 32px' }}>
+        <div style={{ background: 'white', borderRadius: 32, padding: '32px 48px', border: '1px solid #e2e8f0', display: 'grid', gridTemplateColumns: '1.5fr 2fr 1.5fr', gap: '48px', alignItems: 'center', boxShadow: '0 32px 64px -16px rgba(0,0,0,0.1)' }}>
+          <div>
+            <div style={{ fontSize: '0.65rem', fontWeight: 900, color: '#14b8a6', textTransform: 'uppercase', letterSpacing: 2 }}>Global Landscape Context</div>
+            <div style={{ fontSize: '3rem', fontWeight: 900, fontFamily: 'Georgia, serif', color: '#0f172a' }}>{stats.avgScore} <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>AVG</span></div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+            {[{ label: 'Antifragile', val: stats.antifragile, color: '#065f46' }, { label: 'Adaptive', val: stats.adaptive, color: '#1e40af' }, { label: 'Emergent', val: stats.emergent, color: '#b45309' }, { label: 'Fragile', val: stats.fragile, color: '#b91c1c' }].map(t => (
+              <div key={t.label} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a' }}>{t.val}</div>
+                <div style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', color: t.color }}>{t.label}</div>
               </div>
-              <div style={{ fontSize: '0.65rem', color: 'white', fontWeight: 700 }}>{stats.signalsProcessed.toLocaleString()} Signals Processed</div>
-              <div style={{ fontSize: '0.55rem', color: '#94a3b8', fontWeight: 600, marginTop: '4px' }}>Updated {stats.lastUpdated} minutes ago</div>
-              <div style={{ fontSize: '0.5rem', color: '#2dd4bf', fontWeight: 800, marginTop: '12px', letterSpacing: 1 }}>POWERED BY ORION SCOUT</div>
+            ))}
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '0.4rem 0.8rem', background: '#f0fdf4', borderRadius: 6 }}>
+              <div className="live-dot" /> <span style={{ fontSize: '0.6rem', fontWeight: 900, color: '#10b981' }}>LIVE INTELLIGENCE</span>
             </div>
+            <div style={{ fontSize: '0.6rem', color: '#94a3b8', marginTop: '8px' }}>{stats.signalsProcessed.toLocaleString()} Signals Processed</div>
           </div>
         </div>
-      </header>
+      </div>
 
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 1.5rem' }}>
-        <div style={{ background: 'white', borderRadius: 24, border: '1px solid #e2e8f0', overflow: 'hidden', marginTop: '-2rem', boxShadow: '0 20px 60px rgba(0,0,0,0.08)', marginBottom: '2.5rem', position: 'relative', height: 400, background: '#0f172a' }}>
-          <img src="https://images.unsplash.com/photo-1521295121783-8a321d551ad2?auto=format&fit=crop&q=60&w=1400" alt="World Map" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.1, filter: 'grayscale(1)' }} />
-          {!loading && displayed.slice(0, 150).map((org, i) => (
-            <MapDot key={org.organization + i} org={org} selected={focusDot?.organization === org.organization} onClick={setFocusDot} />
-          ))}
-          {focusDot && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ position: 'absolute', bottom: '1.5rem', left: '50%', transform: 'translateX(-50%)', background: 'rgba(15,23,42,0.95)', padding: '1rem 1.5rem', borderRadius: 16, border: '1px solid rgba(255,255,255,0.1)', textAlign: 'center', zIndex: 100 }}>
-              <p style={{ fontSize: '0.6rem', color: '#64748b', fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.5 }}>{focusDot.region} · {focusDot.industry}</p>
-              <p style={{ fontWeight: 700, color: 'white', fontSize: '1rem' }}>{focusDot.organization}</p>
-              <p style={{ fontSize: '1.75rem', fontWeight: 800, color: getEvolutionaryState(focusDot.score).color, fontFamily: 'Georgia,serif' }}>{focusDot.score}</p>
-            </motion.div>
-          )}
+      {/* REGIONAL TURBULENCE SNAPSHOT (Phase 3B) */}
+      <div style={{ maxWidth: 1200, margin: '3rem auto 0', padding: '0 2rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem' }}>
+          {['Global', 'Americas', 'Europe', 'APAC', 'MEA'].map(r => {
+            const turb = regionalTurbulence.find(t => t.region === r)?.avg_turbulence || 0;
+            return (
+              <motion.div key={r} onClick={() => setRegionFilter(r)} style={{ background: regionFilter === r ? '#f1f5f9' : 'white', border: `1px solid ${regionFilter === r ? '#14b8a6' : '#e2e8f0'}`, borderRadius: 16, padding: '1.25rem', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }} whileHover={{ y: -2, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
+                <div style={{ fontSize: '0.6rem', color: '#64748b', fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase' }}>{r} Turbulence</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: turb > 60 ? '#ef4444' : turb > 30 ? '#f59e0b' : '#10b981', marginTop: '0.4rem' }}>{turb > 60 ? 'HIGH' : turb > 30 ? 'MODERATE' : 'LOW'}</div>
+                <div style={{ height: 4, background: '#f1f5f9', borderRadius: 2, marginTop: '0.75rem', overflow: 'hidden' }}>
+                    <motion.div animate={{ width: `${turb}%` }} style={{ height: '100%', background: turb > 60 ? '#ef4444' : turb > 30 ? '#f59e0b' : '#10b981' }} />
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
+      </div>
 
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', alignItems: 'center' }}>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'white', border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.75rem 1rem' }}>
+      <LiveTicker events={tickerEvents} />
+
+      <div style={{ maxWidth: 1200, margin: '4rem auto', padding: '0 1.5rem' }}>
+        {/* Search & Filtering Layer */}
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', alignItems: 'center' }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'white', border: '1px solid #e2e8f0', borderRadius: 12, padding: '0.85rem 1.25rem' }}>
             <Search size={18} color="#94a3b8" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search institutions..." style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '0.9rem' }} />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search institutions..." style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontSize: '0.95rem' }} />
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             {['All', 'Antifragile', 'Emergent', 'Fragile'].map(f => (
-              <button key={f} onClick={() => setFilter(f)} style={{ padding: '0.6rem 1.2rem', borderRadius: 9999, fontSize: '0.7rem', fontWeight: 800, background: filter === f ? '#0a192f' : 'white', color: filter === f ? 'white' : '#64748b', border: '1px solid', borderColor: filter === f ? '#0a192f' : '#e2e8f0', cursor: 'pointer' }}>{f}</button>
+              <button key={f} onClick={() => setFilter(f)} style={{ padding: '0.75rem 1.5rem', borderRadius: 9999, fontSize: '0.75rem', fontWeight: 800, background: filter === f ? '#0a192f' : 'white', color: filter === f ? 'white' : '#64748b', border: '1px solid', borderColor: filter === f ? '#0a192f' : '#e2e8f0', cursor: 'pointer', transition: 'all 0.2s' }}>{f}</button>
             ))}
           </div>
         </div>
 
-
-        <div style={{ background: 'white', borderRadius: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', overflow: 'hidden', padding: '12px' }}>
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '80px 210px minmax(400px, 1fr) 200px 160px',
-            padding: '24px 40px', 
-            background: 'white', 
-            borderBottom: '1px solid #f1f5f9',
-            marginBottom: '4px'
-          }}>
-            {['RANK', 'INSTITUTION', 'LAI SCORE'].map(h => (
-              <span key={h} style={{ 
-                fontSize: '0.65rem', 
-                fontWeight: 900, 
-                color: h === 'LAI SCORE' ? '#0f172a' : '#94a3b8', 
-                letterSpacing: 2
-              }}>
-                {h === 'LAI SCORE' ? 'LAI SCORE' : h}
-                {h === 'LAI SCORE' && <div style={{ fontSize: '0.45rem', fontWeight: 800, opacity: 0.6, letterSpacing: 1, marginTop: '2px' }}>(ADAPTIVENESS INDEX)</div>}
-              </span>
+        {/* Global Intelligence Index */}
+        <div style={{ background: 'white', borderRadius: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '80px 210px minmax(400px, 1fr) 200px 160px', padding: '24px 40px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+            {['RANK', 'INSTITUTION', 'LAI SCORE', 'SHIFT', 'TRUST'].map(h => (
+              <span key={h} style={{ fontSize: '0.65rem', fontWeight: 900, color: '#94a3b8', letterSpacing: 2 }}>{h}</span>
             ))}
-            <span style={{ justifySelf: 'center', fontSize: '0.65rem', fontWeight: 900, color: '#94a3b8', letterSpacing: 2 }}>SHIFT & VELOCITY</span>
-            <span style={{ justifySelf: 'center', fontSize: '0.65rem', fontWeight: 900, color: '#94a3b8', letterSpacing: 2 }}>TRUST LAYER</span>
           </div>
           {loading ? (
-            <div style={{ padding: '5rem', textAlign: 'center', color: '#cbd5e1' }}><Brain size={48} style={{ margin: '0 auto 1rem', opacity: 0.2 }} /><p>Synthesizing Global Signals...</p></div>
+            <div style={{ padding: '8rem', textAlign: 'center', color: '#94a3b8' }}><Brain size={48} style={{ margin: '0 auto 1rem', opacity: 0.2 }} /><p style={{ fontWeight: 600 }}>Synthesizing Global Signals...</p></div>
           ) : (
             displayed.map((r, idx) => (
-              <React.Fragment key={r.organization}>
-                <LeaderboardRow r={r} idx={idx} expandedId={expandedId} setExpandedId={setExpandedId} setFocusDot={setFocusDot} />
-                <div style={{ height: '1px', width: '100%', background: 'linear-gradient(to right, transparent, rgba(0,0,0,0.04), transparent)', margin: '4px 0' }} />
-              </React.Fragment>
+              <LeaderboardRow key={r.organization} r={r} idx={idx} expandedId={expandedId} setExpandedId={setExpandedId} setFocusDot={setFocusDot} activeEvent={recentEvents[r.organization]} />
             ))
           )}
         </div>
