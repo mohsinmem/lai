@@ -60,29 +60,40 @@ export const handler = async (event) => {
       console.log('Skipping rank update: No meaningful movement detected.');
     }
 
-    // 4. Regional Rollups for Turbulence
+    // 4. Regional Rollups with Integrity Anchors (Rule 1 & 3)
     const { data: regionMetrics } = await supabase
       .from('institution_metrics')
-      .select('region, turbulence_7d, score_change_7d');
+      .select('region, turbulence_7d, score_change_7d, signal_volume_7d, confidence_current');
     
-    const counts = {};
-    const sums = {};
+    const stats = {};
     regionMetrics?.forEach(m => {
-      if (!counts[m.region]) { counts[m.region] = 0; sums[m.region] = 0; }
-      counts[m.region]++;
-      sums[m.region] += m.turbulence_7d || 0;
+      const r = m.region || 'Global';
+      if (!stats[r]) { 
+        stats[r] = { counts: 0, turbSum: 0, deltaSum: 0, signalSum: 0, confSum: 0 }; 
+      }
+      stats[r].counts++;
+      stats[r].turbSum += m.turbulence_7d || 0;
+      stats[r].deltaSum += m.score_change_7d || 0;
+      stats[r].signalSum += m.signal_volume_7d || 0;
+      stats[r].confSum += m.confidence_current || 0;
     });
-
-    const rollups = Object.keys(counts).map(r => {
-      const avgTurb = Math.round(sums[r] / counts[r]);
-      // Calculate avg 7d move for the region as proxy for "momentum"
-      const metricsForRegion = regionMetrics.filter(m => m.region === r);
-      const avgDelta = metricsForRegion.reduce((acc, m) => acc + (m.score_change_7d || 0), 0) / counts[r];
+ 
+    const rollups = Object.keys(stats).map(r => {
+      const s = stats[r];
+      const totalSignals = s.signalSum;
+      const isUnderSampled = totalSignals < 10; // Rule 1: Threshold check
+      
+      const avgTurb = Math.round(s.turbSum / s.counts);
+      const avgConf = s.confSum / s.counts;
       
       return {
         region: r,
-        avg_turbulence: avgTurb,
-        delta_7d: parseFloat(avgDelta.toFixed(1))
+        avg_turbulence: isUnderSampled ? null : avgTurb,
+        delta_7d: parseFloat((s.deltaSum / s.counts).toFixed(1)),
+        signal_volume: totalSignals,
+        avg_confidence: avgConf,
+        integrity_state: isUnderSampled ? 'INSUFFICIENT DATA' : 
+                         avgConf < 0.6 ? 'LOW CONFIDENCE' : 'VERIFIED'
       };
     });
 

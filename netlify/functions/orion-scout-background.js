@@ -110,17 +110,26 @@ export const handler = async (event) => {
 
   let browser = null;
   try {
-    // 1. Fetch anchor org targets
+    // 1. Fetch targets with Regional Balancing (Rule 3)
+    // Prioritize MEA, LATAM, and APAC if they haven't been scanned recently
     let { data: targets } = await supabase
       .from('organizations')
-      .select('id, name, region, industry')
+      .select('id, name, region, industry, last_scanned')
       .order('last_scanned', { ascending: true, nullsFirst: true })
-      .limit(5);
+      .limit(15); // Get a larger pool to pick from
 
     if (!targets?.length) {
-      console.log('No anchor targets found — aborting.');
+      console.log('No targets found — aborting.');
       return { statusCode: 200, body: 'No targets to scan' };
     }
+
+    // Prioritize MEA/LATAM in the current 5-target slice
+    const priorityRegions = ['MEA', 'LATAM', 'Middle East', 'Africa', 'South America'];
+    const sortedTargets = [...targets].sort((a, b) => {
+      const aPrio = priorityRegions.some(r => a.region?.includes(r)) ? 0 : 1;
+      const bPrio = priorityRegions.some(r => b.region?.includes(r)) ? 0 : 1;
+      return aPrio - bPrio;
+    }).slice(0, 5);
 
     // 2. Launch headless browser
     browser = await puppeteer.launch({
@@ -134,32 +143,34 @@ export const handler = async (event) => {
     const page = await browser.newPage();
     await page.setExtraHTTPHeaders({ 'Accept-Language': 'en-US,en;q=0.9' });
 
-    // 3. Detect volatile sectors (Volatility Hunting)
+    // 3. Detect volatile sectors
     const volatileSectors = await detectVolatileSectors(page);
     const activeSectors = [...new Set([...ANCHOR_SECTORS, ...volatileSectors])];
 
-    await supabase.from('scraper_logs').insert([{
-      status: 'info',
-      summary: `Orion Scout: Active sector rotation → ${activeSectors.join(' | ')}`,
-      duration_ms: Date.now() - startTime
-    }]);
-
     // 4. Scan anchor orgs
     const allEmittedSignals = [];
-    for (const company of targets) {
-      console.log(`🔍 Scanning: ${company.name}`);
+    for (const company of sortedTargets) {
+      console.log(`🔍 Scanning: ${company.name} (${company.region})`);
       const url = `https://www.google.com/search?q=${encodeURIComponent(company.name + ' leadership strategy news 2026')}&tbm=nws`;
 
       await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
 
       const newsItems = await page.evaluate(() =>
-        Array.from(document.querySelectorAll('div.So033e, div.nS4uS')).map(el => ({
-          text: el.innerText || '',
-          date: el.querySelector('span')?.innerText || ''
-        }))
+        Array.from(document.querySelectorAll('div.So033e, div.nS4uS, div.iY607c')).map(el => {
+          const sourceEl = el.querySelector('div.MgAnRb, span.OSrYqb');
+          return {
+            text: el.innerText || '',
+            date: el.querySelector('span')?.innerText || '',
+            source: sourceEl ? sourceEl.innerText : 'Unknown Source'
+          };
+        })
       );
 
       const signals = extractAFERRSignals(newsItems, company);
+      // Ensure source_name is populated from the news item
+      signals.forEach((sig, idx) => {
+        if (newsItems[idx]?.source) sig.source_name = newsItems[idx].source;
+      });
 
       if (signals.length > 0) {
         // Soft Deduplication: Check if fingerprints already exist

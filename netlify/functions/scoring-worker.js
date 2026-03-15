@@ -87,20 +87,40 @@ export const handler = async (event) => {
       const score7d = history?.find(h => h.recorded_at <= sevenDaysAgo.toISOString().split('T')[0])?.overall_score || overallScore;
       const score30d = pastScores[pastScores.length - 1] || overallScore;
 
-      // 5. Compute Turbulence (7-day composite)
+      // 5. Compute Turbulence & Integrity (7-day composite)
       const sig7d = signals.filter(s => new Date(s.event_timestamp) >= sevenDaysAgo);
       const sig24h = signals.filter(s => new Date(s.event_timestamp) >= twentyFourHoursAgo);
       
       const sigVolume = sig7d.length;
       const sigVelocity = Math.abs(overallScore - score7d);
       const sigDiversity = new Set(sig7d.map(s => s.dimension_impacted)).size;
+      const sourceCount = new Set(sig7d.map(s => s.source_name || s.metadata?.source_domain || 'unknown')).size;
 
-      // Per-component normalization (0-100 scale internal)
-      const normVol = normalize(sigVolume, 0, 20) * 100;
-      const normVel = normalize(sigVelocity, 0, 15) * 100;
-      const normDiv = normalize(sigDiversity, 0, 5) * 100;
+      // 5b. Dynamic Confidence logic (Rule 2)
+      const directions = new Set(sig7d.map(s => s.impact_direction));
+      const hasContradiction = directions.has(1) && directions.has(-1);
+      
+      let calculatedConfidence = sig7d.reduce((acc, s) => acc + (s.confidence || 0), 0) / (sig7d.length || 1);
+      // Boost for diversity, penalty for homogeneity
+      if (sourceCount >= 3) calculatedConfidence *= 1.1;
+      if (sourceCount === 1) calculatedConfidence *= 0.8;
+      // Multi-tier bonus
+      const tiers = new Set(sig7d.map(s => s.source_tier));
+      if (tiers.size > 1) calculatedConfidence *= 1.15;
+      // Contradiction Penalty (Rule 2)
+      if (hasContradiction) calculatedConfidence *= 0.8;
+      // Tier 3 Cap (Rule 2)
+      if (tiers.size === 1 && tiers.has(3)) calculatedConfidence = Math.min(0.75, calculatedConfidence);
+      
+      const finalConfidence = Math.max(0, Math.min(1, calculatedConfidence));
 
-      const turbulence7d = Math.round((normVol * 0.4) + (normVel * 0.4) + (normDiv * 0.2));
+      // 5c. Coverage Floors (Rule 1 & 3)
+      const isUnderSampled = sigVolume < 5; // Entity floor
+      const turbulence7d = isUnderSampled ? null : Math.round(
+        (normalize(sigVolume, 0, 20) * 40) + 
+        (normalize(sigVelocity, 0, 15) * 40) + 
+        (normalize(sigDiversity, 0, 5) * 20)
+      );
 
       // 6. Persistence: institution_metrics
       const latestMajor = signals.filter(s => s.impact_strength >= 7).sort((a,b) => new Date(b.event_timestamp) - new Date(a.event_timestamp))[0];
@@ -119,9 +139,15 @@ export const handler = async (event) => {
         signal_diversity_7d: sigDiversity,
         signal_velocity_7d: sigVelocity,
         signal_last_24h: sig24h.length,
-        confidence_current: signals.reduce((acc, s) => acc + (s.confidence || 0), 0) / signals.length,
+        confidence_current: finalConfidence,
         dominant_dimension: Object.entries(dimensions).sort((a,b) => b[1]-a[1])[0][0],
-        last_major_event_at: latestMajor?.event_timestamp || null
+        last_major_event_at: latestMajor?.event_timestamp || null,
+        integrity_flags: {
+          under_sampled: isUnderSampled,
+          contradiction_detected: hasContradiction,
+          source_diversity: sourceCount,
+          confidence_synthetic: tiers.size === 1 && tiers.has(3)
+        }
       });
 
       // 7. Event Emission with Enriched Metadata

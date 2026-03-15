@@ -768,22 +768,52 @@ const GlobalIndexPage = () => {
       <div style={{ maxWidth: 1200, margin: '2rem auto 0', padding: '0 2rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem' }}>
           {['Global', 'Americas', 'Europe', 'APAC', 'MEA'].map(r => {
-            const turbData = regionalTurbulence.find(t => t.region === r);
-            const turbScore = turbData?.avg_turbulence || 0;
-            const delta = turbData?.delta_7d || (Math.random() * 4 - 2); // Simulated delta if missing
+            const rObj = regionalTurbulence.find(t => t.region === r) || {};
+            const turbScore = rObj.avg_turbulence || 0;
+            const delta = rObj.delta_7d || 0;
+            const sigVol = rObj.signal_volume || 0;
+            const integrity = rObj.integrity_state || 'UNKNOWN';
+            
+            const isInsufficient = integrity === 'INSUFFICIENT DATA';
+            const isLowConf = integrity === 'LOW CONFIDENCE';
             return (
               <motion.div key={r} onClick={() => setRegionFilter(r)} style={{ background: regionFilter === r ? '#f8fafc' : 'white', border: `1px solid ${regionFilter === r ? '#2dd4bf' : '#e2e8f0'}`, borderRadius: 12, padding: '1.25rem', cursor: 'pointer' }} whileHover={{ y: -2, boxShadow: '0 8px 16px rgba(0,0,0,0.04)' }}>
-                <div style={{ fontSize: '0.6rem', color: '#94a3b8', fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', marginBottom: '8px' }}>{r} Turbulence</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                  <span style={{ fontSize: '1.5rem', fontWeight: 950, color: '#0f172a', fontFamily: 'monospace' }}>{turbScore}</span>
-                  <span style={{ fontSize: '0.8rem', color: '#cbd5e1', fontWeight: 300 }}>·</span>
-                  <span style={{ fontSize: '0.65rem', fontWeight: 900, color: turbScore > 60 ? '#ef4444' : turbScore > 30 ? '#f59e0b' : '#10b981' }}>{turbScore > 60 ? 'HIGH' : turbScore > 30 ? 'MODERATE' : 'LOW'}</span>
+                <div style={{ fontSize: '0.6rem', color: '#94a3b8', fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>{r} Turbulence</span>
+                  <span style={{ color: isInsufficient ? '#ef4444' : isLowConf ? '#f59e0b' : '#10b981', fontSize: '0.5rem' }}>{integrity}</span>
                 </div>
-                <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '0.6rem', fontWeight: 900, color: delta >= 0 ? '#ef4444' : '#10b981' }}>
-                    {delta >= 0 ? '↑' : '↓'} {Math.abs(delta).toFixed(1)}
-                  </span>
-                  <span style={{ fontSize: '0.55rem', color: '#94a3b8', fontWeight: 700 }}>over 7d</span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                  {isInsufficient ? (
+                    <span style={{ fontSize: '1rem', fontWeight: 900, color: '#64748b', letterSpacing: 1 }}>NON-OBSERVED</span>
+                  ) : (
+                    <>
+                      <span style={{ fontSize: '1.5rem', fontWeight: 950, color: '#0f172a', fontFamily: 'monospace' }}>{turbScore}</span>
+                      <span style={{ fontSize: '0.8rem', color: '#cbd5e1', fontWeight: 300 }}>·</span>
+                      <span style={{ fontSize: '0.65rem', fontWeight: 900, color: turbScore > 60 ? '#ef4444' : turbScore > 30 ? '#f59e0b' : '#10b981' }}>{turbScore > 60 ? 'HIGH' : turbScore > 30 ? 'MODERATE' : 'LOW'}</span>
+                    </>
+                  )}
+                </div>
+                {!isInsufficient && (
+                  <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <motion.div animate={{ rotate: delta >= 0 ? 0 : 180 }} style={{ color: delta >= 0 ? '#10b981' : '#ef4444' }}>
+                      {delta >= 0 ? <TrendingUp size={14} /> : <TrendingUp size={14} />}
+                    </motion.div>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0f172a', fontFamily: 'monospace' }}>
+                      {delta >= 0 ? '+' : ''}{delta}
+                    </span>
+                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 500 }}>over 7d</span>
+                  </div>
+                )}
+                {isInsufficient && (
+                  <div style={{ marginTop: '0.75rem', color: '#94a3b8', fontSize: '0.6rem', fontStyle: 'italic' }}>
+                    Coverage floor not met. Monitoring…
+                  </div>
+                )}
+                
+                {/* Transparency Readout */}
+                <div style={{ marginTop: '12px', paddingTop: '8px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', fontSize: '0.55rem', fontWeight: 700, color: '#cbd5e1', textTransform: 'uppercase' }}>
+                  <span>Vol: {sigVol} signals</span>
+                  <span>Conf: {Math.round((rObj.avg_confidence || 0) * 100)}%</span>
                 </div>
               </motion.div>
             );
