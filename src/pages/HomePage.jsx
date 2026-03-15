@@ -30,8 +30,11 @@ const HomePage = () => {
             <h1 className="text-white">Leadership Adaptiveness Institute</h1>
             <p className="hero-lead">The institutional standard for measuring how leadership systems respond to disruption.</p>
             <div className="hero-ctas">
-              <Link to="/manifesto" className="btn-institutional primary">Read the Manifesto</Link>
-              <Link to="/global-index" className="btn-institutional outline white">Explore the Global Index</Link>
+              <Link to="/diagnostic" className="btn-institutional primary">Measure Your Leadership System</Link>
+              <Link to="/global-index" className="btn-institutional outline white">Explore the Global Adaptiveness Index</Link>
+            </div>
+            <div className="hero-tertiary">
+              <Link to="/manifesto" className="text-link text-slate-400 hover:text-white transition-colors">Read the Manifesto</Link>
             </div>
           </motion.div>
           
@@ -212,6 +215,8 @@ const HomePage = () => {
         .hero h1 { font-size: 4.5rem; margin-bottom: 1.5rem; }
         .hero-lead { font-size: 1.5rem; color: #94a3b8; max-width: 600px; margin: 0 auto 3rem; }
         .hero-ctas { display: flex; gap: 1.5rem; justify-content: center; }
+        .hero-tertiary { margin-top: 1.5rem; }
+        .text-link { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; text-decoration: none; display: inline-block; }
         .scroll-indicator { position: absolute; bottom: 3rem; left: 50%; transform: translateX(-50%); color: #475569; }
 
         /* Gap Section */
