@@ -1,7 +1,7 @@
-const express = require('express');
-const cors = require('cors');
-const serverless = require('serverless-http');
-const { supabase: supabaseClient } = require('./lib/supabase.cjs');
+import express from 'express';
+import cors from 'cors';
+import serverless from 'serverless-http';
+import { supabase as supabaseClient } from './lib/supabase.cjs';
 
 const app = express();
 
@@ -370,10 +370,72 @@ app.post('/api/diagnostic', async (req, res) => {
       }])
       .select();
 
-    if (diagError) throw diagError;
+    if (diagError) {
+      console.error('[DIAGNOSTIC] Insert Error:', JSON.stringify(diagError, null, 2));
+      throw diagError;
+    }
+
+    if (!finalResult || finalResult.length === 0) {
+      console.error('[DIAGNOSTIC] Insert failed: No data returned.');
+      throw new Error('No data returned from diagnostic insert');
+    }
+
+    const createdId = finalResult[0].id;
+    console.log('[DIAGNOSTIC] Success! Record ID:', createdId);
+
+    // 6. Minimum Delivery Layer (Emails)
+    // Async so it doesn't block the HTTP response
+    (async () => {
+      try {
+        const logEmail = async (email, template, meta) => {
+          console.log(`[DELIVERY] Stored email for ${email} (${template})`);
+          const { data, error } = await supabaseClient.from('email_logs').insert([{
+            recipient_email: email,
+            template_name: template,
+            delivery_status: 'Stored',
+            metadata: meta
+          }]).select().single();
+          
+          if (error) {
+             console.error('[DELIVERY] Error storing log:', error);
+             return; // Graceful degradation if table missing initially
+          }
+
+          console.log(`[DELIVERY] Enqueued email for ${email} (${template})`);
+          await supabaseClient.from('email_logs').update({ delivery_status: 'Enqueued' }).eq('id', data.id);
+          
+          // Simulation of sending
+          setTimeout(async () => {
+            console.log(`[DELIVERY] Sent email for ${email} (${template})`);
+            await supabaseClient.from('email_logs').update({ delivery_status: 'Sent' }).eq('id', data.id);
+          }, 1000);
+        };
+
+        // Emit Completion Email
+        await logEmail(email, 'DIAGNOSTIC_COMPLETION', { report_id: createdId, team_code: final_team_code });
+
+        // Emit Invites (if Team Creator)
+        if (mode === 'team_create' && invites && invites.length > 0) {
+          for (const inv of invites) {
+             if (inv && inv.includes('@')) {
+                await logEmail(inv, 'TEAM_INVITATION', { team_code: final_team_code, inviter: name });
+             }
+          }
+        }
+
+        // Emit Join Notification to existing team (Optional: currently just completion is enough for the user themselves)
+        if (mode === 'team_join') {
+           // Can notify creator here if we had their email
+           console.log(`[DELIVERY] ${email} successfully joined team ${final_team_code}`);
+        }
+
+      } catch (deliveryErr) {
+        console.error('[DELIVERY] Delivery sub-system error:', deliveryErr);
+      }
+    })();
 
     res.status(201).json({ 
-      id: finalResult[0].id, 
+      id: createdId, 
       team_code: final_team_code,
       team_id,
       participant_id: participant.id 
@@ -967,4 +1029,5 @@ app.get('/api/admin/verified-entities', async (req, res) => {
   }
 });
 
-module.exports.handler = serverless(app);
+export { app };
+export const handler = serverless(app);

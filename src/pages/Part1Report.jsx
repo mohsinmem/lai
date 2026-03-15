@@ -136,7 +136,39 @@ const Part1Report = () => {
   }, [id]);
 
   if (loading) return <div className="report-loading">Synthesizing Institutional Profile...</div>;
-  if (!data) return <div className="report-error">Report not found.</div>;
+  if (loading) return <div className="report-loading">Synthesizing Institutional Profile...</div>;
+  if (!data) return (
+    <div className="report-error-container">
+      <div className="error-card">
+        <Activity size={48} className="text-rose mb-4" />
+        <h2>Institutional Profile Not Found</h2>
+        <p>We were unable to locate this specific perception profile. This may occur if the session expired or the record is still being synchronized.</p>
+        <div className="error-actions">
+          <Link to="/diagnostic" className="btn-institutional primary">Take Diagnostic</Link>
+          <a href="mailto:support@lai.institute" className="btn-institutional outline">Contact Support</a>
+        </div>
+        <div className="debug-info">
+          Attempted ID: {id}
+        </div>
+      </div>
+      <style jsx>{`
+        .report-error-container { 
+          min-height: 100vh; display: flex; align-items: center; justify-content: center; 
+          background: #f8fafc; padding: 2rem;
+        }
+        .error-card { 
+          background: white; border: 1px solid #e2e8f0; border-radius: 24px; padding: 4rem; 
+          max-width: 600px; text-align: center; box-shadow: 0 40px 100px -20px rgba(0,0,0,0.05);
+        }
+        .text-rose { color: #f43f5e; }
+        .mb-4 { margin-bottom: 1rem; }
+        h2 { font-size: 2rem; font-weight: 900; color: #0f172a; margin-bottom: 1rem; }
+        p { color: #64748b; margin-bottom: 2rem; line-height: 1.6; }
+        .error-actions { display: flex; gap: 1rem; justify-content: center; margin-bottom: 2rem; }
+        .debug-info { font-size: 0.7rem; color: #94a3b8; font-family: monospace; border-top: 1px solid #f1f5f9; pt: 1rem; }
+      `}</style>
+    </div>
+  );
 
   const scores = {
     signal_detection: data.signal_detection_score,

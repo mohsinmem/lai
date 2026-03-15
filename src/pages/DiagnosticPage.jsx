@@ -160,6 +160,7 @@ const DiagnosticPage = () => {
       });
 
       const data = await response.json();
+      console.log('[DIAGNOSTIC] Submission success:', data);
       if (!response.ok) throw new Error(data.error || 'Failed to submit diagnostic');
       
       setReportId(data.id);
@@ -486,7 +487,12 @@ const DiagnosticPage = () => {
                   <h3>Leadership Adaptiveness Profile</h3>
                   <p>Your individual Perception Profile has been generated.</p>
                 </div>
-                <Link to={`/report/perception/${reportId}`} className="btn-institutional primary">View Research Brief <ArrowRight size={18} /></Link>
+                <div className="report-access-block">
+                  <Link to={`/report/perception/${reportId}`} className="btn-institutional primary">View Research Brief <ArrowRight size={18} /></Link>
+                  <div style={{ marginTop: '1rem', fontSize: '0.7rem', color: '#94a3b8', fontFamily: 'monospace', textAlign: 'center' }}>
+                    PERSISTENT ID: {reportId}
+                  </div>
+                </div>
               </div>
 
               <div className="next-steps-info">
