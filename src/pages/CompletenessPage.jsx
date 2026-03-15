@@ -116,7 +116,7 @@ const CompletenessPage = () => {
       <RelatedPathwaysSection 
         relatedPaths={pageMeta.related}
         eyebrow="Integrity Layer"
-        title="Further Pathwaus"
+        title="Further Pathways"
       />
 
       <style jsx>{`

@@ -387,7 +387,7 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
             </span>
           </div>
         </div>
-        <span>
+        <div style={{ display: 'contents' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
             <ScoreBar score={r.score} />
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -407,7 +407,7 @@ const LeaderboardRow = React.memo(({ r, idx, expandedId, setExpandedId, setFocus
               </span>
             </div>
           </div>
-        </span>
+        </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
           <span style={{ 
             display: 'flex',

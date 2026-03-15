@@ -103,7 +103,7 @@ const ObservatoryPage = () => {
       <RelatedPathwaysSection 
         relatedPaths={pageMeta.related}
         eyebrow="Observatory Layer"
-        title="Further Pathwaus"
+        title="Further Pathways"
       />
 
       <style jsx>{`
