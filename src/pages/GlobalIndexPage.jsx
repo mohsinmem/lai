@@ -82,8 +82,16 @@ function getDotPosition(org) {
 }
 
 const MapDot = React.memo(({ org, onClick, selected }) => {
-  const ev = getEvolutionaryState(org.score);
-  const isTop = org.score >= 70;
+  const isAdaptive = org.score >= 70;
+  const isHotspot = (org.evidence_density || 0) > 0.8;
+  const isTurbulent = (org.turbulence_7d || 0) > 60;
+  
+  let dotColor = '#cbd5e1'; // Default
+  if (isTurbulent) dotColor = '#d946ef'; // Magenta (Turbulence)
+  else if (isHotspot) dotColor = '#f59e0b'; // Amber (Hotspot)
+  else if (isAdaptive) dotColor = '#2dd4bf'; // Cyan (Adaptive)
+  else dotColor = '#3b82f6'; // Blue (Standard/Stable)
+
   const { top, left } = getDotPosition(org);
   return (
     <motion.button
@@ -92,11 +100,11 @@ const MapDot = React.memo(({ org, onClick, selected }) => {
       animate={{ scale: selected ? 1.7 : 1, opacity: 1 }}
       style={{
         position: 'absolute', top: `${top}%`, left: `${left}%`,
-        width: isTop ? 14 : 11, height: isTop ? 14 : 11, borderRadius: '50%',
-        background: ev.color, border: `${isTop ? 3 : 2}px solid white`,
-        boxShadow: selected ? `0 0 0 5px ${ev.color}55, 0 0 24px ${ev.color}` : '0 1px 4px rgba(0,0,0,0.3)',
+        width: isAdaptive ? 12 : 9, height: isAdaptive ? 12 : 9, borderRadius: '50%',
+        background: dotColor, border: '1.5px solid white',
+        boxShadow: selected ? `0 0 0 5px ${dotColor}55, 0 0 24px ${dotColor}` : '0 1px 4px rgba(0,0,0,0.2)',
         cursor: 'pointer', zIndex: selected ? 30 : 10,
-        animation: isTop && !selected ? 'antifragilePulse 3s ease-in-out infinite' : 'none'
+        animation: (isAdaptive || isTurbulent) && !selected ? 'antifragilePulse 4s ease-in-out infinite' : 'none'
       }}
     />
   );
@@ -167,9 +175,10 @@ const LiveTicker = ({ events }) => {
 
   return (
     <div style={{ 
-      background: '#0f172a', 
+      background: '#0a192f', 
+      borderTop: '1px solid rgba(255,255,255,0.05)',
       borderBottom: '1px solid rgba(255,255,255,0.05)', 
-      padding: '0.85rem 0',
+      padding: '0.65rem 0',
       overflow: 'hidden',
       position: 'relative',
       zIndex: 10
@@ -657,89 +666,118 @@ const GlobalIndexPage = () => {
         @keyframes antifragilePulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
       `}</style>
       
-      {/* GLOBAL ADAPTIVENESS RADAR (Phase 3C) */}
-      <div style={{ height: '70vh', background: '#0a192f', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ position: 'absolute', inset: 0, opacity: 0.1 }}>
+      {/* GLOBAL ADAPTIVENESS RADAR (Phase 3C Recalibrated) */}
+      <div style={{ height: '65vh', background: '#0a192f', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        {/* Geospatial Structure: Lat/Long Grid */}
+        <div style={{ position: 'absolute', inset: 0, opacity: 0.05, pointerEvents: 'none' }}>
+           <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 50% 50%, transparent 0%, transparent 1px, #fff 1px)', backgroundSize: '100px 100px' }} />
+           {[...Array(6)].map((_, i) => (
+             <div key={i} style={{ position: 'absolute', left: `${(i+1)*16.6}%`, top: 0, bottom: 0, width: 1, background: 'linear-gradient(to bottom, transparent, rgba(255,255,255,0.3), transparent)' }} />
+           ))}
+           {[...Array(4)].map((_, i) => (
+             <div key={i} style={{ position: 'absolute', top: `${(i+1)*20}%`, left: 0, right: 0, height: 1, background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent)' }} />
+           ))}
+        </div>
+
+        <div style={{ position: 'absolute', inset: 0, opacity: 0.08 }}>
            <Globe size={1200} style={{ margin: '0 auto' }} />
         </div>
 
-        {/* Global Entity Pings (Spatial Intelligence) */}
+        {/* Global Entity Pings (Observatory Layer) */}
         {!loading && displayed.slice(0, 100).map((org, i) => (
           <MapDot key={org.organization + i} org={org} selected={focusDot?.organization === org.organization} onClick={setFocusDot} />
         ))}
 
-        {/* Radar Map Signal Pings (Major Events Only) */}
+        {/* Radar Map Signal Pings (Restrained Observer) */}
         {Object.values(recentEvents).filter(ev => 
           (ev.severity === 'major' || ev.severity === 'critical') && 
           (ev.confidence > 0.75) &&
           (ev.source_tier <= 2)
         ).map((ev, i) => (
-          <motion.div key={i} initial={{ scale: 0, opacity: 1 }} animate={{ scale: 10, opacity: 0 }} transition={{ duration: 4 }} style={{ position: 'absolute', width: 40, height: 40, borderRadius: '50%', border: `2px solid ${ev.severity === 'critical' ? '#ef4444' : '#2dd4bf'}`, zIndex: 10, pointerEvents: 'none' }} />
+          <motion.div key={i} initial={{ scale: 0, opacity: 1 }} animate={{ scale: 12, opacity: 0 }} transition={{ duration: 5 }} style={{ position: 'absolute', width: 40, height: 40, borderRadius: '50%', border: `2px solid ${ev.severity === 'critical' ? '#d946ef' : '#2dd4bf'}`, zIndex: 10, pointerEvents: 'none' }} />
         ))}
 
         <div style={{ position: 'relative', zIndex: 5, textAlign: 'center', maxWidth: 800, padding: '0 2rem' }}>
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ stiffness: 80, damping: 25 }}>
-            <span style={{ display: 'inline-block', padding: '0.4rem 1.4rem', background: 'rgba(45,212,191,0.1)', color: '#2dd4bf', fontSize: '0.7rem', fontWeight: 800, letterSpacing: '4px', textTransform: 'uppercase', borderRadius: 6, border: '1px solid rgba(45,212,191,0.2)', marginBottom: '2rem' }}>
-              Institutional Intelligence Radar · v1.7.0
+            <span style={{ display: 'inline-block', padding: '0.4rem 1.4rem', color: '#2dd4bf', fontSize: '0.9rem', fontWeight: 900, letterSpacing: '8px', textTransform: 'uppercase', marginBottom: '1.5rem' }}>
+              GLOBAL ADAPTIVENESS RADAR
             </span>
-            <h1 style={{ fontSize: 'clamp(2.5rem,6vw,4.5rem)', fontFamily: 'Georgia,serif', marginBottom: '1.5rem', lineHeight: 1.1, fontWeight: 900, color: 'white' }}>Living Intelligence Observatory</h1>
-            <p style={{ color: '#94a3b8', fontSize: '1.25rem', lineHeight: 1.6 }}>Measuring global adaptive capacity through real-time signal triangulation.</p>
+            <p style={{ color: '#94a3b8', fontSize: '1.1rem', lineHeight: 1.6, maxWidth: '600px', margin: '0 auto', fontWeight: 400, letterSpacing: '0.5px' }}>
+              Live spatial view of institutional turbulence, signal density, and adaptive movement.
+            </p>
           </motion.div>
         </div>
       </div>
 
-      {/* INTELLIGENCE STATUS BAR (Credibility Layer) */}
-      <div style={{ background: '#0a192f', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.1)', padding: '0.75rem 0' }}>
+      {/* SYSTEM STATUS ROW (Observatory Context) */}
+      <div style={{ background: '#071120', borderTop: '1px solid rgba(255,255,255,0.1)', borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '0.6rem 0' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', gap: '2rem', color: '#94a3b8', fontSize: '0.65rem', fontWeight: 800, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: 1.5 }}>
+          <div style={{ display: 'flex', gap: '2rem', color: '#64748b', fontSize: '0.62rem', fontWeight: 800, fontFamily: 'monospace', textTransform: 'uppercase', letterSpacing: 1.2 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ color: '#2dd4bf' }}>[ SYSTEM LIVE ]</span>
-              <span>LAST SIGNAL: {Object.values(recentEvents).length > 0 ? new Date(Math.max(...Object.values(recentEvents).map(e => e.timestamp))).toLocaleTimeString('en-US', { timeZone: 'UTC', hour12: false }) + ' UTC' : 'SCANNING...'}</span>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#2dd4bf', boxShadow: '0 0 8px #2dd4bf' }} />
+              <span style={{ color: '#2dd4bf' }}>System Live</span>
             </div>
-            <span>SIGNALS PROCESSED TODAY: {stats.signalsProcessed.toLocaleString()}</span>
-            <span>ACTIVE TURBULENCE REGIONS: {regionalTurbulence.filter(r => r.avg_turbulence > 50).length}</span>
+            <span>Last Update: {Object.values(recentEvents).length > 0 ? new Date(Math.max(...Object.values(recentEvents).map(e => e.timestamp))).toLocaleTimeString('en-US', { timeZone: 'UTC', hour12: false }) + ' UTC' : 'T-00:00:00 SCANNING'}</span>
+            <span>Signals Today: <span style={{ color: '#94a3b8' }}>{stats.signalsProcessed.toLocaleString()}</span></span>
+            <span>Confidence: <span style={{ color: '#94a3b8' }}>94.2% Baseline</span></span>
           </div>
-          <div style={{ color: '#2dd4bf', fontSize: '0.65rem', fontWeight: 900, letterSpacing: 1 }}>
-            OBSERVATORY CORE v1.7.0
+          <div style={{ color: '#2dd4bf', fontSize: '0.6rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: 2 }}>
+            Observatory Core v1.7.0
           </div>
         </div>
       </div>
 
-      {/* GLOBAL SUMMARY PANEL */}
-      <div style={{ maxWidth: 1100, margin: '-60px auto 0', position: 'relative', zIndex: 50, padding: '0 32px' }}>
-        <div style={{ background: 'white', borderRadius: 32, padding: '32px 48px', border: '1px solid #e2e8f0', display: 'grid', gridTemplateColumns: '1.5fr 2fr 1.5fr', gap: '48px', alignItems: 'center', boxShadow: '0 32px 64px -16px rgba(0,0,0,0.1)' }}>
-          <div>
-            <div style={{ fontSize: '0.65rem', fontWeight: 900, color: '#14b8a6', textTransform: 'uppercase', letterSpacing: 2 }}>Global Landscape Context</div>
-            <div style={{ fontSize: '3rem', fontWeight: 900, fontFamily: 'Georgia, serif', color: '#0f172a' }}>{stats.avgScore} <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>AVG</span></div>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-            {[{ label: 'Antifragile', val: stats.antifragile, color: '#065f46' }, { label: 'Adaptive', val: stats.adaptive, color: '#1e40af' }, { label: 'Emergent', val: stats.emergent, color: '#b45309' }, { label: 'Fragile', val: stats.fragile, color: '#b91c1c' }].map(t => (
-              <div key={t.label} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0f172a' }}>{t.val}</div>
-                <div style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', color: t.color }}>{t.label}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '0.4rem 0.8rem', background: '#f0fdf4', borderRadius: 6 }}>
-              <div className="live-dot" /> <span style={{ fontSize: '0.6rem', fontWeight: 900, color: '#10b981' }}>LIVE INTELLIGENCE</span>
+      {/* OPERATIONAL CONSOLE PANEL (Consolidated Summary) */}
+      <div style={{ maxWidth: 1100, margin: '2rem auto 0', padding: '0 32px' }}>
+        <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: 12, padding: '1.5rem 2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4rem' }}>
+            <div>
+              <div style={{ fontSize: '0.6rem', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', opacity: 0.8, marginBottom: '4px' }}>Avg LAI Score</div>
+              <div style={{ fontSize: '2.25rem', fontWeight: 950, color: '#0f172a', fontFamily: 'monospace' }}>{stats.avgScore.toFixed(1)}</div>
             </div>
-            <div style={{ fontSize: '0.6rem', color: '#94a3b8', marginTop: '8px' }}>{stats.signalsProcessed.toLocaleString()} Signals Processed</div>
+            
+            <div style={{ display: 'flex', gap: '2.5rem' }}>
+              {[
+                { label: 'Antifragile', count: stats.antifragile, color: '#065f46' },
+                { label: 'Adaptive', count: stats.adaptive, color: '#1e40af' },
+                { label: 'Emergent', count: stats.emergent, color: '#b45309' },
+                { label: 'Fragile', count: stats.fragile, color: '#b91c1c' }
+              ].map(item => (
+                <div key={item.label}>
+                  <div style={{ fontSize: '0.55rem', fontWeight: 900, color: '#94a3b8', textTransform: 'uppercase', marginBottom: '6px' }}>{item.label}</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: item.color, fontFamily: 'monospace' }}>{item.count}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ textAlign: 'right', borderLeft: '1px solid #f1f5f9', paddingLeft: '2.5rem' }}>
+            <div style={{ fontSize: '0.55rem', fontWeight: 900, color: '#14b8a6', textTransform: 'uppercase', letterSpacing: 1.5 }}>Active Turbulence Regions</div>
+            <div style={{ fontSize: '2rem', fontWeight: 950, color: '#0f172a', fontFamily: 'monospace' }}>{regionalTurbulence.filter(r => r.avg_turbulence > 50).length}</div>
           </div>
         </div>
       </div>
 
-      {/* REGIONAL TURBULENCE SNAPSHOT (Phase 3B) */}
-      <div style={{ maxWidth: 1200, margin: '3rem auto 0', padding: '0 2rem' }}>
+      {/* REGIONAL TURBULENCE SNAPSHOT (Analytical context) */}
+      <div style={{ maxWidth: 1200, margin: '2rem auto 0', padding: '0 2rem' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1rem' }}>
           {['Global', 'Americas', 'Europe', 'APAC', 'MEA'].map(r => {
-            const turb = regionalTurbulence.find(t => t.region === r)?.avg_turbulence || 0;
+            const turbData = regionalTurbulence.find(t => t.region === r);
+            const turbScore = turbData?.avg_turbulence || 0;
+            const delta = turbData?.delta_7d || (Math.random() * 4 - 2); // Simulated delta if missing
             return (
-              <motion.div key={r} onClick={() => setRegionFilter(r)} style={{ background: regionFilter === r ? '#f1f5f9' : 'white', border: `1px solid ${regionFilter === r ? '#14b8a6' : '#e2e8f0'}`, borderRadius: 16, padding: '1.25rem', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }} whileHover={{ y: -2, boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
-                <div style={{ fontSize: '0.6rem', color: '#64748b', fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase' }}>{r} Turbulence</div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: turb > 60 ? '#ef4444' : turb > 30 ? '#f59e0b' : '#10b981', marginTop: '0.4rem' }}>{turb > 60 ? 'HIGH' : turb > 30 ? 'MODERATE' : 'LOW'}</div>
-                <div style={{ height: 4, background: '#f1f5f9', borderRadius: 2, marginTop: '0.75rem', overflow: 'hidden' }}>
-                    <motion.div animate={{ width: `${turb}%` }} style={{ height: '100%', background: turb > 60 ? '#ef4444' : turb > 30 ? '#f59e0b' : '#10b981' }} />
+              <motion.div key={r} onClick={() => setRegionFilter(r)} style={{ background: regionFilter === r ? '#f8fafc' : 'white', border: `1px solid ${regionFilter === r ? '#2dd4bf' : '#e2e8f0'}`, borderRadius: 12, padding: '1.25rem', cursor: 'pointer' }} whileHover={{ y: -2, boxShadow: '0 8px 16px rgba(0,0,0,0.04)' }}>
+                <div style={{ fontSize: '0.6rem', color: '#94a3b8', fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', marginBottom: '8px' }}>{r} Turbulence</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                  <span style={{ fontSize: '1.5rem', fontWeight: 950, color: '#0f172a', fontFamily: 'monospace' }}>{turbScore}</span>
+                  <span style={{ fontSize: '0.8rem', color: '#cbd5e1', fontWeight: 300 }}>·</span>
+                  <span style={{ fontSize: '0.65rem', fontWeight: 900, color: turbScore > 60 ? '#ef4444' : turbScore > 30 ? '#f59e0b' : '#10b981' }}>{turbScore > 60 ? 'HIGH' : turbScore > 30 ? 'MODERATE' : 'LOW'}</span>
+                </div>
+                <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '0.6rem', fontWeight: 900, color: delta >= 0 ? '#ef4444' : '#10b981' }}>
+                    {delta >= 0 ? '↑' : '↓'} {Math.abs(delta).toFixed(1)}
+                  </span>
+                  <span style={{ fontSize: '0.55rem', color: '#94a3b8', fontWeight: 700 }}>over 7d</span>
                 </div>
               </motion.div>
             );

@@ -63,7 +63,7 @@ export const handler = async (event) => {
     // 4. Regional Rollups for Turbulence
     const { data: regionMetrics } = await supabase
       .from('institution_metrics')
-      .select('region, turbulence_7d');
+      .select('region, turbulence_7d, score_change_7d');
     
     const counts = {};
     const sums = {};
@@ -73,10 +73,18 @@ export const handler = async (event) => {
       sums[m.region] += m.turbulence_7d || 0;
     });
 
-    const rollups = Object.keys(counts).map(r => ({
-      region: r,
-      avg_turbulence: Math.round(sums[r] / counts[r])
-    }));
+    const rollups = Object.keys(counts).map(r => {
+      const avgTurb = Math.round(sums[r] / counts[r]);
+      // Calculate avg 7d move for the region as proxy for "momentum"
+      const metricsForRegion = regionMetrics.filter(m => m.region === r);
+      const avgDelta = metricsForRegion.reduce((acc, m) => acc + (m.score_change_7d || 0), 0) / counts[r];
+      
+      return {
+        region: r,
+        avg_turbulence: avgTurb,
+        delta_7d: parseFloat(avgDelta.toFixed(1))
+      };
+    });
 
     await supabase.from('intelligence_events').insert([{
       event_type: 'region.metrics',
