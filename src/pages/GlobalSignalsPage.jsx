@@ -124,7 +124,7 @@ const GlobalSignalsPage = () => {
       <RelatedPathwaysSection 
         relatedPaths={pageMeta.related}
         eyebrow="Intelligence Layer"
-        title="Further Pathwaus"
+        title="Further Pathways"
       />
 
       <style jsx>{`

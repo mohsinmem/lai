@@ -184,7 +184,7 @@ const HomePage = () => {
       <RelatedPathwaysSection 
         relatedPaths={pageMeta.related}
         eyebrow="Navigation"
-        title="Further Pathwaus"
+        title="Further Pathways"
       />
 
       <style jsx>{`
