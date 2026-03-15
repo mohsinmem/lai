@@ -178,7 +178,7 @@ const FrameworkPage = () => {
         .dim-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; }
         .dim-number { font-size: 3rem; font-weight: 900; color: rgba(45, 212, 191, 0.2); line-height: 1; }
         .dim-icon { color: #2dd4bf; }
-        .dim-card h3 { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .dim-card h3 { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; color: white; }
         .dim-sub { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #2dd4bf; letter-spacing: 1px; display: block; margin-bottom: 1.5rem; }
         .dim-desc { color: #94a3b8; line-height: 1.7; margin-bottom: 2rem; font-size: 1rem; }
         

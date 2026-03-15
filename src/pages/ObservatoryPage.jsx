@@ -120,7 +120,7 @@ const ObservatoryPage = () => {
         .text-white { color: white; }
         .eyebrow { display: block; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1rem; }
         .text-teal { color: #2dd4bf; }
-        h1 { font-size: 3.5rem; font-weight: 800; margin-bottom: 1rem; }
+        h1 { font-size: 3.5rem; font-weight: 800; margin-bottom: 1rem; color: white; }
         .hero-lead { font-size: 1.5rem; color: #94a3b8; font-weight: 500; }
 
         .section-h2 { font-size: 2.5rem; font-weight: 800; color: #0a192f; margin-bottom: 1.5rem; }

@@ -162,7 +162,7 @@ const BenchmarkPage = () => {
         .text-white { color: white; }
         .eyebrow { display: block; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 1.5rem; }
         .text-teal { color: #2dd4bf; }
-        h1 { font-size: 3.75rem; font-weight: 800; margin-bottom: 1rem; letter-spacing: -0.02em; }
+        h1 { font-size: 3.75rem; font-weight: 800; margin-bottom: 1rem; letter-spacing: -0.02em; color: white; }
         .hero-lead { font-size: 1.6rem; color: #94a3b8; font-weight: 500; max-width: 700px; margin: 0 auto; line-height: 1.6; }
 
         .section-h2 { font-size: 2.75rem; font-weight: 800; color: #0a192f; margin-bottom: 2rem; }

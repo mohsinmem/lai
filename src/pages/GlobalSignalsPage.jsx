@@ -141,7 +141,7 @@ const GlobalSignalsPage = () => {
         .text-white { color: white; }
         .eyebrow { display: block; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1rem; }
         .text-teal { color: #2dd4bf; }
-        h1 { font-size: 3.5rem; font-weight: 800; margin-bottom: 1rem; }
+        h1 { font-size: 3.5rem; font-weight: 800; margin-bottom: 1rem; color: white; }
         .hero-lead { font-size: 1.5rem; color: #94a3b8; font-weight: 500; }
 
         .section-h2 { font-size: 2.5rem; font-weight: 800; color: #0a192f; margin-bottom: 1.5rem; }
@@ -166,7 +166,7 @@ const GlobalSignalsPage = () => {
         .feed-item { display: flex; gap: 1.5rem; align-items: center; padding: 1.5rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; }
         .feed-date { font-family: 'Inter', monospace; font-weight: 900; font-size: 0.75rem; color: #2dd4bf; }
         .feed-info { flex: 1; display: flex; justify-content: space-between; align-items: center; }
-        .feed-info h4 { font-size: 0.95rem; weight: 600; }
+        .feed-info h4 { font-size: 0.95rem; font-weight: 600; color: white; }
         .status-pill { font-size: 0.65rem; font-weight: 900; text-transform: uppercase; padding: 4px 10px; border-radius: 4px; border: 1px solid currentColor; }
         .status-pill.emergent { color: #3b82f6; }
         .status-pill.antifragile { color: #10b981; }
