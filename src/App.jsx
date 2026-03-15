@@ -30,6 +30,7 @@ import AFERRPage from './pages/AFERRPage';
 // Phase 4: Participation Layer
 import DiagnosticPage from './pages/DiagnosticPage';
 import BenchmarkPage from './pages/BenchmarkPage';
+import Part1Report from './pages/Part1Report';
 // import MeasurementJourneyPage from './pages/MeasurementJourneyPage'; // [NEW]
 
 // Phase 5: Institutional Foundation
@@ -75,6 +76,7 @@ function App() {
 
             {/* Phase 4: Participation Layer */}
             <Route path="/diagnostic" element={<DiagnosticPage />} />
+            <Route path="/report/perception/:id" element={<Part1Report />} />
             <Route path="/benchmark" element={<BenchmarkPage />} />
             <Route path="/journey" element={<div>Leadership Team Measurement Journey (Coming Soon)</div>} />
 

@@ -83,6 +83,10 @@ export const PAGE_REGISTRY = {
     title: "About the Institute",
     desc: "Understand the mission and role of the Leadership Adaptiveness Institute."
   },
+  "/report/perception/:id": {
+    title: "Leadership Adaptiveness Profile",
+    desc: "Perception assessment of the leadership system."
+  },
   "/council": {
     title: "Advisory / Research Council",
     desc: "Learn about the network of researchers and practitioners contributing to the Institute’s work."

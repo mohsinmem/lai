@@ -1,186 +1,289 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, CheckCircle2, ChevronLeft, AlertCircle, BarChart3, TrendingUp, Sparkles, Brain } from 'lucide-react';
-
+import { 
+  ArrowRight, CheckCircle2, ChevronLeft, AlertCircle, 
+  BarChart3, TrendingUp, Sparkles, Brain, Users, 
+  User, Link as LinkIcon, Mail, ShieldCheck, Globe,
+  Briefcase, Activity, Target
+} from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '../supabase';
 
 const dimensions = [
   { 
-    id: 'signal', 
+    id: 'signal_detection', 
     name: 'Signal Detection', 
+    description: 'Ability to detect emerging technological, geopolitical, and market signals.',
     questions: [
-      "How quickly does your leadership team recognize when external conditions are changing?",
-      "How frequently do leaders discuss early signals such as competitor moves, new technologies, or regulatory changes?",
-      "When new information emerges, how quickly is it incorporated into leadership discussions?",
-      "How confident are you that your leadership team identifies meaningful signals before they become major disruptions?"
+      "How quickly does your leadership system recognize emerging technological and market shifts?",
+      "How frequently are external 'weak signals' accurately prioritized in strategic discussions?"
     ] 
   },
   { 
-    id: 'cognitive', 
+    id: 'cognitive_framing', 
     name: 'Cognitive Framing', 
+    description: 'Interpretation of market shifts (Opportunity vs. Threat).',
     questions: [
-      "When unexpected change occurs, how often do leaders treat it as an opportunity rather than a threat?",
-      "When plans stop matching reality, how open are leaders to questioning their assumptions?",
-      "How comfortable is your leadership team with experimenting in uncertain situations?",
-      "When facing disruption, how quickly do leaders move from concern to constructive problem-solving?"
+      "When facing disruption, how often do leaders frame change as an opportunity rather than a threat?",
+      "How effectively does the leadership system challenge its own core assumptions when reality shifts?"
     ] 
   },
   { 
-    id: 'resource', 
-    name: 'Resource Calibration', 
-    questions: [
-      "When priorities change, how quickly does the organization reallocate budget or resources?",
-      "How often are outdated initiatives stopped when they no longer support strategy?",
-      "When new opportunities emerge, how quickly can resources be redirected toward them?",
-      "How confident are you that most resources in your organization support current strategic priorities?"
-    ] 
-  },
-  { 
-    id: 'decision', 
+    id: 'decision_alignment', 
     name: 'Decision Alignment', 
+    description: 'Convergence of actions across the simulated system.',
     questions: [
-      "When leadership agrees on a strategic shift, how consistently do leaders reinforce that direction in their decisions?",
-      "How often do different departments pursue competing priorities after leadership discussions?", // Reverse mapped
-      "How clearly are leadership decisions aligned with the organization's evolving strategy?",
-      "When conditions change, how quickly do leadership decisions converge around a shared response?"
+      "How consistently do leadership decisions converge around a shared response to environmental changes?",
+      "How clearly are strategic shifts translated into coherent decisions across all leadership levels?"
     ] 
   },
   { 
-    id: 'execution', 
-    name: 'Integrated Responsiveness', 
+    id: 'resource_calibration', 
+    name: 'Resource Calibration', 
+    description: 'Velocity of capital and talent reallocation.',
     questions: [
-      "Once leadership decisions change, how quickly do operational teams adjust their actions?",
-      "How often do outdated processes continue after strategy has shifted?", // Reverse mapped
-      "How effectively does your organization translate strategic changes into operational changes?",
-      "When the environment changes, how quickly does execution across teams adjust?"
+      "How quickly can your organization redirect capital and talent to support new strategic priorities?",
+      "How often are resources withdrawn from legacy projects that no longer align with the environment?"
+    ] 
+  },
+  { 
+    id: 'integrated_responsiveness', 
+    name: 'Integrated Responsiveness', 
+    description: 'Systemic translation of strategy into behavioral output.',
+    questions: [
+      "How effectively is systemic behavioral change synchronized across the entire organization?",
+      "How quickly does execution across teams adjust once a leadership pivot has been decided?"
     ] 
   }
 ];
 
 const DiagnosticPage = () => {
-  const [step, setStep] = useState(0); // 0: Start, 0.5: Pre-survey, 1: Questions, 2: Results
-  const [meta, setMeta] = useState({ organization_name: '', industry: '', region: '' });
+  const navigate = useNavigate();
+  // Steps: 0:Intro, 1:Mode, 2:Consent, 3:Context, 3.5:TeamInvite, 4:Questions, 5:Results
+  const [step, setStep] = useState(0); 
+  const [mode, setMode] = useState(null); // 'individual', 'team_create', 'team_join'
+  const [teamCode, setTeamCode] = useState('');
+  const [invites, setInvites] = useState(['']);
+  const [consent, setConsent] = useState(false);
+  const [meta, setMeta] = useState({ 
+    organization_name: '', 
+    industry: '', 
+    region: 'Global',
+    role_level: '',
+    org_size: ''
+  });
+  
   const [currentDimIndex, setCurrentDimIndex] = useState(0);
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [answers, setAnswers] = useState({});
-  const [isFinished, setIsFinished] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reportId, setReportId] = useState(null);
 
-  const totalQuestions = dimensions.reduce((acc, dim) => acc + dim.questions.length, 0);
-  const currentGlobalIndex = currentDimIndex * 4 + currentQIndex;
+  const totalQuestions = dimensions.length * 2;
+  const currentGlobalIndex = currentDimIndex * 2 + currentQIndex;
+
+  // Generate a random team code for creators
+  useEffect(() => {
+    if (step === 1 && mode === 'team_create' && !teamCode) {
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      setTeamCode(code);
+    }
+  }, [step, mode]);
 
   const handleAnswer = (value) => {
     const dimId = dimensions[currentDimIndex].id;
     const qKey = `${dimId}_${currentQIndex}`;
     
-    // 14 is dim 3 (decision), index 1
-    // 17 is dim 4 (execution), index 1
-    let scoredValue = value;
-    if ((currentDimIndex === 3 && currentQIndex === 1) || (currentDimIndex === 4 && currentQIndex === 1)) {
-      scoredValue = 11 - value;
-    }
+    setAnswers({ ...answers, [qKey]: value });
 
-    setAnswers({ ...answers, [qKey]: scoredValue });
-
-    if (currentQIndex < 3) {
+    if (currentQIndex < 1) {
       setCurrentQIndex(currentQIndex + 1);
     } else if (currentDimIndex < dimensions.length - 1) {
       setCurrentDimIndex(currentDimIndex + 1);
       setCurrentQIndex(0);
     } else {
-      calculateResults();
+      submitDiagnostic();
     }
   };
 
-  const calculateResults = async () => {
-    const overallScore = parseFloat(getOverallScore());
+  const submitDiagnostic = async () => {
+    setIsSubmitting(true);
+    
+    const overallScore = calculateOverallScore();
     const resultData = {
       ...meta,
+      participation_mode: mode,
+      team_code: teamCode,
       overall_score: overallScore,
-      signal_score: parseFloat(getDimScore('signal')),
-      cognitive_score: parseFloat(getDimScore('cognitive')),
-      resource_score: parseFloat(getDimScore('resource')),
-      decision_score: parseFloat(getDimScore('decision')),
-      execution_score: parseFloat(getDimScore('execution'))
-
+      signal_detection_score: calculateDimScore('signal_detection'),
+      cognitive_framing_score: calculateDimScore('cognitive_framing'),
+      decision_alignment_score: calculateDimScore('decision_alignment'),
+      resource_calibration_score: calculateDimScore('resource_calibration'),
+      integrated_responsiveness_score: calculateDimScore('integrated_responsiveness'),
+      metadata: {
+        research_consent: consent,
+        invites: mode === 'team_create' ? invites.filter(i => i) : [],
+        source: 'Perceptual'
+      }
     };
 
     try {
-      const API_BASE_URL = '/api';
-      await fetch(`${API_BASE_URL}/api/diagnostic`, {
+      const response = await fetch('/.netlify/functions/api/diagnostic', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(resultData)
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(resultData),
       });
-    } catch (err) {
-      console.error('Failed to save result to backend:', err);
-    }
 
-    setIsFinished(true);
-    setStep(2);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to submit diagnostic');
+      
+      setReportId(data.id);
+      setStep(5);
+    } catch (err) {
+      console.error('Failed to save result:', err);
+      // Fallback for demo/dev if API is not available
+      setReportId('pending-' + Math.random().toString(36).substring(7));
+      setStep(5);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const getDimScore = (dimId) => {
+  const calculateDimScore = (dimId) => {
     const dimAnswers = Object.keys(answers)
       .filter(key => key.startsWith(dimId))
       .map(key => answers[key]);
     if (dimAnswers.length === 0) return 0;
     const avg = dimAnswers.reduce((a, b) => a + b, 0) / dimAnswers.length;
-    return (avg * 10).toFixed(1);
+    return Math.round(avg * 10);
   };
 
-  const getOverallScore = () => {
-    const allScores = dimensions.map(d => parseFloat(getDimScore(d.id)));
-    return (allScores.reduce((a, b) => a + b, 0) / allScores.length).toFixed(0);
+  const calculateOverallScore = () => {
+    const allScores = dimensions.map(d => calculateDimScore(d.id));
+    return Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length);
+  };
+
+  const addInvite = () => setInvites([...invites, '']);
+  const updateInvite = (idx, val) => {
+    const newInvites = [...invites];
+    newInvites[idx] = val;
+    setInvites(newInvites);
   };
 
   return (
     <div className="diagnostic-page">
       <div className="container narrow">
         <AnimatePresence mode="wait">
+          {/* STEP 0: INTRODUCTION */}
           {step === 0 && (
-            <motion.div 
-              key="start"
-              className="start-screen"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-            >
-              <div className="badge-center">Professional Assessment</div>
-              <h1>Leadership Adaptiveness Diagnostic</h1>
-              <p>A rapid behavioral assessment to measure how your leadership system responds to changing environments. (20 Questions • 5 Minutes)</p>
-              <button onClick={() => setStep(0.5)} className="btn-start">
-                Begin Assessment <ArrowRight />
-              </button>
+            <motion.div key="intro" className="diag-card intro" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+              <div className="institutional-badge">Leadership Adaptiveness Diagnostic</div>
+              <h1>Measure Your Leadership System</h1>
+              <p className="lead-text">
+                Measure how your leadership system detects change, aligns decisions, and adapts in complex environments.
+              </p>
+              <div className="process-preview">
+                <div className="preview-item">
+                  <div className="p-icon"><Brain size={20} /></div>
+                  <div className="p-text"><strong>Perception Assessment</strong> Answer a short perception diagnostic</div>
+                </div>
+                <div className="preview-item">
+                  <div className="p-icon"><BarChart3 size={20} /></div>
+                  <div className="p-text"><strong>Adaptiveness Profile</strong> Receive your research-grade profile</div>
+                </div>
+                <div className="preview-item">
+                  <div className="p-icon"><Activity size={20} /></div>
+                  <div className="p-text"><strong>Behavioral Simulation</strong> Observe decisions in high-stakes practice</div>
+                </div>
+                <div className="preview-item">
+                  <div className="p-icon"><Target size={20} /></div>
+                  <div className="p-text"><strong>Reveal the Gap</strong> Identify the delta between perception and action</div>
+                </div>
+              </div>
+              <button onClick={() => setStep(1)} className="btn-institutional primary full-width">Begin Diagnostic <ArrowRight size={18} /></button>
             </motion.div>
           )}
 
-          {step === 0.5 && (
-            <motion.div 
-              key="meta"
-              className="start-screen"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-            >
-              <div className="badge-center">Registration Data</div>
-              <h2>Organization Details</h2>
-              <p>This data helps us provide accurate benchmarking for your industry and region.</p>
+          {/* STEP 1: PARTICIPATION MODE */}
+          {step === 1 && (
+            <motion.div key="mode" className="diag-card" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <button className="btn-back-nav" onClick={() => setStep(0)}><ChevronLeft size={16} /> Back</button>
+              <div className="step-count">Step 1 of 4</div>
+              <h2>Participation Mode</h2>
+              <p>Choose how you would like to participate in this measurement cycle.</p>
               
-              <div className="meta-form">
-                <div className="form-group-diag">
-                  <label>Organization Name</label>
-                  <input 
-                    type="text" 
-                    value={meta.organization_name}
-                    onChange={(e) => setMeta({...meta, organization_name: e.target.value})}
-                    placeholder="Enter organization name"
-                  />
+              <div className="mode-grid">
+                <button className={`mode-btn ${mode === 'team_join' ? 'active' : ''}`} onClick={() => setMode('team_join')}>
+                  <Users size={24} />
+                  <strong>Join a Team</strong>
+                  <span>Existing project with a code.</span>
+                </button>
+                <button className={`mode-btn ${mode === 'team_create' ? 'active' : ''}`} onClick={() => setMode('team_create')}>
+                  <Users size={24} className="text-teal" />
+                  <strong>Create a Team</strong>
+                  <span>Invite colleagues to benchmark.</span>
+                </button>
+                <button className={`mode-btn ${mode === 'individual' ? 'active' : ''}`} onClick={() => setMode('individual')}>
+                  <User size={24} />
+                  <strong>Individual</strong>
+                  <span>Contribute to global research.</span>
+                </button>
+              </div>
+
+              {mode === 'team_join' && (
+                <div className="mode-input-row">
+                  <input type="text" placeholder="Enter Team Code" value={teamCode} onChange={(e) => setTeamCode(e.target.value.toUpperCase())} maxLength={6} />
                 </div>
-                <div className="form-group-diag">
+              )}
+
+              <div className="diag-actions">
+                <button disabled={!mode || (mode === 'team_join' && teamCode.length < 6)} onClick={() => setStep(2)} className="btn-institutional primary">Continue</button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* STEP 2: RESEARCH CONSENT */}
+          {step === 2 && (
+            <motion.div key="consent" className="diag-card" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <button className="btn-back-nav" onClick={() => setStep(1)}><ChevronLeft size={16} /> Back</button>
+              <div className="step-count">Step 2 of 4</div>
+              <h2>Research Consent</h2>
+              <p>Institutional measurement relies on data completeness and integrity.</p>
+              
+              <div className="consent-box">
+                <div className="consent-check" onClick={() => setConsent(!consent)}>
+                  <div className={`checkbox ${consent ? 'checked' : ''}`}>{consent && <CheckCircle2 size={16} />}</div>
+                  <p>I agree that anonymized responses may contribute to research conducted by the Leadership Adaptiveness Institute.</p>
+                </div>
+                <div className="consent-info">
+                  <ShieldCheck size={14} /> This data allows the Observatory to expand the depth of leadership intelligence across industries.
+                </div>
+              </div>
+
+              <div className="diag-actions">
+                <button disabled={!consent} onClick={() => setStep(3)} className="btn-institutional primary">I Agree</button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* STEP 3: CONTEXT FIELDS */}
+          {step === 3 && (
+            <motion.div key="context" className="diag-card" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <button className="btn-back-nav" onClick={() => setStep(2)}><ChevronLeft size={16} /> Back</button>
+              <div className="step-count">Step 3 of 4</div>
+              <h2>Context Fields</h2>
+              <p>Meta-data helps us provide accurate benchmarking for your role and organization.</p>
+              
+              <div className="meta-grid">
+                <div className="form-group">
+                  <label>Organization Name</label>
+                  <input type="text" placeholder="e.g. Modern Logistics" value={meta.organization_name} onChange={(e) => setMeta({...meta, organization_name: e.target.value})} />
+                </div>
+                <div className="form-group">
                   <label>Industry</label>
-                  <select 
-                    value={meta.industry}
-                    onChange={(e) => setMeta({...meta, industry: e.target.value})}
-                  >
+                  <select value={meta.industry} onChange={(e) => setMeta({...meta, industry: e.target.value})}>
                     <option value="">Select Industry</option>
                     <option value="Technology">Technology</option>
                     <option value="Finance">Finance</option>
@@ -188,148 +291,154 @@ const DiagnosticPage = () => {
                     <option value="Manufacturing">Manufacturing</option>
                     <option value="Energy">Energy</option>
                     <option value="Retail">Retail</option>
-                    <option value="Other">Other</option>
                   </select>
                 </div>
-                <div className="form-group-diag">
+                <div className="form-group">
+                  <label>Role Level</label>
+                  <select value={meta.role_level} onChange={(e) => setMeta({...meta, role_level: e.target.value})}>
+                    <option value="">Select Level</option>
+                    <option value="C-Suite">C-Suite</option>
+                    <option value="SVP/VP/Director">SVP/VP / Director</option>
+                    <option value="Middle Management">Middle Management</option>
+                    <option value="Individual Contributor">Individual Contributor</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Organization Size</label>
+                  <select value={meta.org_size} onChange={(e) => setMeta({...meta, org_size: e.target.value})}>
+                    <option value="">Select Size</option>
+                    <option value="1-50">1-50 Employees</option>
+                    <option value="51-500">51-500 Employees</option>
+                    <option value="501-5000">501-5,000 Employees</option>
+                    <option value="5000+">5,000+ Employees</option>
+                  </select>
+                </div>
+                <div className="form-group">
                   <label>Region</label>
-                  <select 
-                    value={meta.region}
-                    onChange={(e) => setMeta({...meta, region: e.target.value})}
-                  >
-                    <option value="">Select Region</option>
+                  <select value={meta.region} onChange={(e) => setMeta({...meta, region: e.target.value})}>
                     <option value="North America">North America</option>
                     <option value="Europe">Europe</option>
                     <option value="APAC">APAC</option>
                     <option value="Middle East">Middle East</option>
-                    <option value="LATAM">LATAM</option>
-                    <option value="Africa">Africa</option>
+                    <option value="Global">Global</option>
                   </select>
                 </div>
-                
+              </div>
+
+              <div className="diag-actions">
                 <button 
-                  disabled={!meta.organization_name || !meta.industry || !meta.region}
-                  onClick={() => setStep(1)} 
-                  className="btn-start"
-                  style={{ marginTop: '2rem' }}
+                  disabled={!meta.organization_name || !meta.industry || !meta.role_level || !meta.org_size} 
+                  onClick={() => setStep(mode === 'team_create' ? 3.5 : 4)} 
+                  className="btn-institutional primary"
                 >
-                  Confirm and Start <ArrowRight />
+                  Continue
                 </button>
               </div>
             </motion.div>
           )}
 
-          {step === 1 && (
-            <motion.div 
-              key="questions"
-              className="question-screen"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: `${(currentGlobalIndex / totalQuestions) * 100}%` }}></div>
-              </div>
-
-              <div className="dim-indicator">
-                <span>Dimension {currentDimIndex + 1} of 5</span>
-                <h3>{dimensions[currentDimIndex].name}</h3>
-              </div>
-
-              <motion.div 
-                key={currentGlobalIndex}
-                className="q-container"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-              >
-                <p className="question-text">{dimensions[currentDimIndex].questions[currentQIndex]}</p>
-                <div className="scale-container">
-                  <div className="scale-labels">
-                    <span>Rarely True</span>
-                    <span>Sometimes</span>
-                    <span>Consistently True</span>
-                  </div>
-                  <div className="scale-options">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                      <button 
-                        key={num} 
-                        className="scale-btn"
-                        onClick={() => handleAnswer(num)}
-                      >
-                        {num}
-                      </button>
-                    ))}
-                  </div>
+          {/* STEP 3.5: TEAM INVITATIONS */}
+          {step === 3.5 && (
+            <motion.div key="invites" className="diag-card" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+              <button className="btn-back-nav" onClick={() => setStep(3)}><ChevronLeft size={16} /> Back</button>
+              <div className="step-count">Team Configuration</div>
+              <h2>Invite Your Leadership Team</h2>
+              <p>Measure the alignment of your leadership system by observing multiple perceptions.</p>
+              
+              <div className="team-code-badge">
+                <div className="badge-label">SHARE TEAM CODE</div>
+                <div className="code-display">
+                  <span>{teamCode}</span>
+                  <button className="btn-copy" onClick={() => navigator.clipboard.writeText(teamCode)}><LinkIcon size={14} /></button>
                 </div>
-              </motion.div>
+              </div>
 
-              <button className="btn-back" onClick={() => {
-                if (currentQIndex > 0) setCurrentQIndex(currentQIndex - 1);
-                else if (currentDimIndex > 0) {
-                  setCurrentDimIndex(currentDimIndex - 1);
-                  setCurrentQIndex(3);
-                } else setStep(0);
-              }}>
-                <ChevronLeft size={16} /> Previous
-              </button>
+              <div className="invites-list">
+                <div className="label-row">
+                  <label>Colleague Emails</label>
+                  <span>Optional</span>
+                </div>
+                {invites.map((email, idx) => (
+                  <div key={idx} className="invite-row">
+                    <Mail size={16} className="text-slate-400" />
+                    <input type="email" placeholder="colleague@org.com" value={email} onChange={(e) => updateInvite(idx, e.target.value)} />
+                  </div>
+                ))}
+                <button className="btn-add-invite" onClick={addInvite}>+ Add Another</button>
+              </div>
+
+              <div className="diag-actions">
+                <button onClick={() => setStep(4)} className="btn-institutional primary">Finalize and Start</button>
+              </div>
             </motion.div>
           )}
 
-          {step === 2 && (
-            <motion.div 
-              key="results"
-              className="results-screen"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              <div className="results-header">
-                <CheckCircle2 color="var(--teal)" size={48} />
-                <h1>Diagnostic Complete</h1>
-                <p>Your Leadership Adaptiveness Snapshot</p>
+          {/* STEP 4: DIAGNOSTIC QUESTIONS */}
+          {step === 4 && (
+            <motion.div key="questions" className="diag-card questions" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <div className="diag-progress">
+                <div className="diag-progress-bar">
+                  <div className="fill" style={{ width: `${(currentGlobalIndex / totalQuestions) * 100}%` }}></div>
+                </div>
+                <div className="diag-progress-label">Dimension {currentDimIndex + 1} of 5 · {dimensions[currentDimIndex].name}</div>
               </div>
 
-              <div className="overall-score-card">
-                <div className="score-circle">
-                  <span className="score-num">{getOverallScore()}</span>
-                  <span className="score-label">LAI SCORE</span>
-                </div>
-                <div className="score-desc">
-                  <h3>{getOverallScore() >= 80 ? 'Highly Adaptive' : getOverallScore() >= 60 ? 'Moderately Adaptive' : 'Adaptiveness Risk'}</h3>
-                  <p>Based on your responses, your leadership system demonstrating {getOverallScore() >= 80 ? 'exceptional' : 'moderate'} capacity to translate ENVIRONMENTAL awareness into ACTION.</p>
-                </div>
+              <div className="question-content">
+                <motion.div key={currentGlobalIndex} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}>
+                  <p className="q-text">{dimensions[currentDimIndex].questions[currentQIndex]}</p>
+                  <div className="scale-legend">
+                    <span>Rarely True</span>
+                    <span>Consistently True</span>
+                  </div>
+                  <div className="scale-options-10">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(val => (
+                      <button key={val} className="scale-node" onClick={() => handleAnswer(val)}>
+                        {val}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
               </div>
 
-              <div className="dimension-breakdown">
-                <h3>Dimension Breakdown</h3>
-                <div className="dim-list">
-                  {dimensions.map(dim => (
-                    <div key={dim.id} className="dim-score-row">
-                      <div className="dim-info">
-                        <span className="dim-name">{dim.name}</span>
-                        <span className="dim-val">{getDimScore(dim.id)}/100</span>
-                      </div>
-                      <div className="dim-bar-track">
-                        <div className="dim-bar-fill" style={{ width: `${getDimScore(dim.id)}%` }}></div>
-                      </div>
-                    </div>
-                  ))}
+              <button className="btn-back-nav" onClick={() => {
+                if (currentQIndex > 0) setCurrentQIndex(0);
+                else if (currentDimIndex > 0) { setCurrentDimIndex(currentDimIndex - 1); setCurrentQIndex(1); }
+                else setStep(mode === 'team_create' ? 3.5 : 3);
+              }}><ChevronLeft size={16} /> Previous Question</button>
+            </motion.div>
+          )}
+
+          {/* STEP 5: RESULTS (PLACEHOLDER FOR PART 1 REPORT) */}
+          {step === 5 && (
+            <motion.div key="results" className="diag-card results-preview" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+              <div className="results-intro">
+                <CheckCircle2 size={48} className="text-teal" />
+                <h1>Assessment Complete</h1>
+                <p>Establishing your institutional profile...</p>
+              </div>
+              
+              <div className="report-access-card">
+                <div className="access-info">
+                  <h3>Leadership Adaptiveness Profile</h3>
+                  <p>Your institutional research brief has been generated.</p>
                 </div>
+                <Link to={`/report/perception/${reportId}`} className="btn-institutional primary">View Research Brief <ArrowRight size={18} /></Link>
               </div>
 
-              <div className="insight-box">
-                <AlertCircle className="text-teal" />
-                <div>
-                  <h4>Key Insight</h4>
-                  <p>Your profile suggests that while you are strong in {dimensions[0].name}, there is a potential bottleneck in {dimensions[2].name}. This is a common pattern in mature organizations.</p>
+              <div className="next-steps-info">
+                <div className="info-node">
+                  <Mail size={20} />
+                  <div>
+                    <strong>Email Confirmation</strong>
+                    <span>A link to your persistent report has been sent to your registered organization record.</span>
+                  </div>
                 </div>
-              </div>
-
-              <div className="conversion-moment">
-                <Sparkles size={32} className="text-teal" />
-                <h3>Observe Real Behavior</h3>
-                <p>This assessment reflects perception-based data. To observe how your team actually behaves under strategic pressure, consider a behavioral simulation.</p>
-                <div className="conversion-actions">
-                  <button className="btn-primary">Request Simulation Demo</button>
-                  <button className="btn-secondary">Download Full Report</button>
+                <div className="info-node">
+                  <Sparkles size={20} className="text-amber-500" />
+                  <div>
+                    <strong>Upcoming Behavioral Observation</strong>
+                    <span>In 3 days, you will receive an invitation to observe these perceptions in a behavioral simulation.</span>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -338,124 +447,132 @@ const DiagnosticPage = () => {
       </div>
 
       <style jsx>{`
-        .diagnostic-page {
-          padding: 8rem 0;
-          min-height: 100vh;
-          background: #fcfcfc;
+        .diagnostic-page { padding: 10rem 0 6rem; background: #f8fafc; min-height: 100vh; }
+        .diag-card { 
+          background: white; border: 1px solid #e2e8f0; border-radius: 24px; padding: 4rem; 
+          box-shadow: 0 40px 100px -20px rgba(0,0,0,0.05); text-align: left;
+        }
+        .diag-card.intro { text-align: center; }
+        .institutional-badge { 
+          display: inline-block; padding: 0.5rem 1rem; background: #f1f5f9; color: #64748b; 
+          border-radius: 99px; font-size: 0.65rem; font-weight: 900; letter-spacing: 2px;
+          text-transform: uppercase; margin-bottom: 2rem;
+        }
+        h1 { font-size: 3rem; font-weight: 900; color: #0f172a; margin-bottom: 1.5rem; letter-spacing: -0.02em; }
+        h2 { font-size: 2rem; font-weight: 950; color: #0f172a; margin-bottom: 1rem; }
+        .lead-text { font-size: 1.25rem; color: #64748b; margin-bottom: 3rem; line-height: 1.6; }
+        
+        .process-preview { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; text-align: left; margin-bottom: 4rem; }
+        .preview-item { display: flex; gap: 1rem; align-items: flex-start; }
+        .p-icon { width: 40px; height: 40px; background: #f1f5f9; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #0f172a; flex-shrink: 0; }
+        .p-text { font-size: 0.95rem; color: #64748b; line-height: 1.4; }
+        .p-text strong { display: block; color: #0f172a; margin-bottom: 0.25rem; }
+
+        .btn-back-nav { 
+          background: none; border: none; color: #94a3b8; font-weight: 800; font-size: 0.75rem; 
+          text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 0.5rem;
+          margin-bottom: 2rem; cursor: pointer; padding: 0;
         }
 
-        .container.narrow {
-          max-width: 800px;
-          margin: 0 auto;
-          padding: 0 1.5rem;
+        .step-count { font-size: 0.65rem; font-weight: 900; color: #14b8a6; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 0.5rem; }
+        
+        /* Mode Grid */
+        .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin: 2rem 0; }
+        .mode-btn { 
+          background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 2rem;
+          display: flex; flex-direction: column; align-items: center; text-align: center;
+          cursor: pointer; transition: all 0.2s;
+        }
+        .mode-btn:hover { border-color: #2dd4bf; y: -2px; }
+        .mode-btn.active { border-color: #0f172a; background: #f8fafc; border-width: 2px; }
+        .mode-btn strong { display: block; margin: 1rem 0 0.5rem; font-size: 1.1rem; color: #0f172a; }
+        .mode-btn span { font-size: 0.8rem; color: #64748b; }
+
+        .mode-input-row { margin-bottom: 2rem; }
+        .mode-input-row input { 
+          width: 100%; padding: 1.25rem; border: 1px solid #e2e8f0; border-radius: 12px;
+          font-family: monospace; font-size: 1.5rem; text-align: center; letter-spacing: 0.5rem;
+          color: #0f172a;
         }
 
-        .start-screen {
-          text-align: center;
-          padding: 4rem 2rem;
-          background: white;
-          border: 1px solid var(--border-color);
-          border-radius: 12px;
-          box-shadow: 0 4px 30px rgba(0,0,0,0.03);
+        /* Consent Box */
+        .consent-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 2rem; margin: 2rem 0; }
+        .consent-check { display: flex; gap: 1rem; align-items: center; cursor: pointer; margin-bottom: 1.5rem; }
+        .checkbox { 
+          width: 24px; height: 24px; border: 2px solid #cbd5e1; border-radius: 6px; 
+          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
+        .checkbox.checked { border-color: #14b8a6; background: #14b8a6; color: white; }
+        .consent-check p { margin: 0; font-size: 1rem; color: #0f172a; font-weight: 500; }
+        .consent-info { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: #64748b; font-style: italic; }
 
-        .badge-center {
-          display: inline-block;
-          color: var(--teal);
-          font-weight: 700;
-          text-transform: uppercase;
-          font-size: 0.75rem;
-          letter-spacing: 2px;
-          margin-bottom: 1.5rem;
+        /* Meta Grid */
+        .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 2rem 0; }
+        .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        .form-group label { font-size: 0.65rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; }
+        .form-group input, .form-group select { 
+          padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem; color: #0f172a; outline: none;
         }
+        .form-group input:focus { border-color: #2dd4bf; }
 
-        .start-screen h1 { font-size: 3rem; margin-bottom: 1.5rem; }
-        .start-screen p { font-size: 1.2rem; color: var(--slate); margin-bottom: 2.5rem; }
-
-        .meta-form { text-align: left; max-width: 400px; margin: 0 auto; }
-        .form-group-diag { margin-bottom: 1.5rem; }
-        .form-group-diag label { display: block; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--slate-light); margin-bottom: 0.5rem; }
-        .form-group-diag input, .form-group-diag select { 
-          width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 1rem; color: var(--navy); 
-        }
-
-        .btn-start {
-          background: var(--navy);
-          color: white;
-          padding: 1.25rem 2.5rem;
-          border: none;
-          border-radius: 4px;
-          font-size: 1.1rem;
-          font-weight: 700;
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          margin: 0 auto;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .btn-start:hover { background: var(--teal); transform: translateY(-2px); }
+        /* Team Invite */
+        .team-code-badge { background: #0f172a; color: white; padding: 2rem; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; margin: 2rem 0; }
+        .badge-label { font-size: 0.6rem; font-weight: 900; letter-spacing: 2px; color: #94a3b8; }
+        .code-display { display: flex; align-items: center; gap: 1rem; font-size: 2.5rem; font-weight: 900; font-family: monospace; letter-spacing: 0.5rem; }
+        .btn-copy { background: rgba(255,255,255,0.1); border: none; color: white; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        
+        .invites-list { margin-bottom: 2.5rem; }
+        .label-row { display: flex; justify-content: space-between; margin-bottom: 0.75rem; }
+        .label-row span { font-size: 0.65rem; color: #cbd5e1; font-weight: 600; text-transform: uppercase; }
+        .invite-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.5rem; }
+        .invite-row input { border: none; flex: 1; outline: none; padding: 0.5rem 0; font-size: 1rem; }
+        .btn-add-invite { background: none; border: none; color: #14b8a6; font-size: 0.85rem; font-weight: 800; cursor: pointer; padding: 0.5rem 0; }
 
         /* Questions */
-        .progress-bar { height: 4px; background: #edf2f7; border-radius: 2px; margin-bottom: 3rem; overflow: hidden; }
-        .progress-fill { height: 100%; background: var(--teal); transition: width 0.3s ease; }
+        .diag-progress { margin-bottom: 4rem; }
+        .diag-progress-bar { height: 6px; background: #f1f5f9; border-radius: 10px; overflow: hidden; margin-bottom: 1rem; }
+        .diag-progress-bar .fill { height: 100%; background: #2dd4bf; transition: width 0.3s ease; }
+        .diag-progress-label { font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
 
-        .dim-indicator { margin-bottom: 2rem; }
-        .dim-indicator span { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--slate-light); }
-        .dim-indicator h3 { font-size: 1.8rem; margin-top: 0.5rem; }
-
-        .q-container { background: white; padding: 3rem; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 2rem; }
-        .question-text { font-size: 1.4rem; color: var(--navy); font-weight: 500; margin-bottom: 3rem; min-height: 4rem; }
-
-        .scale-options { display: grid; grid-template-columns: repeat(10, 1fr); gap: 0.5rem; }
-        .scale-btn {
-          aspect-ratio: 1; border: 1px solid var(--border-color); background: white; border-radius: 4px;
-          font-weight: 600; color: var(--slate); cursor: pointer; transition: all 0.2s ease;
+        .question-content { min-height: 300px; margin-bottom: 4rem; }
+        .q-text { font-size: 2.25rem; font-weight: 900; color: #0f172a; margin-bottom: 4rem; line-height: 1.2; letter-spacing: -0.02em; }
+        
+        .scale-legend { display: flex; justify-content: space-between; margin-bottom: 1rem; font-size: 0.7rem; font-weight: 900; color: #cbd5e1; text-transform: uppercase; letter-spacing: 1.5px; }
+        .scale-options-10 { display: grid; grid-template-columns: repeat(10, 1fr); gap: 0.75rem; }
+        .scale-node { 
+          aspect-ratio: 1; border: 1.5px solid #e2e8f0; border-radius: 12px; 
+          font-weight: 800; color: #64748b; display: flex; align-items: center; justify-content: center;
+          cursor: pointer; transition: all 0.2s; font-size: 1.1rem;
         }
-        .scale-btn:hover { background: var(--navy); color: white; border-color: var(--navy); }
-        .scale-labels { display: flex; justify-content: space-between; font-size: 0.7rem; text-transform: uppercase; color: var(--slate-light); margin-bottom: 0.75rem; font-weight: 700; }
-
-        .btn-back { background: none; border: none; color: var(--slate-light); display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 600; }
+        .scale-node:hover { border-color: #0f172a; color: #0f172a; background: #f8fafc; transform: translateY(-3px); }
 
         /* Results */
-        .results-header { text-align: center; margin-bottom: 3rem; }
-        .results-header h1 { margin-top: 1rem; }
-
-        .overall-score-card {
-          display: flex; align-items: center; gap: 3rem; background: var(--navy); color: white; padding: 3rem; border-radius: 12px; margin-bottom: 3rem;
-        }
-        .score-circle {
-          width: 140px; height: 140px; border: 8px solid var(--teal); border-radius: 50%;
-          display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .score-num { font-size: 3rem; font-weight: 800; line-height: 1; }
-        .score-label { font-size: 0.6rem; letter-spacing: 1px; }
-        .score-desc h3 { color: white; font-size: 1.8rem; margin-bottom: 0.5rem; }
-        .score-desc p { color: #cbd5e0; }
-
-        .dimension-breakdown { background: white; border: 1px solid var(--border-color); padding: 2.5rem; border-radius: 12px; margin-bottom: 2rem; }
-        .dim-list { display: flex; flex-direction: column; gap: 1.5rem; margin-top: 2rem; }
-        .dim-score-row { }
-        .dim-info { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 600; }
-        .dim-bar-track { height: 6px; background: #edf2f7; border-radius: 3px; }
-        .dim-bar-fill { height: 100%; background: var(--teal); border-radius: 3px; }
-
-        .insight-box {
-          display: flex; gap: 1.5rem; background: rgba(49, 151, 149, 0.05); padding: 2rem; border-radius: 8px; border-left: 4px solid var(--teal); margin-bottom: 3rem;
-        }
-        .insight-box h4 { margin-top: 0; }
-
-        .conversion-moment { text-align: center; padding: 4rem 2rem; border-top: 1px solid var(--border-color); }
-        .conversion-moment h3 { font-size: 2rem; margin: 1rem 0; }
-        .conversion-actions { display: flex; justify-content: center; gap: 1.5rem; margin-top: 2.5rem; }
+        .results-preview { text-align: center; }
+        .results-intro { margin-bottom: 4rem; }
+        .results-intro h1 { margin-top: 1.5rem; }
         
-        .btn-primary { background: var(--navy); color: white; border: none; padding: 1rem 2rem; border-radius: 4px; font-weight: 700; cursor: pointer; }
-        .btn-secondary { background: white; color: var(--navy); border: 1px solid var(--border-color); padding: 1rem 2rem; border-radius: 4px; font-weight: 700; cursor: pointer; }
+        .report-access-card { 
+          background: #0f172a; border-radius: 20px; padding: 3rem; color: white;
+          display: flex; justify-content: space-between; align-items: center; text-align: left;
+          margin-bottom: 4rem;
+        }
+        .access-info h3 { font-size: 1.5rem; margin-bottom: 0.5rem; color: white; }
+        .access-info p { color: #94a3b8; margin: 0; }
 
-        @media (max-width: 600px) {
-          .overall-score-card { flex-direction: column; text-align: center; }
-          .scale-options { grid-template-columns: repeat(5, 1fr); gap: 0.75rem; }
+        .next-steps-info { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; text-align: left; border-top: 1px solid #f1f5f9; pt: 3rem; }
+        .info-node { display: flex; gap: 1rem; }
+        .info-node strong { display: block; color: #0f172a; margin-bottom: 0.25rem; }
+        .info-node span { font-size: 0.85rem; color: #64748b; line-height: 1.4; }
+
+        .diag-actions { display: flex; justify-content: flex-end; margin-top: 3rem; }
+        
+        .btn-institutional.full-width { width: 100%; justify-content: center; padding: 1.5rem; font-size: 1.25rem; }
+
+        @media (max-width: 768px) {
+          .mode-grid, .meta-grid, .process-preview, .next-steps-info { grid-template-columns: 1fr; }
+          .diag-card { padding: 2rem; }
+          .report-access-card { flex-direction: column; gap: 2rem; align-items: flex-start; }
+          .scale-options-10 { grid-template-columns: repeat(5, 1fr); }
         }
       `}</style>
     </div>

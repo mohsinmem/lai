@@ -174,11 +174,28 @@ app.get('/api/intelligence/history', async (req, res) => {
 });
 
 // Diagnostic Results
+app.get('/api/diagnostic/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { data, error } = await supabaseClient
+      .from('diagnostic_results')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    console.error('Diagnostic Fetch Error:', err.message);
+    res.status(404).json({ error: 'Report not found' });
+  }
+});
+
 app.post('/api/diagnostic', async (req, res) => {
   const { 
     organization_name, industry, region,
-    overall_score, signal_score, cognitive_score, resource_score, decision_score, execution_score,
-    email
+    overall_score, signal_detection_score, cognitive_framing_score, resource_calibration_score, decision_alignment_score, integrated_responsiveness_score,
+    email, participation_mode, team_code, role_level, org_size, metadata = {}
   } = req.body;
 
   if (!organization_name) {
@@ -206,18 +223,24 @@ app.post('/api/diagnostic', async (req, res) => {
         industry,
         region: region || 'Global',
         overall_score: overall_score || 0,
-        signal_score: signal_score || 0,
-        cognitive_score: cognitive_score || 0,
-        resource_score: resource_score || 0,
-        decision_score: decision_score || 0,
-        execution_score: execution_score || 0,
+        signal_detection_score: signal_detection_score || 0,
+        cognitive_framing_score: cognitive_framing_score || 0,
+        resource_calibration_score: resource_calibration_score || 0,
+        decision_alignment_score: decision_alignment_score || 0,
+        integrated_responsiveness_score: integrated_responsiveness_score || 0,
         verified_entity_id,
         metadata: {
-          source: 'Self-Reported',
+          ...metadata,
+          source: 'Perceptual',
+          participation_mode: participation_mode || 'Individual',
+          team_code: team_code || null,
+          role_level: role_level || 'Not Specified',
+          org_size: org_size || 'Not Specified',
           industry: industry || 'Other',
           region: region || 'Global',
           is_published: true,
-          auto_mapped: !!verified_entity_id
+          auto_mapped: !!verified_entity_id,
+          recorded_at: new Date().toISOString()
         }
       }])
       .select();
