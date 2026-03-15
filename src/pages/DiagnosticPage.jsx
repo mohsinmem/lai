@@ -80,6 +80,7 @@ const DiagnosticPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reportId, setReportId] = useState(null);
   const [serverTeamCode, setServerTeamCode] = useState('');
+  const [copied, setCopied] = useState(null); // 'report' or 'team'
 
   const totalQuestions = dimensions.length * 2;
   const currentGlobalIndex = currentDimIndex * 2 + currentQIndex;
@@ -204,10 +205,10 @@ const DiagnosticPage = () => {
           {/* STEP 0: INTRODUCTION */}
           {step === 0 && (
             <motion.div key="intro" className="diag-card intro" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-              <div className="institutional-badge">Leadership Adaptiveness Diagnostic</div>
-              <h1>Measure Your Leadership System</h1>
+              <div className="institutional-badge">Measurement Cycle: Part 1 of 2</div>
+              <h1>Perceptual Measurement</h1>
               <p className="lead-text">
-                Measure how your leadership system detects change, aligns decisions, and adapts in complex environments.
+                Assess how your leadership system detects change, aligns decisions, and adapts in complex environments.
               </p>
               <div className="process-preview">
                 <div className="preview-item">
@@ -465,49 +466,82 @@ const DiagnosticPage = () => {
           {/* STEP 7: RESULTS */}
           {step === 7 && (
             <motion.div key="results" className="diag-card results-preview" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-              <div className="results-intro">
-                <CheckCircle2 size={48} className="text-teal" />
-                <h1>Assessment Complete</h1>
-                <p>Establishing your institutional profile...</p>
+              <div className="results-body" style={{ textAlign: 'center' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(20, 184, 166, 0.1)', color: '#14b8a6', marginBottom: '2rem' }}>
+                  <TrendingUp size={40} />
+                </div>
+                <h1 style={{ fontSize: '2.5rem', color: '#0f172a', marginBottom: '0.75rem', fontWeight: '950', letterSpacing: '-0.03em' }}>Part 1 Complete</h1>
+                <p style={{ color: '#64748b', fontSize: '1.25rem', marginBottom: '3rem', maxWidth: '600px', marginInline: 'auto' }}>Your Perceptual Adaptiveness Profile has been successfully generated. Part 2 (Behavioral Measurement) is currently pending activation.</p>
               </div>
               
               {serverTeamCode && (
-                <div className="team-code-badge success">
-                  <div className="badge-label">YOUR TEAM CODE</div>
-                  <div className="code-display">
-                    <span>{serverTeamCode}</span>
-                    <button className="btn-copy" onClick={() => navigator.clipboard.writeText(serverTeamCode)}><LinkIcon size={14} /></button>
+                <div className="team-code-badge" style={{ background: '#f8fafc', border: '2px solid #e2e8f0', padding: '2.5rem', borderRadius: '20px', marginBottom: '3rem', position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: '#14b8a6' }}></div>
+                  <div className="badge-label" style={{ fontSize: '0.8rem', fontWeight: '800', color: '#94a3b8', letterSpacing: '0.1em', marginBottom: '1rem', textTransform: 'uppercase' }}>TEAM ACCESS CODE</div>
+                  <div className="code-display" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem' }}>
+                    <span style={{ fontSize: '3rem', fontWeight: '900', fontFamily: 'monospace', color: '#0f172a', letterSpacing: '0.2em' }}>{serverTeamCode}</span>
+                    <button 
+                      className="btn-copy" 
+                      onClick={() => {
+                        navigator.clipboard.writeText(serverTeamCode);
+                        setCopied('team');
+                        setTimeout(() => setCopied(null), 2000);
+                      }}
+                      style={{ background: '#0f172a', border: 'none', color: 'white', width: '56px', height: '56px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
+                    >
+                      {copied === 'team' ? <CheckCircle2 size={24} color="#14b8a6" /> : <LinkIcon size={24} />}
+                    </button>
                   </div>
-                  <p className="text-xs text-slate-400 mt-2">Share this code with colleagues to enable team alignment variance analysis.</p>
+                  {copied === 'team' && <div style={{ color: '#14b8a6', fontSize: '0.75rem', fontWeight: '800', marginTop: '1rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Code Copied to Clipboard</div>}
+                  {!copied && <p style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '1.5rem', fontWeight: '500' }}>Share this code with your team to enable aggregate alignment variance mapping.</p>}
                 </div>
               )}
 
-              <div className="report-access-card">
-                <div className="access-info">
-                  <h3>Leadership Adaptiveness Profile</h3>
-                  <p>Your individual Perception Profile has been generated.</p>
+              <div className="report-access-card" style={{ background: '#0f172a', color: 'white', padding: '3rem', borderRadius: '24px', marginBottom: '3rem', boxShadow: '0 30px 60px -12px rgba(0,0,0,0.25)', textAlign: 'left' }}>
+                <div style={{ marginBottom: '2rem' }}>
+                  <h3 style={{ fontSize: '1.75rem', fontWeight: '800', marginBottom: '0.75rem', letterSpacing: '-0.02em' }}>Leadership Adaptiveness Profile</h3>
+                  <p style={{ color: '#94a3b8', fontSize: '1.1rem', lineHeight: '1.5' }}>Your individual results and research brief are now available for review.</p>
                 </div>
-                <div className="report-access-block">
-                  <Link to={`/report/perception/${reportId}`} className="btn-institutional primary">View Research Brief <ArrowRight size={18} /></Link>
-                  <div style={{ marginTop: '1rem', fontSize: '0.7rem', color: '#94a3b8', fontFamily: 'monospace', textAlign: 'center' }}>
-                    PERSISTENT ID: {reportId}
-                  </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                  <Link to={`/report/perception/${reportId}`} className="btn-institutional primary" style={{ background: '#14b8a6', color: 'white', padding: '1.25rem', borderRadius: '12px', textAlign: 'center', fontWeight: '700', fontSize: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', textDecoration: 'none' }}>
+                    View Results Brief <ArrowRight size={20} />
+                  </Link>
+                  
+                  <button 
+                    onClick={() => {
+                      const url = `${window.location.origin}/report/perception/${reportId}`;
+                      navigator.clipboard.writeText(url);
+                      setCopied('report');
+                      setTimeout(() => setCopied(null), 2000);
+                    }}
+                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', padding: '1.25rem', borderRadius: '12px', color: 'white', fontSize: '1rem', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', transition: 'all 0.2s' }}
+                  >
+                    {copied === 'report' ? <><CheckCircle2 size={18} color="#14b8a6" /> Copied!</> : <><LinkIcon size={18} /> Copy Report Link</>}
+                  </button>
+                </div>
+                <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', fontSize: '0.7rem', color: '#475569', fontFamily: 'monospace', textAlign: 'center' }}>
+                  PERSISTENT LOG ID: {reportId}
                 </div>
               </div>
 
-              <div className="next-steps-info">
-                <div className="info-node">
-                  <Mail size={20} />
+              <div className="next-steps-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                <div style={{ background: 'white', padding: '2rem', borderRadius: '20px', border: '1px solid #e2e8f0', display: 'flex', gap: '1.5rem', alignItems: 'flex-start', textAlign: 'left' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justify_content: 'center', color: '#14b8a6', flexShrink: 0 }}>
+                    <Mail size={24} />
+                  </div>
                   <div>
-                    <strong>Report Persistence</strong>
-                    <span>A secure link to your persistent report has been sent to {identity.email}.</span>
+                    <strong style={{ display: 'block', fontSize: '1.1rem', color: '#0f172a', marginBottom: '0.5rem' }}>Persistence Link</strong>
+                    <span style={{ fontSize: '0.9rem', color: '#64748b', lineHeight: '1.6' }}>A secure access link has been dispatched to <strong>{identity.email}</strong>.</span>
                   </div>
                 </div>
-                <div className="info-node">
-                  <TrendingUp size={20} className="text-teal" />
+                <div style={{ background: 'white', padding: '2rem', borderRadius: '20px', border: '1px solid #e2e8f0', display: 'flex', gap: '1.5rem', alignItems: 'flex-start', textAlign: 'left' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justify_content: 'center', color: '#14b8a6', flexShrink: 0 }}>
+                    <TrendingUp size={24} />
+                  </div>
                   <div>
-                    <strong>Team Alignment</strong>
-                    <span>Team variance insights will activate once 3 members complete the assessment.</span>
+                    <strong style={{ display: 'block', fontSize: '1.1rem', color: '#0f172a', marginBottom: '0.5rem' }}>Analytics Threshold</strong>
+                    <span style={{ fontSize: '0.9rem', color: '#64748b', lineHeight: '1.6' }}>Team-wide variance mapping activates upon reaching <strong>3+ completions</strong>.</span>
                   </div>
                 </div>
               </div>
