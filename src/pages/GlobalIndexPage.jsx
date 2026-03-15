@@ -836,6 +836,32 @@ const GlobalIndexPage = () => {
           </div>
         </div>
 
+        {/* INSTITUTIONAL FRAMING (Launch Phase) */}
+        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 24, padding: '3rem', marginBottom: '3rem' }}>
+          <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center' }}>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: 900, color: '#0f172a', marginBottom: '1.25rem', fontFamily: 'Georgia, serif' }}>An Evolving Measurement of Observable Leadership Behavior</h2>
+            <p style={{ fontSize: '1.1rem', color: '#64748b', lineHeight: 1.6, marginBottom: '2.5rem' }}>
+              The Global Leadership Adaptiveness Index is not a static leaderboard. As organizations participate in diagnostic and simulation-based measurement, the Observatory expands the depth and completeness of leadership intelligence across industries and regions.
+            </p>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
+              {[
+                { label: 'Triangulated Measurement', color: '#10b981', desc: 'Direct behavioral telemetry + environmental signals.' },
+                { label: 'Partial Insight', color: '#3b82f6', desc: 'Environmental signals + limited diagnostic data.' },
+                { label: 'Insufficient Behavioral Data', color: '#94a3b8', desc: 'Preliminary observability via market signals only.' }
+              ].map(s => (
+                <div key={s.label} style={{ textAlign: 'left', padding: '1.5rem', background: 'white', border: '1px solid #e2e8f0', borderRadius: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.75rem' }}>
+                    <div style={{ width: 8, height: 8, background: s.color, borderRadius: '50%' }} />
+                    <span style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', color: s.color, letterSpacing: 1 }}>{s.label}</span>
+                  </div>
+                  <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}>{s.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Global Intelligence Index */}
         <div style={{ background: 'white', borderRadius: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '80px 210px minmax(400px, 1fr) 200px 160px', padding: '24px 40px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>

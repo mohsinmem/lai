@@ -31,7 +31,7 @@ const HomePage = () => {
             <p className="hero-lead">The institutional standard for measuring how leadership systems respond to disruption.</p>
             <div className="hero-ctas">
               <Link to="/diagnostic" className="btn-institutional primary">Measure Your Leadership System</Link>
-              <Link to="/global-index" className="btn-institutional outline white">Explore the Global Adaptiveness Index</Link>
+              <Link to="/observatory" className="btn-institutional outline white">How the Observatory Works</Link>
             </div>
             <div className="hero-tertiary">
               <Link to="/manifesto" className="text-link text-slate-400 hover:text-white transition-colors">Read the Manifesto</Link>
