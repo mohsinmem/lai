@@ -31,7 +31,7 @@ const HomePage = () => {
             <p className="hero-lead">The institutional standard for measuring how leadership systems respond to disruption.</p>
             <div className="hero-ctas">
               <Link to="/manifesto" className="btn-institutional primary">Read the Manifesto</Link>
-              <Link to="/global-index" className="btn-institutional outline">Explore the Global Index</Link>
+              <Link to="/global-index" className="btn-institutional outline white">Explore the Global Index</Link>
             </div>
           </motion.div>
           
@@ -270,9 +270,11 @@ const HomePage = () => {
           display: inline-block;
           font-size: 0.95rem;
         }
-        .btn-institutional.primary { background: #0a192f; color: white !important; }
+        .btn-institutional.primary { background: #2dd4bf; color: #0a192f !important; }
+        .btn-institutional.primary:hover { background: #14b8a6; }
         .btn-institutional.outline { border: 1px solid #cbd5e1; color: #0a192f; }
-        .btn-institutional.outline.white { color: white !important; border-color: rgba(255,255,255,0.2); }
+        .btn-institutional.outline.white { color: white !important; border-color: rgba(255,255,255,0.4); }
+        .btn-institutional.outline.white:hover { background: rgba(255,255,255,0.1); border-color: white; }
         .btn-institutional:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
 
         @media (max-width: 992px) {
