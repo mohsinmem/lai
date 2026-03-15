@@ -5,11 +5,23 @@ import { Linkedin, Twitter, Mail, Globe } from 'lucide-react';
 const Footer = () => {
   return (
     <footer className="footer">
+      <div className="persistent-cta">
+        <div className="container">
+          <div className="cta-content">
+            <div className="cta-text">
+              <h3>Measure Your Leadership System</h3>
+              <p>Understand how your leadership team detects signals, aligns decisions, and responds when reality changes.</p>
+            </div>
+            <Link to="/diagnostic" className="btn-cta-footer">Take the Leadership Adaptiveness Diagnostic <ArrowRight size={18} /></Link>
+          </div>
+        </div>
+      </div>
+
       <div className="container">
         <div className="footer-top grid-12">
           <div className="footer-brand">
             <Link to="/" className="f-logo">LAI</Link>
-            <p>The Leadership Adaptiveness Institute is a global research body dedicated to establishing standards for organizational response to change.</p>
+            <p>The Leadership Adaptiveness Institute is a global research body dedicated to establishing standards for leadership behavior in complex environments.</p>
             <div className="social-links">
               <a href="#"><Linkedin size={20} /></a>
               <a href="#"><Twitter size={20} /></a>
@@ -20,20 +32,21 @@ const Footer = () => {
           <div className="footer-links">
             <h4>Institute</h4>
             <ul>
-              <li><Link to="/manifesto">Manifesto</Link></li>
-              <li><Link to="/framework">The Framework</Link></li>
-              <li><Link to="/about">About Us</Link></li>
-              <li><Link to="/research">Research Library</Link></li>
+              <li><Link to="/about">About the Institute</Link></li>
+              <li><Link to="/council">Advisory / Research Council</Link></li>
+              <li><Link to="/library">Research Library</Link></li>
+              <li><Link to="/aferr">AFERR Research Program</Link></li>
+              <li><Link to="/simulation">Simulation-Based Measurement</Link></li>
             </ul>
           </div>
 
           <div className="footer-links">
-            <h4>Measurement</h4>
+            <h4>Participation</h4>
             <ul>
-              <li><Link to="/diagnostic">Diagnostic Assessment</Link></li>
-              <li><Link to="/global-index">Global Index</Link></li>
-              <li><Link to="/benchmark">Submit Benchmark</Link></li>
-              <li><Link to="/simulation">Simulation Engine</Link></li>
+              <li><Link to="/diagnostic">Leadership Diagnostic</Link></li>
+              <li><Link to="/benchmark">Benchmark Your Organization</Link></li>
+              <li><Link to="/journey">Measurement Journey</Link></li>
+              <li><a href="#">Contact / Collaborate</a></li>
             </ul>
           </div>
 
@@ -59,9 +72,57 @@ const Footer = () => {
       <style jsx>{`
         .footer {
           background: #f8fafc;
-          padding: 6rem 0 2rem;
+          padding: 0;
           border-top: 1px solid var(--border-color);
           color: var(--navy);
+        }
+
+        .persistent-cta {
+          background: #0a192f;
+          padding: 4rem 0;
+          color: white;
+        }
+
+        .cta-content {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 2rem;
+        }
+
+        .cta-text h3 {
+          font-size: 1.8rem;
+          font-weight: 800;
+          margin-bottom: 0.5rem;
+          color: white;
+        }
+
+        .cta-text p {
+          color: #94a3b8;
+          font-size: 1.1rem;
+          max-width: 600px;
+        }
+
+        .btn-cta-footer {
+          background: #2dd4bf;
+          color: #0a192f;
+          padding: 1rem 2rem;
+          border-radius: 4px;
+          font-weight: 800;
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          transition: all 0.2s;
+          white-space: nowrap;
+        }
+
+        .btn-cta-footer:hover {
+          background: #14b8a6;
+          transform: translateY(-2px);
+        }
+
+        .footer-top {
+          padding: 6rem 0 4rem;
         }
 
         .footer-brand { grid-column: span 4; }

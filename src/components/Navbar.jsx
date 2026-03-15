@@ -18,8 +18,9 @@ const Navbar = () => {
   const navLinks = [
     { name: 'Manifesto', path: '/manifesto' },
     { name: 'Framework', path: '/framework' },
-    { name: 'Global Index', path: '/global-index' },
-    { name: 'Research', path: '/research' },
+    { name: 'Observatory', path: '/observatory' },
+    { name: 'Research', path: '/library' },
+    { name: 'Benchmark', path: '/benchmark' },
     { name: 'About', path: '/about' },
   ];
 

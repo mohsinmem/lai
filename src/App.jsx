@@ -2,20 +2,45 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import ScrollToTop from './components/ScrollToTop';
+
+// Phase 1: Institutional Authority
 import HomePage from './pages/HomePage';
 import ManifestoPage from './pages/ManifestoPage';
 import FrameworkPage from './pages/FrameworkPage';
+import LAIMeasurementPage from './pages/LAIMeasurementPage'; 
+import AdaptivenessGapPage from './pages/AdaptivenessGapPage';
+import GlobalSignalsPage from './pages/GlobalSignalsPage'; 
+
+// Phase 2: Observatory Layer
 import GlobalIndexPage from './pages/GlobalIndexPage';
+// import ObservatoryExplainerPage from './pages/ObservatoryExplainerPage'; // [NEW]
+// import DataCompletenessPage from './pages/DataCompletenessPage'; // [NEW]
+// import MethodologyPage from './pages/MethodologyPage'; // [NEW]
+// import ResearchFlywheelPage from './pages/ResearchFlywheelPage'; // [NEW]
+
+// Phase 3: Research Layer
+import ResearchPage from './pages/ResearchPage'; // Research Library
+import AFERRPage from './pages/AFERRPage';
+// import BehavioralSciencePage from './pages/BehavioralSciencePage'; // [NEW]
+// import SimulationMeasurementPage from './pages/SimulationMeasurementPage'; // [NEW]
+// import GlobalCollaborationPage from './pages/GlobalCollaborationPage'; // [NEW]
+// import CaseInsightsPage from './pages/CaseInsightsPage'; // [NEW]
+
+// Phase 4: Participation Layer
 import DiagnosticPage from './pages/DiagnosticPage';
+// import BenchmarkPage from './pages/BenchmarkPage'; // [NEW]
+// import MeasurementJourneyPage from './pages/MeasurementJourneyPage'; // [NEW]
+
+// Phase 5: Institutional Foundation
 import AboutPage from './pages/AboutPage';
-import ResearchPage from './pages/ResearchPage';
+// import AdvisoryCouncilPage from './pages/AdvisoryCouncilPage'; // [NEW]
+
+// Admin & Dev
 import ResearchDashboard from './pages/ResearchDashboard';
 import AdminMappingPage from './pages/AdminMappingPage';
 import AdminIntel from './pages/AdminIntel';
 import DevStatus from './pages/DevStatus';
-import ScrollToTop from './components/ScrollToTop';
-import AFERRPage from './pages/AFERRPage';
-import LAIMeasurementPage from './pages/LAIMeasurementPage';
 
 function App() {
   return (
@@ -25,14 +50,39 @@ function App() {
         <Navbar />
         <main>
           <Routes>
+            {/* Phase 1: Institutional Authority */}
             <Route path="/" element={<HomePage />} />
             <Route path="/manifesto" element={<ManifestoPage />} />
+            <Route path="/gap" element={<div>Adaptiveness Gap (Coming Soon)</div>} />
             <Route path="/framework" element={<FrameworkPage />} />
-            <Route path="/aferr" element={<AFERRPage />} />
-            <Route path="/measurement" element={<LAIMeasurementPage />} />
+            <Route path="/how-measured" element={<LAIMeasurementPage />} />
+            <Route path="/signals" element={<div>Global Adaptiveness Signals (Coming Soon)</div>} />
+
+            {/* Phase 2: Observatory Layer */}
+            <Route path="/observatory" element={<div>Leadership Adaptiveness Observatory (Coming Soon)</div>} />
             <Route path="/global-index" element={<GlobalIndexPage />} />
+            <Route path="/completeness" element={<div>Understanding Data Completeness (Coming Soon)</div>} />
+            <Route path="/methodology" element={<div>Measurement Methodology (Coming Soon)</div>} />
+            <Route path="/flywheel" element={<div>The LAI Research Flywheel (Coming Soon)</div>} />
+
+            {/* Phase 3: Research Layer */}
+            <Route path="/behavioral-science" element={<div>Behavioral Science of Adaptiveness (Coming Soon)</div>} />
+            <Route path="/aferr" element={<AFERRPage />} />
+            <Route path="/simulation" element={<div>Simulation-Based Measurement (Coming Soon)</div>} />
+            <Route path="/collaboration" element={<div>Global Research Collaboration (Coming Soon)</div>} />
+            <Route path="/case-insights" element={<div>Case Insights (Coming Soon)</div>} />
+            <Route path="/library" element={<ResearchPage />} />
+
+            {/* Phase 4: Participation Layer */}
             <Route path="/diagnostic" element={<DiagnosticPage />} />
+            <Route path="/benchmark" element={<div>Benchmark Your Organization (Coming Soon)</div>} />
+            <Route path="/journey" element={<div>Leadership Team Measurement Journey (Coming Soon)</div>} />
+
+            {/* Phase 5: Institutional Foundation */}
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/council" element={<div>Advisory / Research Council (Coming Soon)</div>} />
+
+            {/* Admin & Legacy */}
             <Route path="/research" element={<ResearchPage />} />
             <Route path="/admin" element={<ResearchDashboard />} />
             <Route path="/admin/mapping" element={<AdminMappingPage />} />
