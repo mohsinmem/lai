@@ -307,10 +307,10 @@ const Part1Report = () => {
                <p>
                  The next stage of the Leadership Adaptiveness Diagnostic observes leadership behavior under dynamic conditions. In the coming days, you will receive access to a short simulation experience designed to observe how leadership decisions unfold in practice.
                </p>
-               <div className="stage-actions">
-                  <button className="btn-institutional primary">Launch Preliminary Simulation</button>
-                  <button className="btn-institutional outline">Download Briefing PDF</button>
-               </div>
+                <div className="stage-actions">
+                   <Link to="/how-measured" className="btn-institutional primary">Launch Preliminary Simulation</Link>
+                   <button className="btn-institutional outline" onClick={() => window.print()}>Download Briefing PDF</button>
+                </div>
             </div>
         </section>
 
@@ -417,6 +417,18 @@ const Part1Report = () => {
           .profile-section { grid-template-columns: 1fr; }
           .meta-row { flex-direction: column; gap: 0.5rem; }
           .team-comparison-grid { grid-template-columns: 1fr; }
+        }
+
+        @media print {
+          body { background: white !important; }
+          .report-page { padding: 0 !important; background: white !important; }
+          .report-container { box-shadow: none !important; padding: 2rem !important; max-width: 100% !important; margin: 0 !important; }
+          header.nav-header, .stage-actions, footer.report-footer, .breadcrumb, .diagnostic-alert { display: none !important; }
+          .report-section { page-break-inside: avoid; margin-bottom: 2rem !important; padding-bottom: 2rem !important; }
+          .radar-chart-svg { max-width: 300px !important; height: auto !important; }
+          h1 { font-size: 2rem !important; margin-bottom: 1rem !important; }
+          .profile-section { display: block !important; }
+          .chart-area { margin-bottom: 2rem; }
         }
       `}</style>
     </div>

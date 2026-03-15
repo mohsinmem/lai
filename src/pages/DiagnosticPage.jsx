@@ -205,7 +205,7 @@ const DiagnosticPage = () => {
           {/* STEP 0: INTRODUCTION */}
           {step === 0 && (
             <motion.div key="intro" className="diag-card intro" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-              <div className="institutional-badge">Measurement Cycle: Part 1 of 2</div>
+              <div className="institutional-badge">Measurement Cycle: LAI-CORE [Part 1 of 2]</div>
               <h1>Perceptual Measurement</h1>
               <p className="lead-text">
                 Assess how your leadership system detects change, aligns decisions, and adapts in complex environments.
@@ -519,10 +519,6 @@ const DiagnosticPage = () => {
                   >
                     {copied === 'report' ? <><CheckCircle2 size={18} color="#14b8a6" /> Copied!</> : <><LinkIcon size={18} /> Copy Report Link</>}
                   </button>
-                </div>
-
-                <div style={{ marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)', fontSize: '0.75rem', color: '#64748b', fontFamily: 'monospace', textAlign: 'center' }}>
-                  PERSISTENT LOG ID: <span style={{ color: '#94a3b8' }}>{reportId}</span>
                 </div>
               </div>
 

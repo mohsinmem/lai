@@ -130,10 +130,10 @@ const LAIMeasurementPage = () => {
         <div className="container">
            <div className="final-cta-box text-center">
               <Globe size={48} className="text-teal-500 mb-4 mx-auto" />
-              <h2 className="section-h2">Explore the Global Adaptiveness Index</h2>
+              <h2 className="section-h2">Explore the Global Observatory Index</h2>
               <p className="max-w-2xl mx-auto mb-5 text-slate-600">Discover how organizations and leadership teams compare across industries and regions through our triangulated dataset.</p>
               <Link to="/global-index" className="btn-institutional">
-                 See the Global Adaptiveness Index <ArrowRight size={20} />
+                 See the Global Observatory Index <ArrowRight size={20} />
               </Link>
            </div>
         </div>
